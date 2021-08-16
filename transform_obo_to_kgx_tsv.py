@@ -1,6 +1,7 @@
 import logging
 import tempfile
 
+from kgx.cli import transform
 from tqdm import tqdm
 import yaml
 import boto3
@@ -65,16 +66,28 @@ def base_url_if_exists(oid):
     return ourl
 
 
-for o in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
-    url = base_url_if_exists(o['id'])  # take base if it exists, otherwise just use non-base
+for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
+    ontology_name = ontology['id']
+    print(f"{ontology_name}")
+
+    url = base_url_if_exists(ontology_name)  # take base ontology if it exists, otherwise just use non-base
     # TODO: generate base if it doesn't exist, using robot
 
-    tf = tempfile.NamedTemporaryFile()
-    outfile = "outfile.owl"
+    tf_input = tempfile.NamedTemporaryFile()
+    tf_output_dir = tempfile.TemporaryDirectory()
 
     # download url
-    urllib.request.urlretrieve(url, tf.name)
+    urllib.request.urlretrieve(url, tf_input.name)
+
+    # query kghub/[ontology]/current/*hash*
 
     # use kgx to convert OWL to KGX tsv
+    transform(inputs=[tf_input.name],
+              input_format='owl',
+              # input_compression=compression,
+              output=os.path.join(tf_output_dir.name, ontology_name),
+              output_format='tsv')
 
+    # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
+    os.system(f"ls -lhd {tf_output_dir.name}/*")
     # upload to S3

@@ -52,11 +52,11 @@ pipeline {
             }
         }
 
-        stage('Build kg_covid_19') {
+        stage('Build obo2kghub') {
             steps {
                 dir('./gitrepo') {
                     git(
-                            url: 'https://github.com/Knowledge-Graph-Hub/kg-covid-19',
+                            url: 'https://github.com/justaddcoffee/obo2kghub.git',
                             branch: env.BRANCH_NAME
                     )
                     sh '/usr/bin/python3.8 -m venv venv'
@@ -67,65 +67,10 @@ pipeline {
             }
         }
 
-        stage('Download') {
-            steps {
-                dir('./gitrepo') {
-                    script {
-                        def run_py_dl = sh(
-                            script: '. venv/bin/activate && python3.8 run.py download', returnStatus: true
-                        )
-                        if (run_py_dl == 0) {
-                            if (env.BRANCH_NAME != 'master') { // upload raw to s3 if we're on correct branch
-                                echo "Will not push if not on correct branch."
-                            } else {
-                                withCredentials([file(credentialsId: 's3cmd_kg_hub_push_configuration', variable: 'S3CMD_CFG')]) {
-                                    sh '. venv/bin/activate && s3cmd -c $S3CMD_CFG --acl-public --mime-type=plain/text --cf-invalidate put -r data/raw s3://kg-hub-public-data/$S3PROJECTDIR/'
-                                }
-                            }
-                        } else { // 'run.py download' failed - let's try to download last good copy of raw/ from s3 to data/
-                            currentBuild.result = "UNSTABLE"
-                            withCredentials([file(credentialsId: 's3cmd_kg_hub_push_configuration', variable: 'S3CMD_CFG')]) {
-                                sh 'rm -fr data/raw || true;'
-                                sh 'mkdir -p data/raw || true'
-                                sh '. venv/bin/activate && s3cmd -c $S3CMD_CFG --acl-public --mime-type=plain/text get -r s3://kg-hub-public-data/$S3PROJECTDIR/raw/ data/raw/'
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Transform') {
             steps {
                 dir('./gitrepo') {
-                    sh '. venv/bin/activate && env && python3.8 run.py transform'
-                }
-            }
-        }
-
-        stage('Merge') {
-            steps {
-                dir('./gitrepo') {
-                    sh '. venv/bin/activate && python3.8 run.py merge -y merge_jenkins.yaml'
-                    sh 'cp merged_graph_stats.yaml merged_graph_stats_$BUILDSTARTDATE.yaml'
-                    sh 'tar -rvf data/merged/merged-kg.tar merged_graph_stats_$BUILDSTARTDATE.yaml'
-                }
-            }
-        }
-
-        stage('Make blazegraph journal'){
-            steps {
-                dir('./gitrepo/blazegraph') {
-                        git(
-                                url: 'https://github.com/balhoff/blazegraph-runner.git',
-                                branch: 'master'
-                        )
-                        sh 'HOME=`pwd` && sbt stage' // set HOME here to prevent sbt from trying to make dir .cache in /
-                        sh 'ls -lhd ../data/merged/merged-kg.nt.gz'
-                        sh 'pigz -f -d ../data/merged/merged-kg.nt.gz'
-                        sh 'export JAVA_OPTS=-Xmx128G && ./target/universal/stage/bin/blazegraph-runner load --informat=ntriples --journal=../merged-kg.jnl --use-ontology-graph=true ../data/merged/merged-kg.nt'
-                        sh 'pigz ../merged-kg.jnl'
-                        sh 'pigz ../data/merged/merged-kg.nt'
+                    sh '. venv/bin/activate && env && python3.8 transform_obo_to_kgx_tsv.py'
                 }
             }
         }
@@ -217,33 +162,6 @@ pipeline {
             }
         }
 
-        stage('Deploy blazegraph') {
-            when { anyOf { branch 'master' } }
-            steps {
-                git([branch: 'master',
-                     credentialsId: 'justaddcoffee_github_api_token_username_pw',
-                     url: 'https://github.com/geneontology/operations.git'])
-
-                dir('./ansible') {
-
-                    withCredentials([file(credentialsId: 'ansible-bbop-local-slave', variable: 'DEPLOY_LOCAL_IDENTITY')]) {
-                        echo 'Push master out to public Blazegraph'
-
-                        // these commands ensure that ansible's ssh command doesn't
-                        // fail (in a very difficult-to-debug way) when it needs
-                        // us to accept the public key of pan.lbl.gov
-                        sh 'mkdir -p ~/.ssh/'
-                        sh 'ssh-keyscan -H pan.lbl.gov >> ~/.ssh/known_hosts'
-
-                        retry(3){
-                            sh 'HOME=`pwd` && ansible-playbook update-kg-hub-endpoint.yaml --inventory=hosts.local-rdf-endpoint --private-key="$DEPLOY_LOCAL_IDENTITY" -e target_user=bbop --extra-vars="endpoint=internal"'
-                        }
-                    }
-                }
-
-            }
-        }
-    }
 
     post {
         always {
