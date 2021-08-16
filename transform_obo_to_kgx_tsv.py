@@ -1,6 +1,5 @@
 import logging
 import tempfile
-
 from kgx.cli import transform
 from tqdm import tqdm
 import yaml
@@ -8,13 +7,12 @@ import boto3
 import requests
 import urllib.request
 import os
+from botocore.exceptions import ClientError
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
-import yaml
-from botocore.exceptions import ClientError
-
 source_of_obo_truth = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml'
+
 with urllib.request.urlopen(source_of_obo_truth) as f:
     yaml_content = f.read().decode('utf-8')
     yaml_parsed = yaml.safe_load(yaml_content)
@@ -84,7 +82,6 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     # use kgx to convert OWL to KGX tsv
     transform(inputs=[tf_input.name],
               input_format='owl',
-              # input_compression=compression,
               output=os.path.join(tf_output_dir.name, ontology_name),
               output_format='tsv')
 

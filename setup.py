@@ -17,6 +17,7 @@ setup(
         'setuptools',
         'boto3',
         'pyyaml',
-        'tqdm'
+        'tqdm',
+        'linkml_model'
     ]
 )
