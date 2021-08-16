@@ -71,7 +71,7 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     url = base_url_if_exists(ontology_name)  # take base ontology if it exists, otherwise just use non-base
     # TODO: generate base if it doesn't exist, using robot
 
-    tf_input = tempfile.NamedTemporaryFile()
+    tf_input = tempfile.NamedTemporaryFile(prefix=ontology_name)
     tf_output_dir = tempfile.TemporaryDirectory()
 
     # download url
