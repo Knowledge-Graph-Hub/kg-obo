@@ -10,13 +10,13 @@ import tempfile
 from kgx.cli import transform
 from tqdm import tqdm
 import yaml
-import requests
 import urllib.request
 import os
-
-from robot_utils import initialize_robot, convert_to_json
+from robot_utils import initialize_robot, convert_owl_to_json
 
 # ROBOT needs to be installed beforehand
+from kg_obo.obolibrary_utils import base_url_if_exists
+
 initialize_robot("./")
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
@@ -29,27 +29,6 @@ path_to_robot = "/usr/local/bin/"
 with urllib.request.urlopen(source_of_obo_truth) as f:
     yaml_content = f.read().decode('utf-8')
     yaml_parsed = yaml.safe_load(yaml_content)
-
-
-def base_url_if_exists(oid):
-    ourl = f"http://purl.obolibrary.org/obo/{oid}/{oid}-base.owl"
-    try:
-        ret = requests.head(ourl, allow_redirects=True)
-        if ret.status_code != 200:
-            ourl = f"http://purl.obolibrary.org/obo/{oid}.owl"
-        else:
-            i = 0
-            for line in urllib.request.urlopen(ourl):
-                i = i + 1
-                if i > 3:
-                    break
-                l = line.decode('utf-8')
-                if "ListBucketResult" in l:
-                    ourl = f"http://purl.obolibrary.org/obo/{oid}.owl"
-
-    except Exception:
-        ourl = f"http://purl.obolibrary.org/obo/{oid}.owl"
-    return ourl
 
 
 for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
