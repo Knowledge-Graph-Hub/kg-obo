@@ -1,5 +1,4 @@
-  
-from .robot_utils import robot_utils
+
 from .upload_dir_to_s3 import upload_dir_to_s3
 
 __all__ = [
