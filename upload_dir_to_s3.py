@@ -1,5 +1,7 @@
 from botocore.exceptions import ClientError
 import boto3
+import os
+import logging
 
 
 def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
