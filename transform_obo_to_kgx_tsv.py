@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Transform all available OBO Foundry ontologies from OBO format
+to KGX TSV, with intermediate JSON.
+"""
+
 import tempfile
 from kgx.cli import transform
 from tqdm import tqdm
@@ -5,6 +13,8 @@ import yaml
 import requests
 import urllib.request
 import os
+
+imp
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
