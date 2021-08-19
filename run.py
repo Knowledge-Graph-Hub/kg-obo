@@ -12,10 +12,10 @@ from tqdm import tqdm
 import yaml
 import urllib.request
 import os
-from robot_utils import initialize_robot, convert_owl_to_json
 
 # ROBOT needs to be installed beforehand
 from kg_obo.obolibrary_utils import base_url_if_exists
+from kg_obo.robot_utils import initialize_robot, convert_owl_to_json
 
 initialize_robot("/usr/local/bin")
 
