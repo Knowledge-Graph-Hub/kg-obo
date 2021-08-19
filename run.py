@@ -21,7 +21,6 @@ initialize_robot("/usr/local/bin")
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
-from robot_utils import convert_owl_to_json
 
 source_of_obo_truth = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml'
 path_to_robot = "/usr/local/bin/"
