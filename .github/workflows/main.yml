@@ -24,7 +24,7 @@ jobs:
           coverage report
           coverage xml
       - name: run mypy
-        run: mypy --strict-optional kg_obo
+        run: mypy --strict-optional kg_obo run.py
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
