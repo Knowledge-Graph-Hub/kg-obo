@@ -30,7 +30,7 @@ def initialize_robot(path: str) -> list:
     return [robot_file, env]
 
 
-def convert_to_json(path: str, ont: str):
+def convert_owl_to_json(path: str, ont: str) -> str:
     """
     This method converts owl to JSON using ROBOT and the subprocess library
 
@@ -51,7 +51,7 @@ def convert_to_json(path: str, ont: str):
 
         subprocess.call(call, env=env)
 
-    return None
+    return output_json
 
 
 
