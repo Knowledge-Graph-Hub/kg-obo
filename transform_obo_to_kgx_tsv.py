@@ -1,4 +1,3 @@
-import logging
 import tempfile
 from kgx.cli import transform
 from tqdm import tqdm
