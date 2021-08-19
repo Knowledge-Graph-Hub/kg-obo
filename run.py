@@ -35,19 +35,19 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     print(f"{ontology_name}")
 
     url = base_url_if_exists(ontology_name)  # take base ontology if it exists, otherwise just use non-base
+    print(url)
+
     # TODO: generate base if it doesn't exist, using robot
 
-    tf_input = tempfile.NamedTemporaryFile(prefix=ontology_name)
+    # download url to tempfile
+    # convert from owl to json using ROBOT
+    with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
+        urllib.request.urlretrieve(url, tfile.name)
+        json_file = convert_owl_to_json(path_to_robot, tfile.name)
+
     tf_output_dir = tempfile.TemporaryDirectory()
 
-    # download url
-    urllib.request.urlretrieve(url, tf_input.name)
-
     # query kghub/[ontology]/current/*hash*
-
-    # convert from owl to json using ROBOT
-
-    json_file = convert_owl_to_json(path_to_robot, tf_input.name)
 
     # use kgx to convert OWL to KGX tsv
     transform(inputs=[json_file],
