@@ -40,8 +40,8 @@ def convert_owl_to_json(path: str, ont: str) -> str:
     """
 
     robot_file, env = initialize_robot(path)
-    input_owl = os.path.join(path, ont.lower() + '.owl')
-    output_json = os.path.join(path, ont.lower() + '.json')
+    input_owl = ont
+    output_json = ont.lower() + '.json'
     if not os.path.isfile(output_json):
         # Setup the arguments for ROBOT through subprocess
         call = ['bash', robot_file, 'convert', \
