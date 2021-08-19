@@ -10,7 +10,7 @@ pipeline {
     }
     environment {
         BUILDSTARTDATE = sh(script: "echo `date +%Y%m%d`", returnStdout: true).trim()
-        S3PROJECTDIR = 'kg-covid-19' // no trailing slash
+        S3PROJECTDIR = 'kg-obo' // no trailing slash
 
         // Distribution ID for the AWS CloudFront for this bucket
         // used solely for invalidations
@@ -56,7 +56,7 @@ pipeline {
             steps {
                 dir('./gitrepo') {
                     git(
-                            url: 'https://github.com/justaddcoffee/obo2kghub.git',
+                            url: 'https://github.com/Knowledge-Graph-Hub/kg-obo',
                             branch: env.BRANCH_NAME
                     )
                     sh '/usr/bin/python3.8 -m venv venv'
