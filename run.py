@@ -17,7 +17,7 @@ from robot_utils import initialize_robot, convert_owl_to_json
 # ROBOT needs to be installed beforehand
 from kg_obo.obolibrary_utils import base_url_if_exists
 
-initialize_robot("./")
+initialize_robot("/usr/local/bin")
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
@@ -52,7 +52,6 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
 
     # use kgx to convert OWL to KGX tsv
     transform(inputs=[json_file],
-
               input_format='json',
               output=os.path.join(tf_output_dir.name, ontology_name),
               output_format='tsv',
