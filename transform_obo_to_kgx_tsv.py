@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Transform all available OBO Foundry ontologies from OBO format
+to KGX TSV, with intermediate JSON.
+"""
+
 import tempfile
 from kgx.cli import transform
 from tqdm import tqdm
@@ -5,6 +13,11 @@ import yaml
 import requests
 import urllib.request
 import os
+
+from robot_utils import initialize_robot, convert_to_json
+
+# ROBOT needs to be installed beforehand
+initialize_robot("./")
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
@@ -55,10 +68,12 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     # query kghub/[ontology]/current/*hash*
 
     # convert from owl to json using ROBOT
+
     json_file = convert_owl_to_json(path_to_robot, tf_input.name)
 
     # use kgx to convert OWL to KGX tsv
     transform(inputs=[json_file],
+
               input_format='json',
               output=os.path.join(tf_output_dir.name, ontology_name),
               output_format='tsv',
