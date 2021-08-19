@@ -12,16 +12,15 @@ from tqdm import tqdm
 import yaml
 import urllib.request
 import os
-from robot_utils import initialize_robot, convert_owl_to_json
 
 # ROBOT needs to be installed beforehand
 from kg_obo.obolibrary_utils import base_url_if_exists
+from kg_obo.robot_utils import initialize_robot, convert_owl_to_json
 
 initialize_robot("/usr/local/bin")
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
-from robot_utils import convert_owl_to_json
 
 source_of_obo_truth = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml'
 path_to_robot = "/usr/local/bin/"
