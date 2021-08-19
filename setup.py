@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 test_deps = [
     'pytest',
@@ -16,13 +16,13 @@ extras = {
 setup(
     name='kg-obo',
     version='0.1',
-    packages=[''],
     url='https://github.com/Knowledge-Graph-Hub/kg-obo',
     license='',
     author='Justin Reese, Harry Caufield',
     author_email='justinreese@lbl.gov, jhc@lbl.gov',
     description='',
 
+    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     tests_require=test_deps,
 
     # add package dependencies
