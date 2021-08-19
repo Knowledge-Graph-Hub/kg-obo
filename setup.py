@@ -23,6 +23,8 @@ setup(
     author_email='justinreese@lbl.gov, jhc@lbl.gov',
     description='',
 
+    tests_require=test_deps,
+
     # add package dependencies
     install_requires=[
         'kgx==1.3.0',
