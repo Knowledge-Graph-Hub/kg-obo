@@ -21,7 +21,10 @@ initialize_robot("./")
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
+from robot_utils import convert_owl_to_json
+
 source_of_obo_truth = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml'
+path_to_robot = "/usr/local/bin/"
 
 with urllib.request.urlopen(source_of_obo_truth) as f:
     yaml_content = f.read().decode('utf-8')
@@ -65,11 +68,12 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     # query kghub/[ontology]/current/*hash*
 
     # convert from owl to json using ROBOT
-    tf_input_json = (tf_input.name).lower() + '.json')
-    convert_to_json(tf_input)
-    
+
+    json_file = convert_owl_to_json(path_to_robot, tf_input.name)
+
     # use kgx to convert OWL to KGX tsv
-    transform(inputs=[tf_input_json.name],
+    transform(inputs=[json_file],
+
               input_format='json',
               output=os.path.join(tf_output_dir.name, ontology_name),
               output_format='tsv',
