@@ -7,9 +7,9 @@ to KGX TSV, with intermediate JSON.
 """
 
 import tempfile
-from kgx.cli import transform
-from tqdm import tqdm
-import yaml
+from kgx.cli import transform  # type: ignore
+from tqdm import tqdm  # type: ignore
+import yaml  # type: ignore
 import urllib.request
 import os
 

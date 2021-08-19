@@ -1,5 +1,5 @@
 import urllib
-import requests
+import requests  # type: ignore
 
 
 def base_url_if_exists(oid):
