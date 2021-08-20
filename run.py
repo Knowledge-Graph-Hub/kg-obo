@@ -25,7 +25,7 @@ initialize_robot("/usr/local/bin")
 
 timestring = (datetime.now()).strftime("%Y-%m-%d_%H%M%S")
 logging.basicConfig(filename="obo_transform_" + timestring + ".log",
-                    level=logging.DEBUG
+                    level=logging.NOTSET
                     )
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
@@ -41,6 +41,7 @@ with urllib.request.urlopen(source_of_obo_truth) as f:
 for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     ontology_name = ontology['id']
     print(f"{ontology_name}")
+    logging.info("Loading " + ontology_name)
 
     url = base_url_if_exists(ontology_name)  # take base ontology if it exists, otherwise just use non-base
     print(url)
