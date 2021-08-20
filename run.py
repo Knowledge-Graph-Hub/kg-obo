@@ -11,13 +11,21 @@ from kgx.cli import transform  # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
 import urllib.request
-import os
+from datetime import datetime
+import logging
 
 # ROBOT needs to be installed beforehand
 from kg_obo.obolibrary_utils import base_url_if_exists
 from kg_obo.robot_utils import initialize_robot, convert_owl_to_json
 
 initialize_robot("/usr/local/bin")
+
+# Set up logging
+
+timestring = (datetime.now()).strftime("%Y-%m-%d_%H%M%S")
+logging.basicConfig(filename="obo_transform_" + timestring + ".log", "w+b",
+                    level=logging.DEBUG
+                    )
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
@@ -28,7 +36,6 @@ path_to_robot = "/usr/local/bin/"
 with urllib.request.urlopen(source_of_obo_truth) as f:
     yaml_content = f.read().decode('utf-8')
     yaml_parsed = yaml.safe_load(yaml_content)
-
 
 for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     ontology_name = ontology['id']
@@ -50,11 +57,14 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     # query kghub/[ontology]/current/*hash*
 
     # use kgx to convert OWL to KGX tsv
-    transform(inputs=[json_file],
-              input_format='json',
-              output=os.path.join(tf_output_dir.name, ontology_name),
-              output_format='tsv',
-              )
+    try:
+        transform(inputs=[json_file],
+            input_format='json',
+            output=os.path.join(tf_output_dir.name, ontology_name),
+            output_format='tsv',
+            )
+    except FileNotFoundError as e:
+        logging.error(e)
 
     # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
     os.system(f"ls -lhd {tf_output_dir.name}/*")
