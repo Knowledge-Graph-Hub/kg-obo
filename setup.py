@@ -39,7 +39,7 @@ extras = {
 }
 
 setup(
-    name='kg-obo',
+    name='kg_obo',
     version=__version__,
     url='https://github.com/Knowledge-Graph-Hub/kg-obo',
     license='',
