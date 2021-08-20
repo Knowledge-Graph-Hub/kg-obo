@@ -53,7 +53,7 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
         urllib.request.urlretrieve(url, tfile.name)
         json_file = convert_owl_to_json(path_to_robot, tfile.name)
 
-    tf_output_dir = tempfile.TemporaryDirectory()
+    tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
 
     # query kghub/[ontology]/current/*hash*
 
@@ -61,12 +61,12 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     try:
         transform(inputs=[json_file],
             input_format='json',
-            output=os.path.join(tf_output_dir.name, ontology_name),
+            output=os.path.join(tf_output_dir, ontology_name),
             output_format='tsv',
             )
     except FileNotFoundError as e:
         logging.error(e)
 
     # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
-    os.system(f"ls -lhd {tf_output_dir.name}/*")
+    os.system(f"ls -lhd {tf_output_dir}/*")
     # upload to S3
