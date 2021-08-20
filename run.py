@@ -10,7 +10,7 @@ import tempfile
 from kgx.cli import transform  # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
-import urllib.request
+import requests
 from datetime import datetime
 import os
 import logging
@@ -34,9 +34,9 @@ logging.basicConfig(filename="obo_transform_" + timestring + ".log",
 source_of_obo_truth = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml'
 path_to_robot = "/usr/local/bin/"
 
-with urllib.request.urlopen(source_of_obo_truth) as f:
-    yaml_content = f.read().decode('utf-8')
-    yaml_parsed = yaml.safe_load(yaml_content)
+yaml_req = requests.get(source_of_obo_truth)
+yaml_content = (yaml_req.content).decode('utf-8')
+yaml_parsed = yaml.safe_load(yaml_content)
 
 for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     ontology_name = ontology['id']
@@ -51,7 +51,16 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     # download url to tempfile
     # convert from owl to json using ROBOT
     with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
-        urllib.request.urlretrieve(url, tfile.name)
+        req = requests.get(url, stream=True)
+        file_size = int(req.headers['Content-Length'])
+        chunk_size = 1024
+        with open(tfile.name, 'wb') as outfile:
+            pbar = tqdm(unit="B", total=file_size, unit_scale=True, unit_divisor=chunk_size)
+            for chunk in req.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    pbar.update(len(chunk))
+                    outfile.write(chunk)
+        pbar.close()
         json_file = convert_owl_to_json(path_to_robot, tfile.name)
 
     tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
