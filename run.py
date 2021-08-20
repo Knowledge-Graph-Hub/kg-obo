@@ -10,7 +10,7 @@ import tempfile
 from kgx.cli import transform  # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
-import requests
+import requests  # type: ignore
 from datetime import datetime
 import os
 import logging
