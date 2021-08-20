@@ -23,7 +23,7 @@ initialize_robot("/usr/local/bin")
 # Set up logging
 
 timestring = (datetime.now()).strftime("%Y-%m-%d_%H%M%S")
-logging.basicConfig(filename="obo_transform_" + timestring + ".log", "w+b",
+logging.basicConfig(filename="obo_transform_" + timestring + ".log",
                     level=logging.DEBUG
                     )
 
