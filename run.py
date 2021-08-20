@@ -12,6 +12,7 @@ from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
 import urllib.request
 from datetime import datetime
+import os
 import logging
 
 # ROBOT needs to be installed beforehand
