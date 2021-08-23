@@ -15,6 +15,8 @@ from datetime import datetime
 import os
 import logging
 
+from xml.sax._exceptions import SAXParseException
+
 from kg_obo.obolibrary_utils import base_url_if_exists
 
 # Set up logging
@@ -66,6 +68,8 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
                 output_format='tsv',
                 )
         except FileNotFoundError as e:
+            logging.error(e)
+        except SAXParseException as e:
             logging.error(e)
 
     # query kghub/[ontology]/current/*hash*
