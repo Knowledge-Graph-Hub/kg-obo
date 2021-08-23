@@ -14,16 +14,20 @@ import requests  # type: ignore
 from datetime import datetime
 import os
 import logging
+import sys
 
 from xml.sax._exceptions import SAXParseException # type: ignore
 
 from kg_obo.obolibrary_utils import base_url_if_exists
 
+SKIP_LIST = ["chebi"]
+
 # Set up logging
 timestring = (datetime.now()).strftime("%Y-%m-%d_%H%M%S")
 logging.basicConfig(filename="obo_transform_" + timestring + ".log",
-                    level=logging.NOTSET
+                    level=logging.INFO
                     )
+logger = logging.getLogger()
 
 # this is a stable URL containing a YAML file that describes all the OBO ontologies:
 # get the ID for each ontology, construct PURL
@@ -34,20 +38,23 @@ path_to_robot = "/usr/local/bin/"
 yaml_req = requests.get(source_of_obo_truth)
 yaml_content = (yaml_req.content).decode('utf-8')
 yaml_parsed = yaml.safe_load(yaml_content)
+yaml_onto_list = yaml_parsed['ontologies']
+yaml_onto_list_filtered = [ontology for ontology in yaml_onto_list if ontology['id'] not in SKIP_LIST]
 
-for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
+for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
     ontology_name = ontology['id']
     print(f"{ontology_name}")
-    logging.info("Loading " + ontology_name)
+    logger.info("Loading " + ontology_name)
 
     url = base_url_if_exists(ontology_name)  # take base ontology if it exists, otherwise just use non-base
     print(url)
 
-    # TODO: generate base if it doesn't exist, using robot
-
     # download url to tempfile
     # use kgx to convert OWL to KGX tsv
     with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
+
+        success = True
+
         req = requests.get(url, stream=True)
         file_size = int(req.headers['Content-Length'])
         chunk_size = 1024
@@ -61,16 +68,30 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
         
         tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
         
+        #Use kgx to transform, but save errors to log
         try:
+            stderr = sys.stderr
+            stdout = sys.stdout
+            stderr.write = logger.error
+            stdout.write = logger.warning
             transform(inputs=[tfile.name],
-                input_format='owl',
-                output=os.path.join(tf_output_dir, ontology_name),
-                output_format='tsv',
-                )
+                    input_format='owl',
+                    output=os.path.join(tf_output_dir, ontology_name),
+                    output_format='tsv',
+                    )
+            sys.stderr = stderr
+            sys.stdout = stdout
         except FileNotFoundError as e:
-            logging.error(e)
+            logger.error(e)
+            success = False
         except SAXParseException as e:
-            logging.error(e)
+            logger.error(e)
+            success = False
+
+        if success:
+            logger.info("Successfully completed transform of " + ontology_name)
+        else:
+            logger.warning("Encountered errors while transforming " + ontology_name)
 
     # query kghub/[ontology]/current/*hash*
     
