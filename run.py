@@ -49,7 +49,7 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
     # TODO: generate base if it doesn't exist, using robot
 
     # download url to tempfile
-    # convert from owl to json using ROBOT
+    # use kgx to convert OWL to KGX tsv
     with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
         req = requests.get(url, stream=True)
         file_size = int(req.headers['Content-Length'])
@@ -61,22 +61,20 @@ for ontology in tqdm(yaml_parsed['ontologies'], "processing ontologies"):
                     pbar.update(len(chunk))
                     outfile.write(chunk)
         pbar.close()
-        json_file = convert_owl_to_json(path_to_robot, tfile.name)
-
-    tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
+        
+        tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
+        
+        try:
+            transform(inputs=[tfile.name],
+                input_format='owl',
+                output=os.path.join(tf_output_dir, ontology_name),
+                output_format='tsv',
+                )
+        except FileNotFoundError as e:
+            logging.error(e)
 
     # query kghub/[ontology]/current/*hash*
-
-    # use kgx to convert OWL to KGX tsv
-    try:
-        transform(inputs=[json_file],
-            input_format='json',
-            output=os.path.join(tf_output_dir, ontology_name),
-            output_format='tsv',
-            )
-    except FileNotFoundError as e:
-        logging.error(e)
-
+    
     # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
     os.system(f"ls -lhd {tf_output_dir}/*")
     # upload to S3
