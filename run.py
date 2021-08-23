@@ -15,7 +15,7 @@ from datetime import datetime
 import os
 import logging
 
-from xml.sax._exceptions import SAXParseException
+from xml.sax._exceptions import SAXParseException # type: ignore
 
 from kg_obo.obolibrary_utils import base_url_if_exists
 
