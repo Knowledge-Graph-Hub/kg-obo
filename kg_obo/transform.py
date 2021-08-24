@@ -26,10 +26,8 @@ def retrieve_obofoundry_yaml(
     yaml_content = (yaml_req.content).decode('utf-8')
     yaml_parsed = yaml.safe_load(yaml_content)
     yaml_onto_list = yaml_parsed['ontologies']
-    yaml_onto_list_filtered = [ontology for ontology in yaml_onto_list if
-                               ontology['id'] not in skip_list]
+    yaml_onto_list_filtered = [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list]
     return yaml_onto_list_filtered
-
 
 def run_transform(skip_list: list = None, log_dir="logs") -> None:
     
