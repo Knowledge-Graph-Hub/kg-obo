@@ -38,17 +38,26 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
-    logging.basicConfig(filename=os.path.join(log_dir, "obo_transform_" + timestring + ".log"),
-                        level=logging.INFO)
-    logger = logging.getLogger("kg-obo")
-    kgx_logger = get_logger()
+    log_path = os.path.join(log_dir, "obo_transform_" + timestring + ".log")
+    log_level = logging.INFO
+    root_logger = logging.getLogger()
+    root_logger_handler = logging.FileHandler(log_path)
+    
+    kg_obo_logger = logging.getLogger("kg-obo")
+    kg_obo_logger.setLevel(log_level)
+    kg_obo_logger.addHandler(root_logger_handler)
 
+    kgx_logger = get_logger()
+    kgx_logger.setLevel(log_level)
+    kgx_logger.addHandler(root_logger_handler)
+
+    # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
         ontology_name = ontology['id']
         print(f"{ontology_name}")
-        logger.info("Loading " + ontology_name)
+        kg_obo_logger.info("Loading " + ontology_name)
 
         # take base ontology if it exists, otherwise just use non-base
         url = base_url_if_exists(ontology_name)
@@ -89,13 +98,13 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                     SAXParseException,
                     ParserError,
                     Exception) as e:
-                    logger.error(e)
+                    kg_obo_logger.error(e)
                     success = False
 
             if success:
-                logger.info("Successfully completed transform of " + ontology_name)
+                kg_obo_logger.info("Successfully completed transform of " + ontology_name)
             else:
-                logger.warning("Encountered errors while transforming " + ontology_name)
+                kg_obo_logger.warning("Encountered errors while transforming " + ontology_name)
 
             # query kghub/[ontology]/current/*hash*
 
