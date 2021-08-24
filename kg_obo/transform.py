@@ -30,11 +30,11 @@ def retrieve_obofoundry_yaml(
     return yaml_onto_list_filtered
 
 
-def run_transform(skip_list: list = None) -> None:
+def run_transform(skip_list: list = None, log_dir="logs") -> None:
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H%M%S")
-    logging.basicConfig(filename=os.path.join("logs", "obo_transform_" + timestring + ".log"),
+    logging.basicConfig(filename=os.path.join(log_dir, "obo_transform_" + timestring + ".log"),
                         level=logging.INFO)
     logger = logging.getLogger()
 
@@ -45,8 +45,8 @@ def run_transform(skip_list: list = None) -> None:
         print(f"{ontology_name}")
         logger.info("Loading " + ontology_name)
 
-        url = base_url_if_exists(
-            ontology_name)  # take base ontology if it exists, otherwise just use non-base
+        # take base ontology if it exists, otherwise just use non-base
+        url = base_url_if_exists(ontology_name)
         print(url)
 
         # download url to tempfile
