@@ -83,7 +83,8 @@ def run_transform(skip_list: list = None, log_dir="logs") -> None:
                           )
             except (FileNotFoundError,
                     SAXParseException,
-                    ParserError) as e:
+                    ParserError,
+                    Exception) as e:
                     logger.error(e)
                     success = False
 
