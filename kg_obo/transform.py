@@ -42,7 +42,6 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
     log_level = logging.INFO
     log_format = ("%(asctime)s [%(levelname)s]: %(message)s in %(pathname)s:%(lineno)d")
 
-    root_logger = logging.getLogger()
     root_logger_handler = logging.FileHandler(log_path)
     root_logger_handler.setFormatter(logging.Formatter(log_format))
     
