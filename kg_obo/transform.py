@@ -54,16 +54,21 @@ def run_transform(skip_list: list = None, log_dir="logs") -> None:
 
             success = True
             
-            req = requests.get(url, stream=True)
-            file_size = int(req.headers['Content-Length'])
-            chunk_size = 1024
-            with open(tfile.name, 'wb') as outfile:
-                pbar = tqdm(unit="B", total=file_size, unit_scale=True,
+            try:
+                req = requests.get(url, stream=True)
+                file_size = int(req.headers['Content-Length'])
+                chunk_size = 1024
+                with open(tfile.name, 'wb') as outfile:
+                    pbar = tqdm(unit="B", total=file_size, unit_scale=True,
                             unit_divisor=chunk_size)
-                for chunk in req.iter_content(chunk_size=chunk_size):
-                    if chunk:
-                        pbar.update(len(chunk))
-                        outfile.write(chunk)
+                    for chunk in req.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            pbar.update(len(chunk))
+                            outfile.write(chunk)
+            except (KeyError) as e:
+                logger.error(e)
+                success = False
+
             pbar.close()
 
             tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
