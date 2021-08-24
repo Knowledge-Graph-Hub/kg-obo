@@ -40,8 +40,11 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
     log_path = os.path.join(log_dir, "obo_transform_" + timestring + ".log")
     log_level = logging.INFO
+    log_format = ("%(asctime)s [%(levelname)s]: %(message)s in %(pathname)s:%(lineno)d")
+
     root_logger = logging.getLogger()
     root_logger_handler = logging.FileHandler(log_path)
+    root_logger_handler.setFormatter(logging.Formatter(log_format))
     
     kg_obo_logger = logging.getLogger("kg-obo")
     kg_obo_logger.setLevel(log_level)
