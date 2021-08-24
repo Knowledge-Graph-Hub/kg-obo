@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve KG-COVID-19
+about: Create a report to help us improve kg-obo
 labels: bug
 
 ---
