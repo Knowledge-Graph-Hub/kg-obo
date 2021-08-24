@@ -80,7 +80,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                             pbar.update(len(chunk))
                             outfile.write(chunk)
             except (KeyError) as e:
-                logger.error(e)
+                kg_obo_logger.error(e)
                 success = False
 
             pbar.close()
