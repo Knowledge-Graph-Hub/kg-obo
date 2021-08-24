@@ -1,14 +1,15 @@
 import tempfile
 from kgx.cli import transform  # type: ignore
+from kgx.config import get_logger # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
 import requests  # type: ignore
 from datetime import datetime
 import os
 import logging
-import sys
 
 from xml.sax._exceptions import SAXParseException  # type: ignore
+from rdflib.exceptions import ParserError # type: ignore
 
 from kg_obo.obolibrary_utils import base_url_if_exists
 
@@ -31,13 +32,13 @@ def retrieve_obofoundry_yaml(
 
 
 def run_transform(skip_list: list = None, log_dir="logs") -> None:
-
+    
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H%M%S")
     logging.basicConfig(filename=os.path.join(log_dir, "obo_transform_" + timestring + ".log"),
                         level=logging.INFO)
     logger = logging.getLogger()
-
+    
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
@@ -54,7 +55,7 @@ def run_transform(skip_list: list = None, log_dir="logs") -> None:
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
             success = True
-
+            
             req = requests.get(url, stream=True)
             file_size = int(req.headers['Content-Length'])
             chunk_size = 1024
@@ -71,30 +72,23 @@ def run_transform(skip_list: list = None, log_dir="logs") -> None:
 
             # Use kgx to transform, but save errors to log
             try:
-                stderr = sys.stderr
-                stdout = sys.stdout
-                stderr.write = logger.error
-                stdout.write = logger.warning
                 transform(inputs=[tfile.name],
                           input_format='owl',
                           output=os.path.join(tf_output_dir, ontology_name),
                           output_format='tsv',
                           )
-                sys.stderr = stderr
-                sys.stdout = stdout
-            except FileNotFoundError as e:
-                logger.error(e)
-                success = False
-            except SAXParseException as e:
-                logger.error(e)
-                success = False
+            except (FileNotFoundError,
+                    SAXParseException,
+                    ParserError) as e:
+                    logger.error(e)
+                    success = False
 
             if success:
                 logger.info("Successfully completed transform of " + ontology_name)
             else:
                 logger.warning("Encountered errors while transforming " + ontology_name)
-
-        # query kghub/[ontology]/current/*hash*
+            
+            # query kghub/[ontology]/current/*hash*
 
         # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
         os.system(f"ls -lhd {tf_output_dir}/*")
