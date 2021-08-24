@@ -32,11 +32,12 @@ def retrieve_obofoundry_yaml(
 def run_transform(skip_list: list = None, log_dir="logs") -> None:
     
     # Set up logging
-    timestring = (datetime.now()).strftime("%Y-%m-%d_%H%M%S")
+    timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
     logging.basicConfig(filename=os.path.join(log_dir, "obo_transform_" + timestring + ".log"),
                         level=logging.INFO)
-    logger = logging.getLogger()
-    
+    logger = logging.getLogger("kg-obo")
+    kgx_logger = get_logger()
+
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
