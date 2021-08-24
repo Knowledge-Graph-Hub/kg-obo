@@ -1,6 +1,8 @@
 from unittest import TestCase, mock
 from unittest.mock import Mock
 
+from botocore.exceptions import ClientError
+
 from kg_obo import upload_dir_to_s3
 
 
@@ -10,7 +12,7 @@ class TestUploadDirToS3(TestCase):
         pass
 
     @mock.patch('boto3.client')
-    def test_base_url_if_exists(self, mock_boto):
+    def test_upload_dir_to_s3(self, mock_boto):
         local_dir = "tests/resources/fake_upload_dir"
         bucket = "my_bucket"
         bucket_dir = "remote_dir"
