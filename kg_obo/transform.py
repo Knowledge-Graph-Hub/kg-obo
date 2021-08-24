@@ -16,21 +16,26 @@ from kg_obo.obolibrary_utils import base_url_if_exists
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
-        skip_list: list = None) -> list:
+        skip_list: list = []) -> list:
     """ Retrieve YAML containing list of all ontologies in OBOFoundry
     :param yaml_url: a stable URL containing a YAML file that describes all the OBO ontologies:
     :param skip_list: which ontologies should we skip
     :return: parsed yaml describing ontologies to transform
     """
     yaml_req = requests.get(yaml_url)
-    yaml_content = (yaml_req.content).decode('utf-8')
+    yaml_content = yaml_req.content.decode('utf-8')
     yaml_parsed = yaml.safe_load(yaml_content)
-    yaml_onto_list = yaml_parsed['ontologies']
-    yaml_onto_list_filtered = [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list]
+    if not yaml_parsed or 'ontologies' not in yaml_parsed:
+        raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
+    else:
+        yaml_onto_list: list = yaml_parsed['ontologies']
+    yaml_onto_list_filtered = \
+        [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list]
     return yaml_onto_list_filtered
 
-def run_transform(skip_list: list = None, log_dir="logs") -> None:
-    
+
+def run_transform(skip_list: list = [], log_dir="logs") -> None:
+
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
     logging.basicConfig(filename=os.path.join(log_dir, "obo_transform_" + timestring + ".log"),
@@ -54,7 +59,6 @@ def run_transform(skip_list: list = None, log_dir="logs") -> None:
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
             success = True
-            
             try:
                 req = requests.get(url, stream=True)
                 file_size = int(req.headers['Content-Length'])
@@ -92,7 +96,7 @@ def run_transform(skip_list: list = None, log_dir="logs") -> None:
                 logger.info("Successfully completed transform of " + ontology_name)
             else:
                 logger.warning("Encountered errors while transforming " + ontology_name)
-            
+
             # query kghub/[ontology]/current/*hash*
 
         # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
