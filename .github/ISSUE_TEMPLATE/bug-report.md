@@ -19,7 +19,7 @@ A clear and concise description of what you expected to happen.
 
 ### Version
 
-Which version of KG-COVID-19 are you seeing the bug with? An md5 hash is most useful.
+Which version of kg-obo are you seeing the bug with? An md5 hash is most useful.
 
 ### Additional context
 
