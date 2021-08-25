@@ -1,6 +1,6 @@
 import tempfile
 import kgx  # type: ignore
-
+from kgx.cli import transform # type: ignore
 from kgx.config import get_logger # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
@@ -48,10 +48,10 @@ def kgx_transform(input_file: list, input_format: str,
     """
     success = True
     try:
-        kgx.cli.transform(inputs=input_file,
-                          input_format=input_format,
-                          output=output_file,
-                          output_format=output_format)
+        transform(inputs=input_file,
+                      input_format=input_format,
+                      output=output_file,
+                      output_format=output_format)
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
@@ -82,6 +82,9 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
+    
+    successful_transforms = []
+    failed_transforms = []
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
         ontology_name = ontology['id']
@@ -112,6 +115,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 kg_obo_logger.error(e)
                 success = False
                 kg_obo_logger.warning("Encountered errors while transforming " + ontology_name)
+                failed_transforms.append(ontology_name)
                 continue
 
             pbar.close()
@@ -129,12 +133,17 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
             if success:
                 kg_obo_logger.info("Successfully completed transform of " + ontology_name)
+                successful_transforms.append(ontology_name)
             else:
                 kg_obo_logger.warning("Encountered errors while transforming " + ontology_name)
+                failed_transforms.append(ontology_name)
 
             # query kghub/[ontology]/current/*hash*
-
+        
         # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
         os.system(f"ls -lhd {tf_output_dir}/*")
-
+    
+        print(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
+        print(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
+        
         # upload to S3
