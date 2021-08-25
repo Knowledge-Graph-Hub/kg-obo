@@ -110,6 +110,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             except KeyError as e:
                 kg_obo_logger.error(e)
                 success = False
+                kg_obo_logger.warning("Encountered errors while transforming " + ontology_name)
                 continue
 
             pbar.close()
