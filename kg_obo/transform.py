@@ -55,7 +55,7 @@ def kgx_transform(input_file: list, input_format: str,
             SAXParseException,
             ParserError,
             Exception) as e:
-        logger.error(e)
+        logger.error(e)  # type: ignore
         success = False
     return success
 
