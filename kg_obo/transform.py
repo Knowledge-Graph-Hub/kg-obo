@@ -84,6 +84,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
     
     successful_transforms = []
+    errored_transforms = []
     failed_transforms = []
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
@@ -114,7 +115,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             except KeyError as e:
                 kg_obo_logger.error(e)
                 success = False
-                kg_obo_logger.warning("Encountered errors while transforming " + ontology_name)
+                kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
                 continue
 
@@ -123,27 +124,45 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
 
             # Use kgx to transform, but save errors to log
+            transform_errors = []
             success = kgx_transform(input_file=[tfile.name],
                                     input_format='owl',
                                     output_file=os.path.join(tf_output_dir, ontology_name),
                                     output_format='tsv',
                                     logger=kg_obo_logger)
 
-            # TODO: check file size and fail/warn if nodes|edge file is empty
+            # Check file size and fail/warn if nodes|edge file is empty
+            for filename in os.listdir(tf_output_dir):
+              if os.stat(os.path.join(tf_output_dir, filename)).st_size == 0:
+                  kg_obo_logger.warning("Output is empty - something went wrong during transformation.")
+                  success = False
+              else:
+                  kg_obo_logger.info(f"{filename} {os.stat(os.path.join(tf_output_dir, filename)).st_size} bytes")
 
-            if success:
-                kg_obo_logger.info("Successfully completed transform of " + ontology_name)
+            if success and len(transform_errors) == 0:
+                kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
+            elif success and len(transform_errors) > 0:
+                kg_obo_logger.info(f"Completed transform of {ontology_name} with {len(transform_errors)} errors")
+                errored_transforms.append(ontology_name)
             else:
-                kg_obo_logger.warning("Encountered errors while transforming " + ontology_name)
+                kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
 
             # query kghub/[ontology]/current/*hash*
         
         # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
-        os.system(f"ls -lhd {tf_output_dir}/*")
+        
     
-        print(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
+    print(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
+    kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
+        
+    if len(errored_transforms) > 0:
+        print(f"Incompletely transformed due to errors {len(errored_transforms)}: {errored_transforms}")
+        kg_obo_logger.info(f"Incompletely transformed due to errors {len(errored_transforms)}: {errored_transforms}")
+
+    if len(failed_transforms) > 0:
         print(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
+        kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
         
         # upload to S3
