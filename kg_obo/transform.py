@@ -1,5 +1,5 @@
 import tempfile
-import kgx  # type: ignore
+import kgx.cli  # type: ignore
 from kgx.config import get_logger # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
