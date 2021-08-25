@@ -10,7 +10,9 @@ from kg_obo.transform import run_transform, kgx_transform
 class TestRunTransform(TestCase):
 
     def setUp(self) -> None:
-        pass
+        self.kgx_transform_kwargs = {'input_file': ['foo'], 'input_format': 'tsv',
+                                     'output_file': 'bar', 'output_format': 'tsv',
+                                     'logger': logging.Logger}
 
     @mock.patch('requests.get')
     @mock.patch('kg_obo.transform.retrieve_obofoundry_yaml')
@@ -26,9 +28,13 @@ class TestRunTransform(TestCase):
 
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
-        logger = logging.Logger
-        kgx_transform(input_file=['foo'], input_format='tsv',
-                      output_file='bar', output_format='tsv', logger=logger)
+        ret_val = kgx_transform(**self.kgx_transform_kwargs)
         self.assertTrue(mock_kgx_transform.called)
+        self.assertTrue(ret_val)
 
-        # mock_kgx_transform.side_effect = FileNotFoundError(mock.Mock())
+        mock_kgx_transform.side_effect = Exception(mock.Mock())
+        mock_kgx_transform.side_effect.isEnabledFor = mock.Mock()
+        mock_kgx_transform.side_effect._log = mock.Mock()
+        ret_val = kgx_transform(**self.kgx_transform_kwargs)
+        self.assertTrue(mock_kgx_transform.called)
+        self.assertFalse(ret_val)
