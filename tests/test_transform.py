@@ -32,11 +32,11 @@ class TestRunTransform(TestCase):
     def test_kgx_transform(self, mock_kgx_transform) -> None:
         ret_val = kgx_transform(**self.kgx_transform_kwargs)
         self.assertTrue(mock_kgx_transform.called)
-        self.assertTrue(ret_val)
+        self.assertTrue(ret_val[0])
 
         mock_kgx_transform.side_effect = Exception(mock.Mock())
         mock_kgx_transform.side_effect.isEnabledFor = mock.Mock()
         mock_kgx_transform.side_effect._log = mock.Mock()
         ret_val = kgx_transform(**self.kgx_transform_kwargs)
         self.assertTrue(mock_kgx_transform.called)
-        self.assertFalse(ret_val)
+        self.assertFalse(ret_val[0])
