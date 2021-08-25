@@ -125,15 +125,17 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
             pbar.close()
 
+            # TODO: Decide whether we need to transform based on version IRI
+
             tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
 
             # Use kgx to transform, but save errors to log
             transform_errors: list = []
             success, errors = kgx_transform(input_file=[tfile.name],
-                                    input_format='owl',
-                                    output_file=os.path.join(tf_output_dir, ontology_name),
-                                    output_format='tsv',
-                                    logger=kgx_logger)
+                                            input_format='owl',
+                                            output_file=os.path.join(tf_output_dir, ontology_name),
+                                            output_format='tsv',
+                                            logger=kgx_logger)
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(tf_output_dir):
@@ -153,9 +155,13 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
 
-            # query kghub/[ontology]/current/*hash*
-
-        # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
+        # TODO: upload to S3
+        # make a version file
+        # make an index.html for s3_bucket/kg-obo/[this ontology]/[version]/
+        # make an index.html for s3_bucket/kg-obo/[this ontology]/
+        # push to s3:
+        # push s3_bucket/kg-obo/[this ontology]/[version]
+        # push s3_bucket/kg-obo/[this ontology]/current
 
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
@@ -165,4 +171,4 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
-        # upload to S3
+    # TODO: make new index.html for s3_bucket/kg-obo/
