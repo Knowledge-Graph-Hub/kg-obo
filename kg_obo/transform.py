@@ -36,7 +36,7 @@ def retrieve_obofoundry_yaml(
 
 
 def kgx_transform(input_file: list, input_format: str,
-                  output_file: str, output_format: str, logger: object) -> bool:
+                  output_file: str, output_format: str, logger: object) -> tuple:
     """Call KGX transform and report success status (bool)
 
     :param input_file: list of files to transform
@@ -44,21 +44,26 @@ def kgx_transform(input_file: list, input_format: str,
     :param output_file: output file root (appended with nodes/edges.[format])
     :param output_format: output format
     :param logger: logger
-    :return: boolean - did transform work?
+    :return: tuple - (bool for did transform work?, bool for any errors encountered)
     """
     success = True
+    errors = False
     try:
         transform(inputs=input_file,
                       input_format=input_format,
                       output=output_file,
                       output_format=output_format)
+        if 30 in logger._cache and logger._cache[30]:
+            logger.error("Encountered errors in transforming or parsing.")
+            errors = True
+            logger._cache.clear()
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
             Exception) as e:
         success = False
         logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
-    return success
+    return (success, errors)
 
 
 def run_transform(skip_list: list = [], log_dir="logs") -> None:
@@ -125,11 +130,11 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
             # Use kgx to transform, but save errors to log
             transform_errors = []
-            success = kgx_transform(input_file=[tfile.name],
+            success, errors = kgx_transform(input_file=[tfile.name],
                                     input_format='owl',
                                     output_file=os.path.join(tf_output_dir, ontology_name),
                                     output_format='tsv',
-                                    logger=kg_obo_logger)
+                                    logger=kgx_logger)
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(tf_output_dir):
@@ -139,11 +144,11 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
               else:
                   kg_obo_logger.info(f"{filename} {os.stat(os.path.join(tf_output_dir, filename)).st_size} bytes")
 
-            if success and len(transform_errors) == 0:
+            if success and not errors:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
-            elif success and len(transform_errors) > 0:
-                kg_obo_logger.info(f"Completed transform of {ontology_name} with {len(transform_errors)} errors")
+            elif success and errors:
+                kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
                 errored_transforms.append(ontology_name)
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
@@ -153,16 +158,12 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
         
         # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
         
-    
-    print(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
         
     if len(errored_transforms) > 0:
-        print(f"Incompletely transformed due to errors {len(errored_transforms)}: {errored_transforms}")
         kg_obo_logger.info(f"Incompletely transformed due to errors {len(errored_transforms)}: {errored_transforms}")
 
     if len(failed_transforms) > 0:
-        print(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
         
         # upload to S3
