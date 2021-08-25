@@ -86,7 +86,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
                     outfile.write(chunk)
         return True
     except KeyError as e:
-        logger.error(e)
+        logger.error(e)  # type: ignore
         return False
 
 
