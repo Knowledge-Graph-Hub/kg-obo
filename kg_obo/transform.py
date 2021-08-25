@@ -12,7 +12,7 @@ import logging
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
-from kg_obo.obolibrary_utils import base_url_if_exists
+import kg_obo.obolibrary_utils
 
 
 def retrieve_obofoundry_yaml(
@@ -89,7 +89,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
         kg_obo_logger.info("Loading " + ontology_name)
 
         # take base ontology if it exists, otherwise just use non-base
-        url = base_url_if_exists(ontology_name)
+        url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
         print(url)
 
         # download url to tempfile
