@@ -7,6 +7,8 @@ import requests  # type: ignore
 from datetime import datetime
 import os
 import logging
+import mmap
+import re
 
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
@@ -64,6 +66,30 @@ def kgx_transform(input_file: list, input_format: str,
         logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
     return (success, errors)
 
+def get_owl_iri(input_file_name: str) -> str:
+    """
+    Extracts version IRI from OWL definitions.
+    Here, the IRI is the full URL of the origin OWL, 
+    as naming conventions vary.
+    Avoids parsing as the IRI should be near the top of the file.
+
+    :param input_file_name: name of OWL format file to extract IRI from
+    :return: str of IRI
+    """
+    
+    iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
+
+    with open(input_file_name, 'rb', 0) as owl_file, \
+        mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
+        iri_search = re.search(iri_tag, owl_string)
+        if iri_search: 
+            iri = (iri_search.group(1)).decode("utf-8")
+        else:
+            print("Version IRI not found.")
+            iri = "NA"
+       
+    return iri
+
 
 def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
@@ -103,6 +129,8 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
         # download url to tempfile
         # use kgx to convert OWL to KGX tsv
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
+            
+            owl_iri = "NA"
 
             success = True
             try:
@@ -123,9 +151,15 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 failed_transforms.append(ontology_name)
                 continue
 
-            pbar.close()
-
+            pbar.close() #Not fully necessary but output looks better
+            
+            # TODO: Write IRI to a YAML so we can keep track of each / use for file system structure
             # TODO: Decide whether we need to transform based on version IRI
+            
+            owl_iri = get_owl_iri(tfile.name)
+            kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
+            
+            print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
             tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
 
