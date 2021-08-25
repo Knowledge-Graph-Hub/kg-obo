@@ -31,8 +31,11 @@ def retrieve_obofoundry_yaml(
         raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
     else:
         yaml_onto_list: list = yaml_parsed['ontologies']
+        print(yaml_onto_list)
     yaml_onto_list_filtered = \
-        [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list]
+        [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list \
+          if not "is_obsolete" in ontology
+        ] #conveniently, is_obsolete is never False
     return yaml_onto_list_filtered
 
 
