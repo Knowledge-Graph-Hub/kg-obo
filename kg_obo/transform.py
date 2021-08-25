@@ -1,5 +1,6 @@
 import tempfile
-from kgx.cli import transform  # type: ignore
+import kgx
+
 from kgx.config import get_logger # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
@@ -47,10 +48,10 @@ def kgx_transform(input_file: list, input_format: str,
     """
     success = True
     try:
-        transform(inputs=input_file,
-                  input_format=input_format,
-                  output=output_file,
-                  output_format=output_format)
+        kgx.cli.transform(inputs=input_file,
+                          input_format=input_format,
+                          output=output_file,
+                          output_format=output_format)
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
