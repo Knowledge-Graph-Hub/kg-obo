@@ -34,6 +34,32 @@ def retrieve_obofoundry_yaml(
     return yaml_onto_list_filtered
 
 
+def kgx_transform(input_file: list, input_format: str,
+                  output_file: str, output_format: str, logger: object) -> bool:
+    """Call KGX transform and report success status (bool)
+
+    :param input_file: list of files to transform
+    :param input_format: input format
+    :param output_file: output file root (appended with nodes/edges.[format])
+    :param output_format: output format
+    :param logger: logger
+    :return: boolean - did transform work?
+    """
+    success = True
+    try:
+        transform(inputs=input_file,
+                  input_format=input_format,
+                  output=output_file,
+                  output_format=output_format)
+    except (FileNotFoundError,
+            SAXParseException,
+            ParserError,
+            Exception) as e:
+        logger.error(e)
+        success = False
+    return success
+
+
 def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
     # Set up logging
@@ -44,7 +70,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
     root_logger_handler = logging.FileHandler(log_path)
     root_logger_handler.setFormatter(logging.Formatter(log_format))
-    
+
     kg_obo_logger = logging.getLogger("kg-obo")
     kg_obo_logger.setLevel(log_level)
     kg_obo_logger.addHandler(root_logger_handler)
@@ -76,32 +102,28 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 chunk_size = 1024
                 with open(tfile.name, 'wb') as outfile:
                     pbar = tqdm(unit="B", total=file_size, unit_scale=True,
-                            unit_divisor=chunk_size)
+                                unit_divisor=chunk_size)
                     for chunk in req.iter_content(chunk_size=chunk_size):
                         if chunk:
                             pbar.update(len(chunk))
                             outfile.write(chunk)
-            except (KeyError) as e:
+            except KeyError as e:
                 kg_obo_logger.error(e)
                 success = False
+                continue
 
             pbar.close()
 
             tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
 
             # Use kgx to transform, but save errors to log
-            try:
-                transform(inputs=[tfile.name],
-                          input_format='owl',
-                          output=os.path.join(tf_output_dir, ontology_name),
-                          output_format='tsv',
-                          )
-            except (FileNotFoundError,
-                    SAXParseException,
-                    ParserError,
-                    Exception) as e:
-                    kg_obo_logger.error(e)
-                    success = False
+            success = kgx_transform(input_file=[tfile.name],
+                                    input_format='owl',
+                                    output_file=os.path.join(tf_output_dir, ontology_name),
+                                    output_format='tsv',
+                                    logger=kg_obo_logger)
+
+            # TODO: check file size and fail/warn if nodes|edge file is empty
 
             if success:
                 kg_obo_logger.info("Successfully completed transform of " + ontology_name)
@@ -112,4 +134,5 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
         # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
         os.system(f"ls -lhd {tf_output_dir}/*")
+
         # upload to S3
