@@ -1,6 +1,6 @@
 import tempfile
 import kgx  # type: ignore
-from kgx.cli import transform # type: ignore
+import kgx.cli  # type: ignore
 from kgx.config import get_logger # type: ignore
 from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
@@ -49,11 +49,11 @@ def kgx_transform(input_file: list, input_format: str,
     success = True
     errors = False
     try:
-        transform(inputs=input_file,
-                      input_format=input_format,
-                      output=output_file,
-                      output_format=output_format)
-        if 30 in logger._cache and logger._cache[30]:
+        kgx.cli.transform(inputs=input_file,
+                          input_format=input_format,
+                          output=output_file,
+                          output_format=output_format)
+        if hasattr(logger, "_cache") and 30 in logger._cache and logger._cache[30]:
             logger.error("Encountered errors in transforming or parsing.")
             errors = True
             logger._cache.clear()
@@ -87,7 +87,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
-    
+
     successful_transforms = []
     errored_transforms = []
     failed_transforms = []
@@ -155,15 +155,15 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 failed_transforms.append(ontology_name)
 
             # query kghub/[ontology]/current/*hash*
-        
+
         # kghub/obo2kghub/bfo/2021_08_16|current/nodes|edges.tsv|date-hash
-        
+
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
-        
+
     if len(errored_transforms) > 0:
         kg_obo_logger.info(f"Incompletely transformed due to errors {len(errored_transforms)}: {errored_transforms}")
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
-        
+
         # upload to S3
