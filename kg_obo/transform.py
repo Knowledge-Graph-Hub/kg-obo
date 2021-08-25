@@ -65,6 +65,31 @@ def kgx_transform(input_file: list, input_format: str,
     return (success, errors)
 
 
+def download_ontology(url: str, file: str, logger: object) -> bool:
+    """Download ontology from URL
+
+    :param url: url to download from
+    :param file: file to download into
+    :param logger:
+    :return: boolean indicating whether download worked
+    """
+    try:
+        req = requests.get(url, stream=True)
+        file_size = int(req.headers['Content-Length'])
+        chunk_size = 1024
+        with open(file, 'wb') as outfile:
+            pbar = tqdm(unit="B", total=file_size, unit_scale=True,
+                        unit_divisor=chunk_size)
+            for chunk in req.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    pbar.update(len(chunk))
+                    outfile.write(chunk)
+        return True
+    except KeyError as e:
+        logger.error(e)
+        return False
+
+
 def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
     # Set up logging
@@ -105,25 +130,12 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
             success = True
-            try:
-                req = requests.get(url, stream=True)
-                file_size = int(req.headers['Content-Length'])
-                chunk_size = 1024
-                with open(tfile.name, 'wb') as outfile:
-                    pbar = tqdm(unit="B", total=file_size, unit_scale=True,
-                                unit_divisor=chunk_size)
-                    for chunk in req.iter_content(chunk_size=chunk_size):
-                        if chunk:
-                            pbar.update(len(chunk))
-                            outfile.write(chunk)
-            except KeyError as e:
-                kg_obo_logger.error(e)
+
+            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger):
                 success = False
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
                 continue
-
-            pbar.close()
 
             # TODO: Decide whether we need to transform based on version IRI
 
