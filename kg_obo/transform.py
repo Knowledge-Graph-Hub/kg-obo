@@ -53,10 +53,10 @@ def kgx_transform(input_file: list, input_format: str,
                           input_format=input_format,
                           output=output_file,
                           output_format=output_format)
-        if hasattr(logger, "_cache") and 30 in logger._cache and logger._cache[30]:
-            logger.error("Encountered errors in transforming or parsing.")
+        if hasattr(logger, "_cache") and 30 in logger._cache and logger._cache[30]:  # type: ignore
+            logger.error("Encountered errors in transforming or parsing.")  # type: ignore
             errors = True
-            logger._cache.clear()
+            logger._cache.clear()  # type: ignore
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
@@ -129,7 +129,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
 
             # Use kgx to transform, but save errors to log
-            transform_errors = []
+            transform_errors: list = []
             success, errors = kgx_transform(input_file=[tfile.name],
                                     input_format='owl',
                                     output_file=os.path.join(tf_output_dir, ontology_name),
