@@ -31,11 +31,11 @@ def retrieve_obofoundry_yaml(
         raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
     else:
         yaml_onto_list: list = yaml_parsed['ontologies']
-        print(yaml_onto_list)
     yaml_onto_list_filtered = \
         [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list \
           if not "is_obsolete" in ontology
         ] #conveniently, is_obsolete is never False
+
     return yaml_onto_list_filtered
 
 
@@ -93,6 +93,31 @@ def get_owl_iri(input_file_name: str) -> str:
        
     return iri
 
+def track_obo_version(name: str = "", iri: str = "") -> None:
+    """
+    Writes OBO version as per IRI to tracking.yaml.
+    Does some parsing to get a shorter version number.
+    Versions may take multiple formats across OBOs.
+    
+    :param name: name of OBO, as OBO ID
+    :param iri: full OBO VersionIRI, as URL
+    """
+
+    # TODO: In practice the tracking file should be copied to S3 storage
+    # TODO: also need to compare versions before uploading anything
+
+    tracking_filename = "tracking.yaml"
+
+    version = (iri.split("/"))[-2]
+
+    with open(tracking_filename, 'r') as track_file:
+        tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
+    
+    tracking["ontologies"][name]["current_iri"] = iri
+    tracking["ontologies"][name]["current_version"] = version
+
+    with open(tracking_filename, 'w') as track_file:
+        track_file.write(yaml.dump(tracking))
 
 def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
@@ -160,8 +185,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             # TODO: Decide whether we need to transform based on version IRI
             
             owl_iri = get_owl_iri(tfile.name)
-            kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
-            
+            kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}") 
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
             tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
@@ -185,13 +209,16 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             if success and not errors:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
+
+                track_obo_version(ontology_name, owl_iri)
+
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
                 errored_transforms.append(ontology_name)
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
-
+            
         # TODO: upload to S3
         # make a version file
         # make an index.html for s3_bucket/kg-obo/[this ontology]/[version]/
