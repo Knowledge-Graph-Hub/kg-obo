@@ -81,15 +81,18 @@ def get_owl_iri(input_file_name: str) -> str:
     """
     
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
-
-    with open(input_file_name, 'rb', 0) as owl_file, \
-        mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
-        iri_search = re.search(iri_tag, owl_string)
-        if iri_search: 
-            iri = (iri_search.group(1)).decode("utf-8")
-        else:
-            print("Version IRI not found.")
-            iri = "NA"
+    
+    try:
+        with open(input_file_name, 'rb', 0) as owl_file, \
+            mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
+            iri_search = re.search(iri_tag, owl_string)
+            if iri_search: 
+                iri = (iri_search.group(1)).decode("utf-8")
+            else:
+                print("Version IRI not found.")
+                iri = "NA"
+     except ValueError: #Should not happen unless OWL definitions are missing/broken
+        iri = "NA"
        
     return iri
 
@@ -192,8 +195,6 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
                 continue
-
-            pbar.close() #Not fully necessary but output looks better
             
             # TODO: Decide whether we need to transform based on version IRI
             
