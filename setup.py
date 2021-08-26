@@ -63,6 +63,7 @@ setup(
         'requests',
         'setuptools',
         'boto3',
+        'botocore',
         'pyyaml',
         'tqdm'
     ],
