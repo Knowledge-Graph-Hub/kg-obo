@@ -110,8 +110,11 @@ def track_obo_version(name: str = "", iri: str = "") -> None:
     # TODO: also need to compare versions before uploading anything
 
     tracking_filename = "tracking.yaml"
-
-    version = (iri.split("/"))[-2]
+    
+    try:
+      version = (iri.split("/"))[-2]
+    except IndexError:
+      version = name
 
     with open(tracking_filename, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
