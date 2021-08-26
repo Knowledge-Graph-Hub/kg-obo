@@ -21,14 +21,16 @@ class TestRunTransform(TestCase):
     @mock.patch('requests.get')
     @mock.patch('kg_obo.transform.retrieve_obofoundry_yaml')
     @mock.patch('kg_obo.obolibrary_utils.base_url_if_exists')
+    @mock.patch('kg_obo.transform.get_owl_iri', return_value="http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl")
     @mock.patch('kgx.cli.transform')
-    def test_run_transform(self, mock_kgx_transform, mock_base_url,
+    def test_run_transform(self, mock_kgx_transform, mock_get_owl_iri, mock_base_url,
                            mock_retrieve_obofoundry_yaml, mock_get):
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
         with tempfile.TemporaryDirectory() as td:
             run_transform(log_dir=td)
             self.assertTrue(mock_get.called)
             self.assertTrue(mock_base_url.called)
+            self.assertTrue(mock_get_owl_iri.called)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
             self.assertTrue(mock_kgx_transform.called)
 
