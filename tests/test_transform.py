@@ -72,4 +72,8 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo.owl')
-        self.assertEqual(iri, 'http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl')
+        self.assertEqual('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', iri)
+
+    def test_get_owl_iri_bad_input(self):
+        iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
+        self.assertEqual("NA", iri)
