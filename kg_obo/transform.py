@@ -33,8 +33,8 @@ def retrieve_obofoundry_yaml(
         yaml_onto_list: list = yaml_parsed['ontologies']
     yaml_onto_list_filtered = \
         [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list \
-          if not "is_obsolete" in ontology
-        ] #conveniently, is_obsolete is never False
+          if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+        ]
 
     return yaml_onto_list_filtered
 
