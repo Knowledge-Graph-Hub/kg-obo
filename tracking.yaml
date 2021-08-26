@@ -1,15 +1,3 @@
-## OBO to Node/Edge Transform Tracking
-# Each entry, separated by "-", must contain the following:
-# 'name': the name of an ontology, following OBO ID conventions, e.g.,
-#          bfo
-# 'current_iri': the most recent version of the ontology, expressed as a full IRI, e.g.,
-#          http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl
-# 'current_version': the most recent version of the ontology, expressed as a version string, e.g.,
-#          2019-08-26
-# 'archive_iris': previous versions of the ontology, expressed in the format of 'current_iri'.
-#          May not exist if only one version is available.
-# 'archive_versions': previous versions of the ontology, expressed in the format of 'current_version'
-#          May not exist if only one version is available.
 ---
 
 -
