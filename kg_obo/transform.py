@@ -85,8 +85,9 @@ def get_owl_iri(input_file_name: str) -> str:
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
-            iri_search = re.search(iri_tag, owl_string)
-            if iri_search: 
+            iri_search = re.search(iri_tag, owl_string) #type: ignore
+            #mypy doesn't like re and mmap objects
+            if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
             else:
                 print("Version IRI not found.")
@@ -110,8 +111,11 @@ def track_obo_version(name: str = "", iri: str = "") -> None:
     # TODO: also need to compare versions before uploading anything
 
     tracking_filename = "tracking.yaml"
-
-    version = (iri.split("/"))[-2]
+    
+    try:
+      version = (iri.split("/"))[-2]
+    except IndexError:
+      version = name
 
     with open(tracking_filename, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
