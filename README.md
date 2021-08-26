@@ -25,7 +25,7 @@ python run.py
 
 A file called `tracking.yaml` is used to keep track of what transforms exist for a given ontology. This remote file is checked to decide whether a transform is necessary, and is also updated remotely after a given transform completes. 
 
-#### `tracking.yaml` file
+####  `tracking.yaml` file: OBO to Node/Edge Transform Tracking
 The OBO to Node/Edge Transform Tracking (tracking.yaml) file is used to keep track of current and previous version of transformed ontologies.
 
 Each entry, named by its OBO ID, must contain the following:
@@ -37,6 +37,7 @@ Each entry, named by its OBO ID, must contain the following:
           2019-08-26
 
 The following two items may not exist if only one version is available:
+
 `'archive_iris'`: previous versions of the ontology, expressed in the format of 'current_iri'.
  
 `'archive_versions'`: previous versions of the ontology, expressed in the format of 'current_version'.
