@@ -1,4 +1,4 @@
-from botocore.exceptions import ClientError  # type: ignore
+import botocore.exceptions  # type: ignore
 import boto3  # type: ignore
 import os
 import logging
@@ -20,7 +20,7 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
             try:
                 client.head_object(Bucket=s3_bucket, Key=s3_path)
                 logging.warning("Existing file {s3_path} found on S3! Skipping.")
-            except ClientError:  # Exception abuse
+            except botocore.exceptions.ClientError:  # Exception abuse
                 extra_args = None
                 if make_public:
                     extra_args = {'ACL': 'public-read'}

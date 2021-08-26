@@ -62,7 +62,6 @@ pipeline {
                     sh '/usr/bin/python3.8 -m venv venv'
                     sh '. venv/bin/activate'
                     sh './venv/bin/pip install .'
-                    sh './venv/bin/pip install awscli pystache boto3 s3cmd'
                 }
             }
         }
@@ -70,7 +69,8 @@ pipeline {
         stage('Transform') {
             steps {
                 dir('./gitrepo') {
-                    sh '. venv/bin/activate && env && python3.8 transform_obo_to_kgx_tsv.py'
+                    echo 'do nothing for now'
+                    // sh '. venv/bin/activate && env && python3.8 run.py'
                 }
             }
         }
@@ -79,7 +79,9 @@ pipeline {
 
     post {
         always {
-            echo 'Nothing to do (in always)'
+            echo 'In always'
+            echo 'Cleaning workspace...'
+            cleanWs()
         }
         success {
             echo 'I succeeded!'

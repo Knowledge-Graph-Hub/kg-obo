@@ -6,6 +6,19 @@
 
 A package to transform all [OBO ontologies](http://obofoundry.org/) into [KGX TSV format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md), and put the transformed graph in [KGhub](http://kg-hub.berkeleybop.io/index.html)
 
+Installation:
+```
+git clone https://github.com/Knowledge-Graph-Hub/kg-obo.git
+cd kg-obo
+python -m venv venv # optional
+pip install .
+```
+
+Usage:
+```
+python run.py
+```
+
 ## OBO to Node/Edge Transform Tracking (tracking.yaml)
 Each entry, named by its OBO ID, must contain the following:
  

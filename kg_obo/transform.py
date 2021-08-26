@@ -119,6 +119,31 @@ def track_obo_version(name: str = "", iri: str = "") -> None:
     with open(tracking_filename, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
+def download_ontology(url: str, file: str, logger: object) -> bool:
+    """Download ontology from URL
+
+    :param url: url to download from
+    :param file: file to download into
+    :param logger:
+    :return: boolean indicating whether download worked
+    """
+    try:
+        req = requests.get(url, stream=True)
+        file_size = int(req.headers['Content-Length'])
+        chunk_size = 1024
+        with open(file, 'wb') as outfile:
+            pbar = tqdm(unit="B", total=file_size, unit_scale=True,
+                        unit_divisor=chunk_size)
+            for chunk in req.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    pbar.update(len(chunk))
+                    outfile.write(chunk)
+        return True
+    except KeyError as e:
+        logger.error(e)  # type: ignore
+        return False
+
+
 def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
     # Set up logging
@@ -161,19 +186,8 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             owl_iri = "NA"
 
             success = True
-            try:
-                req = requests.get(url, stream=True)
-                file_size = int(req.headers['Content-Length'])
-                chunk_size = 1024
-                with open(tfile.name, 'wb') as outfile:
-                    pbar = tqdm(unit="B", total=file_size, unit_scale=True,
-                                unit_divisor=chunk_size)
-                    for chunk in req.iter_content(chunk_size=chunk_size):
-                        if chunk:
-                            pbar.update(len(chunk))
-                            outfile.write(chunk)
-            except KeyError as e:
-                kg_obo_logger.error(e)
+
+            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger):
                 success = False
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
@@ -181,7 +195,6 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
 
             pbar.close() #Not fully necessary but output looks better
             
-            # TODO: Write IRI to a YAML so we can keep track of each / use for file system structure
             # TODO: Decide whether we need to transform based on version IRI
             
             owl_iri = get_owl_iri(tfile.name)
