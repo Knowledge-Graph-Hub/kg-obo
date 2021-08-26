@@ -178,8 +178,6 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
                 continue
-
-            pbar.close() #Not fully necessary but output looks better
             
             # TODO: Write IRI to a YAML so we can keep track of each / use for file system structure
             # TODO: Decide whether we need to transform based on version IRI
