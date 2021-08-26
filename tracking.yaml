@@ -1,6 +1,4 @@
----
-
--
-  name: bfo
+ontologies:
+- name: bfo
   current_iri: http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl
   current_version: 2019-08-26
