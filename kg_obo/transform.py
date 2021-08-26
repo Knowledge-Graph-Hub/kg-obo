@@ -91,7 +91,7 @@ def get_owl_iri(input_file_name: str) -> str:
             else:
                 print("Version IRI not found.")
                 iri = "NA"
-     except ValueError: #Should not happen unless OWL definitions are missing/broken
+    except ValueError: #Should not happen unless OWL definitions are missing/broken
         iri = "NA"
        
     return iri
