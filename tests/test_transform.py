@@ -1,6 +1,6 @@
 import logging
 import tempfile
-from unittest import TestCase, mock, skip
+from unittest import TestCase, mock
 from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
@@ -24,13 +24,20 @@ class TestRunTransform(TestCase):
     @mock.patch('kgx.cli.transform')
     def test_run_transform(self, mock_kgx_transform, mock_base_url,
                            mock_retrieve_obofoundry_yaml, mock_get):
+        mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
         with tempfile.TemporaryDirectory() as td:
-            mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
-            ret_val = run_transform(log_dir=td)
+            run_transform(log_dir=td)
             self.assertTrue(mock_get.called)
             self.assertTrue(mock_base_url.called)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
             self.assertTrue(mock_kgx_transform.called)
+
+        # test that we don't run transform if download of ontology fails
+        with mock.patch('kg_obo.transform.download_ontology', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td)
+            self.assertFalse(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
