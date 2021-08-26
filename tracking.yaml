@@ -1,0 +1,580 @@
+ontologies:
+  bfo:
+    current_iri: "NA"
+    current_version: "NA"
+  chebi:
+    current_iri: "NA"
+    current_version: "NA"
+  doid:
+    current_iri: "NA"
+    current_version: "NA"
+  go:
+    current_iri: "NA"
+    current_version: "NA"
+  obi:
+    current_iri: "NA"
+    current_version: "NA"
+  pato:
+    current_iri: "NA"
+    current_version: "NA"
+  po:
+    current_iri: "NA"
+    current_version: "NA"
+  pr:
+    current_iri: "NA"
+    current_version: "NA"
+  xao:
+    current_iri: "NA"
+    current_version: "NA"
+  zfa:
+    current_iri: "NA"
+    current_version: "NA"
+  aeo:
+    current_iri: "NA"
+    current_version: "NA"
+  agro:
+    current_iri: "NA"
+    current_version: "NA"
+  aism:
+    current_iri: "NA"
+    current_version: "NA"
+  amphx:
+    current_iri: "NA"
+    current_version: "NA"
+  apo:
+    current_iri: "NA"
+    current_version: "NA"
+  apollo_sv:
+    current_iri: "NA"
+    current_version: "NA"
+  aro:
+    current_iri: "NA"
+    current_version: "NA"
+  bco:
+    current_iri: "NA"
+    current_version: "NA"
+  bspo:
+    current_iri: "NA"
+    current_version: "NA"
+  bto:
+    current_iri: "NA"
+    current_version: "NA"
+  caro:
+    current_iri: "NA"
+    current_version: "NA"
+  cdao:
+    current_iri: "NA"
+    current_version: "NA"
+  cdno:
+    current_iri: "NA"
+    current_version: "NA"
+  cheminf:
+    current_iri: "NA"
+    current_version: "NA"
+  chiro:
+    current_iri: "NA"
+    current_version: "NA"
+  chmo:
+    current_iri: "NA"
+    current_version: "NA"
+  cido:
+    current_iri: "NA"
+    current_version: "NA"
+  cio:
+    current_iri: "NA"
+    current_version: "NA"
+  cl:
+    current_iri: "NA"
+    current_version: "NA"
+  clao:
+    current_iri: "NA"
+    current_version: "NA"
+  clo:
+    current_iri: "NA"
+    current_version: "NA"
+  clyh:
+    current_iri: "NA"
+    current_version: "NA"
+  cmo:
+    current_iri: "NA"
+    current_version: "NA"
+  cob:
+    current_iri: "NA"
+    current_version: "NA"
+  cro:
+    current_iri: "NA"
+    current_version: "NA"
+  cteno:
+    current_iri: "NA"
+    current_version: "NA"
+  cto:
+    current_iri: "NA"
+    current_version: "NA"
+  cvdo:
+    current_iri: "NA"
+    current_version: "NA"
+  ddanat:
+    current_iri: "NA"
+    current_version: "NA"
+  ddpheno:
+    current_iri: "NA"
+    current_version: "NA"
+  dideo:
+    current_iri: "NA"
+    current_version: "NA"
+  dpo:
+    current_iri: "NA"
+    current_version: "NA"
+  dron:
+    current_iri: "NA"
+    current_version: "NA"
+  duo:
+    current_iri: "NA"
+    current_version: "NA"
+  ecao:
+    current_iri: "NA"
+    current_version: "NA"
+  eco:
+    current_iri: "NA"
+    current_version: "NA"
+  ecocore:
+    current_iri: "NA"
+    current_version: "NA"
+  ecto:
+    current_iri: "NA"
+    current_version: "NA"
+  emapa:
+    current_iri: "NA"
+    current_version: "NA"
+  envo:
+    current_iri: "NA"
+    current_version: "NA"
+  eupath:
+    current_iri: "NA"
+    current_version: "NA"
+  exo:
+    current_iri: "NA"
+    current_version: "NA"
+  fao:
+    current_iri: "NA"
+    current_version: "NA"
+  fbbi:
+    current_iri: "NA"
+    current_version: "NA"
+  fbbt:
+    current_iri: "NA"
+    current_version: "NA"
+  fbcv:
+    current_iri: "NA"
+    current_version: "NA"
+  fbdv:
+    current_iri: "NA"
+    current_version: "NA"
+  fideo:
+    current_iri: "NA"
+    current_version: "NA"
+  flopo:
+    current_iri: "NA"
+    current_version: "NA"
+  fma:
+    current_iri: "NA"
+    current_version: "NA"
+  foodon:
+    current_iri: "NA"
+    current_version: "NA"
+  fovt:
+    current_iri: "NA"
+    current_version: "NA"
+  fypo:
+    current_iri: "NA"
+    current_version: "NA"
+  gaz:
+    current_iri: "NA"
+    current_version: "NA"
+  gecko:
+    current_iri: "NA"
+    current_version: "NA"
+  genepio:
+    current_iri: "NA"
+    current_version: "NA"
+  geno:
+    current_iri: "NA"
+    current_version: "NA"
+  geo:
+    current_iri: "NA"
+    current_version: "NA"
+  gno:
+    current_iri: "NA"
+    current_version: "NA"
+  hancestro:
+    current_iri: "NA"
+    current_version: "NA"
+  hao:
+    current_iri: "NA"
+    current_version: "NA"
+  hom:
+    current_iri: "NA"
+    current_version: "NA"
+  hsapdv:
+    current_iri: "NA"
+    current_version: "NA"
+  hso:
+    current_iri: "NA"
+    current_version: "NA"
+  htn:
+    current_iri: "NA"
+    current_version: "NA"
+  iao:
+    current_iri: "NA"
+    current_version: "NA"
+  iceo:
+    current_iri: "NA"
+    current_version: "NA"
+  ico:
+    current_iri: "NA"
+    current_version: "NA"
+  ido:
+    current_iri: "NA"
+    current_version: "NA"
+  ino:
+    current_iri: "NA"
+    current_version: "NA"
+  labo:
+    current_iri: "NA"
+    current_version: "NA"
+  ma:
+    current_iri: "NA"
+    current_version: "NA"
+  maxo:
+    current_iri: "NA"
+    current_version: "NA"
+  mco:
+    current_iri: "NA"
+    current_version: "NA"
+  mf:
+    current_iri: "NA"
+    current_version: "NA"
+  mfmo:
+    current_iri: "NA"
+    current_version: "NA"
+  mfoem:
+    current_iri: "NA"
+    current_version: "NA"
+  mfomd:
+    current_iri: "NA"
+    current_version: "NA"
+  mi:
+    current_iri: "NA"
+    current_version: "NA"
+  miapa:
+    current_iri: "NA"
+    current_version: "NA"
+  micro:
+    current_iri: "NA"
+    current_version: "NA"
+  mmo:
+    current_iri: "NA"
+    current_version: "NA"
+  mmusdv:
+    current_iri: "NA"
+    current_version: "NA"
+  mod:
+    current_iri: "NA"
+    current_version: "NA"
+  mondo:
+    current_iri: "NA"
+    current_version: "NA"
+  mop:
+    current_iri: "NA"
+    current_version: "NA"
+  mp:
+    current_iri: "NA"
+    current_version: "NA"
+  mpath:
+    current_iri: "NA"
+    current_version: "NA"
+  mpio:
+    current_iri: "NA"
+    current_version: "NA"
+  mro:
+    current_iri: "NA"
+    current_version: "NA"
+  ms:
+    current_iri: "NA"
+    current_version: "NA"
+  nbo:
+    current_iri: "NA"
+    current_version: "NA"
+  ncbitaxon:
+    current_iri: "NA"
+    current_version: "NA"
+  ncit:
+    current_iri: "NA"
+    current_version: "NA"
+  ncro:
+    current_iri: "NA"
+    current_version: "NA"
+  nomen:
+    current_iri: "NA"
+    current_version: "NA"
+  oae:
+    current_iri: "NA"
+    current_version: "NA"
+  oarcs:
+    current_iri: "NA"
+    current_version: "NA"
+  oba:
+    current_iri: "NA"
+    current_version: "NA"
+  obcs:
+    current_iri: "NA"
+    current_version: "NA"
+  obib:
+    current_iri: "NA"
+    current_version: "NA"
+  ogg:
+    current_iri: "NA"
+    current_version: "NA"
+  ogms:
+    current_iri: "NA"
+    current_version: "NA"
+  ogsf:
+    current_iri: "NA"
+    current_version: "NA"
+  ohd:
+    current_iri: "NA"
+    current_version: "NA"
+  ohmi:
+    current_iri: "NA"
+    current_version: "NA"
+  ohpi:
+    current_iri: "NA"
+    current_version: "NA"
+  olatdv:
+    current_iri: "NA"
+    current_version: "NA"
+  omit:
+    current_iri: "NA"
+    current_version: "NA"
+  omo:
+    current_iri: "NA"
+    current_version: "NA"
+  omp:
+    current_iri: "NA"
+    current_version: "NA"
+  omrse:
+    current_iri: "NA"
+    current_version: "NA"
+  one:
+    current_iri: "NA"
+    current_version: "NA"
+  ons:
+    current_iri: "NA"
+    current_version: "NA"
+  ontoneo:
+    current_iri: "NA"
+    current_version: "NA"
+  oostt:
+    current_iri: "NA"
+    current_version: "NA"
+  opl:
+    current_iri: "NA"
+    current_version: "NA"
+  opmi:
+    current_iri: "NA"
+    current_version: "NA"
+  ornaseq:
+    current_iri: "NA"
+    current_version: "NA"
+  ovae:
+    current_iri: "NA"
+    current_version: "NA"
+  pco:
+    current_iri: "NA"
+    current_version: "NA"
+  pdro:
+    current_iri: "NA"
+    current_version: "NA"
+  pdumdv:
+    current_iri: "NA"
+    current_version: "NA"
+  peco:
+    current_iri: "NA"
+    current_version: "NA"
+  phipo:
+    current_iri: "NA"
+    current_version: "NA"
+  plana:
+    current_iri: "NA"
+    current_version: "NA"
+  planp:
+    current_iri: "NA"
+    current_version: "NA"
+  poro:
+    current_iri: "NA"
+    current_version: "NA"
+  ppo:
+    current_iri: "NA"
+    current_version: "NA"
+  psdo:
+    current_iri: "NA"
+    current_version: "NA"
+  pso:
+    current_iri: "NA"
+    current_version: "NA"
+  pw:
+    current_iri: "NA"
+    current_version: "NA"
+  rbo:
+    current_iri: "NA"
+    current_version: "NA"
+  ro:
+    current_iri: "NA"
+    current_version: "NA"
+  rs:
+    current_iri: "NA"
+    current_version: "NA"
+  rxno:
+    current_iri: "NA"
+    current_version: "NA"
+  sepio:
+    current_iri: "NA"
+    current_version: "NA"
+  so:
+    current_iri: "NA"
+    current_version: "NA"
+  spd:
+    current_iri: "NA"
+    current_version: "NA"
+  stato:
+    current_iri: "NA"
+    current_version: "NA"
+  swo:
+    current_iri: "NA"
+    current_version: "NA"
+  symp:
+    current_iri: "NA"
+    current_version: "NA"
+  taxrank:
+    current_iri: "NA"
+    current_version: "NA"
+  to:
+    current_iri: "NA"
+    current_version: "NA"
+  trans:
+    current_iri: "NA"
+    current_version: "NA"
+  tto:
+    current_iri: "NA"
+    current_version: "NA"
+  uberon:
+    current_iri: "NA"
+    current_version: "NA"
+  uo:
+    current_iri: "NA"
+    current_version: "NA"
+  upheno:
+    current_iri: "NA"
+    current_version: "NA"
+  vo:
+    current_iri: "NA"
+    current_version: "NA"
+  vt:
+    current_iri: "NA"
+    current_version: "NA"
+  vto:
+    current_iri: "NA"
+    current_version: "NA"
+  wbbt:
+    current_iri: "NA"
+    current_version: "NA"
+  wbls:
+    current_iri: "NA"
+    current_version: "NA"
+  wbphenotype:
+    current_iri: "NA"
+    current_version: "NA"
+  xco:
+    current_iri: "NA"
+    current_version: "NA"
+  xlmod:
+    current_iri: "NA"
+    current_version: "NA"
+  xpo:
+    current_iri: "NA"
+    current_version: "NA"
+  zeco:
+    current_iri: "NA"
+    current_version: "NA"
+  zfs:
+    current_iri: "NA"
+    current_version: "NA"
+  zp:
+    current_iri: "NA"
+    current_version: "NA"
+  fobi:
+    current_iri: "NA"
+    current_version: "NA"
+  gsso:
+    current_iri: "NA"
+    current_version: "NA"
+  hp:
+    current_iri: "NA"
+    current_version: "NA"
+  kisao:
+    current_iri: "NA"
+    current_version: "NA"
+  mamo:
+    current_iri: "NA"
+    current_version: "NA"
+  sbo:
+    current_iri: "NA"
+    current_version: "NA"
+  scdo:
+    current_iri: "NA"
+    current_version: "NA"
+  txpo:
+    current_iri: "NA"
+    current_version: "NA"
+  sibo:
+    current_iri: "NA"
+    current_version: "NA"
+  fix:
+    current_iri: "NA"
+    current_version: "NA"
+  vario:
+    current_iri: "NA"
+    current_version: "NA"
+  ogi:
+    current_iri: "NA"
+    current_version: "NA"
+  rex:
+    current_iri: "NA"
+    current_version: "NA"
+  ceph:
+    current_iri: "NA"
+    current_version: "NA"
+  ehdaa2:
+    current_iri: "NA"
+    current_version: "NA"
+  rnao:
+    current_iri: "NA"
+    current_version: "NA"
+  upa:
+    current_iri: "NA"
+    current_version: "NA"
+  ero:
+    current_iri: "NA"
+    current_version: "NA"
+  idomal:
+    current_iri: "NA"
+    current_version: "NA"
+  miro:
+    current_iri: "NA"
+    current_version: "NA"
+  tads:
+    current_iri: "NA"
+    current_version: "NA"
+  tgma:
+    current_iri: "NA"
+    current_version: "NA"
