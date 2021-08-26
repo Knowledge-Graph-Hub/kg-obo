@@ -7,10 +7,7 @@
 A package to transform all [OBO ontologies](http://obofoundry.org/) into [KGX TSV format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md), and put the transformed graph in [KGhub](http://kg-hub.berkeleybop.io/index.html)
 
 ## OBO to Node/Edge Transform Tracking (tracking.yaml)
-Each entry, separated by "-", must contain the following:
- 
-'name': the name of an ontology, following OBO ID conventions, e.g.,
-          bfo
+Each entry, named by its OBO ID, must contain the following:
  
 'current_iri': the most recent version of the ontology, expressed as a full IRI, e.g.,          
           http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl
