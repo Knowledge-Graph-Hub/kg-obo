@@ -4,7 +4,8 @@ from unittest import TestCase, mock
 from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
-from kg_obo.transform import run_transform, kgx_transform, download_ontology
+from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
+    get_owl_iri
 
 
 class TestRunTransform(TestCase):
@@ -68,3 +69,7 @@ class TestRunTransform(TestCase):
         ret_val = download_ontology(**self.download_ontology_kwargs)
         self.assertTrue(mock_get.called)
         self.assertFalse(ret_val)
+
+    def test_get_owl_iri(self):
+        iri = get_owl_iri('tests/resources/download_ontology/bfo.owl')
+        self.assertEqual(iri, 'http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl')
