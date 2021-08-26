@@ -189,8 +189,6 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
         # download url to tempfile
         # use kgx to convert OWL to KGX tsv
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
-            
-            owl_iri = "NA"
 
             success = True
 
