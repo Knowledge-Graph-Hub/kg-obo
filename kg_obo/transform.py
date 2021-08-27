@@ -239,6 +239,8 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
 
                 track_obo_version(ontology_name, owl_iri, owl_version)
 
+                kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
+
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
                 errored_transforms.append(ontology_name)
@@ -261,5 +263,3 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
-
-    # TODO: make new index.html for s3_bucket/kg-obo/
