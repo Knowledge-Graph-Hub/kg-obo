@@ -153,8 +153,8 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         return False
 
 
-def run_transform(skip_list: list = [], log_dir="logs") -> None:
-
+def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None:
+    
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
     log_path = os.path.join(log_dir, "obo_transform_" + timestring + ".log")
@@ -188,8 +188,15 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
         url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
         print(url)
 
-        # download url to tempfile
+        # download url
         # use kgx to convert OWL to KGX tsv
+        if not os.path.exists(data_dir):
+            os.mkdir(data_dir)
+        base_obo_path = os.path.join(data_dir, ontology_name)
+        if not os.path.exists(base_obo_path):
+            os.mkdir(base_obo_path)
+        
+        # Downloaded OBOs are still tempfiles as we don't intend to keep them
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
             success = True
@@ -206,23 +213,25 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}") 
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
-            tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
+            versioned_obo_path = os.path.join(base_obo_path, owl_version)
+            if not os.path.exists(versioned_obo_path):
+                os.mkdir(versioned_obo_path)
 
             # Use kgx to transform, but save errors to log
             transform_errors: list = []
             success, errors = kgx_transform(input_file=[tfile.name],
                                             input_format='owl',
-                                            output_file=os.path.join(tf_output_dir, ontology_name),
+                                            output_file=os.path.join(versioned_obo_path, ontology_name),
                                             output_format='tsv',
                                             logger=kgx_logger)
 
             # Check file size and fail/warn if nodes|edge file is empty
-            for filename in os.listdir(tf_output_dir):
-              if os.stat(os.path.join(tf_output_dir, filename)).st_size == 0:
+            for filename in os.listdir(versioned_obo_path):
+              if os.stat(os.path.join(versioned_obo_path, filename)).st_size == 0:
                   kg_obo_logger.warning("Output is empty - something went wrong during transformation.")
                   success = False
               else:
-                  kg_obo_logger.info(f"{filename} {os.stat(os.path.join(tf_output_dir, filename)).st_size} bytes")
+                  kg_obo_logger.info(f"{filename} {os.stat(os.path.join(versioned_obo_path, filename)).st_size} bytes")
 
             if success and not errors:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
