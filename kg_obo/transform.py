@@ -14,7 +14,7 @@ from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
 import kg_obo.obolibrary_utils
-
+import kg_obo.upload
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
@@ -69,15 +69,17 @@ def kgx_transform(input_file: list, input_format: str,
         logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
     return (success, errors)
 
-def get_owl_iri(input_file_name: str) -> str:
+def get_owl_iri(input_file_name: str) -> tuple:
     """
     Extracts version IRI from OWL definitions.
     Here, the IRI is the full URL of the origin OWL, 
     as naming conventions vary.
-    Avoids parsing as the IRI should be near the top of the file.
+    Avoids much file parsing as the IRI should be near the top of the file.
+    Does some string parsing to get a shorter version number.
+    Versions may take multiple formats across OBOs.
 
     :param input_file_name: name of OWL format file to extract IRI from
-    :return: str of IRI
+    :return: tuple of (str of IRI, str of version)
     """
     
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
@@ -89,34 +91,34 @@ def get_owl_iri(input_file_name: str) -> str:
             #mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
+                try:
+                    version = (iri.split("/"))[-2]
+                except IndexError:
+                    version = name
             else:
                 print("Version IRI not found.")
                 iri = "NA"
+                version = "NA"
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         iri = "NA"
+        version = "NA"
        
-    return iri
+    return (iri, version)
 
-def track_obo_version(name: str = "", iri: str = "") -> None:
+def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
-    Does some parsing to get a shorter version number.
-    Versions may take multiple formats across OBOs.
     
     :param name: name of OBO, as OBO ID
     :param iri: full OBO VersionIRI, as URL
+    :param version: short OBO version
     """
 
     # TODO: In practice the tracking file should be copied to S3 storage
     # TODO: also need to compare versions before uploading anything
 
     tracking_filename = "tracking.yaml"
-    
-    try:
-      version = (iri.split("/"))[-2]
-    except IndexError:
-      version = name
-
+   
     with open(tracking_filename, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
     
@@ -200,7 +202,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             
             # TODO: Decide whether we need to transform based on version IRI
             
-            owl_iri = get_owl_iri(tfile.name)
+            owl_iri, owl_version = get_owl_iri(tfile.name)
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}") 
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
@@ -226,7 +228,7 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
 
-                track_obo_version(ontology_name, owl_iri)
+                track_obo_version(ontology_name, owl_iri, owl_version)
 
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")

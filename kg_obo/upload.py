@@ -27,3 +27,6 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
 
                 logging.info(f"Uploading {s3_path}")
                 client.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
+
+def upload_index_files() -> None:
+    return None
