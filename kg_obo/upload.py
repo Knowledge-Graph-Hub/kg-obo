@@ -5,6 +5,13 @@ import logging
 
 def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                      make_public=False) -> None:
+    """
+    Upload a local directory to a specified AWS S3 bucket.
+    :param local_directory: str name of directory to upload
+    :param s3_bucket: str ID of the bucket to upload to
+    :param s3_bucket_dir: str of name of directory to create on S3
+    """
+    
     client = boto3.client('s3')
     for root, dirs, files in os.walk(local_directory):
 
