@@ -98,10 +98,10 @@ def get_owl_iri(input_file_name: str) -> tuple:
             else:
                 print("Version IRI not found.")
                 iri = "NA"
-                version = "NA"
+                version = "release"
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         iri = "NA"
-        version = "NA"
+        version = "release"
        
     return (iri, version)
 
