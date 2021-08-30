@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 import botocore.exceptions
 
-import kg_obo.upload
+from kg_obo.upload import upload_dir_to_s3
 
 
 class TestUploadDirToS3(TestCase):
