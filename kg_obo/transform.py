@@ -114,18 +114,17 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     :param version: short OBO version
     """
 
-    # TODO: In practice the tracking file should be copied to S3 storage
     # TODO: also need to compare versions before uploading anything
 
-    tracking_filename = "tracking.yaml"
+    tracking_path = os.path.join("data", "tracking.yaml")
    
-    with open(tracking_filename, 'r') as track_file:
+    with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
     
     tracking["ontologies"][name]["current_iri"] = iri
     tracking["ontologies"][name]["current_version"] = version
 
-    with open(tracking_filename, 'w') as track_file:
+    with open(tracking_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
 def download_ontology(url: str, file: str, logger: object) -> bool:
