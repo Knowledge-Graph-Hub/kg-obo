@@ -101,7 +101,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
             else:
                 print("Version IRI not found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
-        print("Could not parse OWL definitions enough to locate version IRI."
+        print("Could not parse OWL definitions enough to locate version IRI.")
        
     return (iri, version)
 
