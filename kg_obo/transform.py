@@ -247,14 +247,6 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
             
-        # TODO: upload to S3
-        # make a version file
-        # make an index.html for s3_bucket/kg-obo/[this ontology]/[version]/
-        # make an index.html for s3_bucket/kg-obo/[this ontology]/
-        # push to s3:
-        # push s3_bucket/kg-obo/[this ontology]/[version]
-        # push s3_bucket/kg-obo/[this ontology]/current
-
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
     if len(errored_transforms) > 0:
@@ -262,3 +254,11 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
+
+    # In practice, this happens once per transform so we can remove the raw download and move on
+    # But for now we are doing initial population of the collection so we'll do it all at once.
+    
+    with open("s3_config", "r") as config_file:
+        s3_bucket = config_file.read()
+    kg_obo_logger.info("Uploading...")
+    kg_obo.upload.upload_dir_to_s3("data",s3_bucket,"data")
