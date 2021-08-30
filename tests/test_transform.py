@@ -76,4 +76,4 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
-        self.assertEqual("NA", iri)
+        self.assertEqual(("NA", "release"), iri)
