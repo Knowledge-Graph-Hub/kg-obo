@@ -84,6 +84,9 @@ def get_owl_iri(input_file_name: str) -> tuple:
     
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     
+    iri = "NA"
+    version = "release"
+
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
@@ -94,14 +97,11 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 try:
                     version = (iri.split("/"))[-2]
                 except IndexError:
-                    version = name
+                    pass
             else:
                 print("Version IRI not found.")
-                iri = "NA"
-                version = "release"
     except ValueError: #Should not happen unless OWL definitions are missing/broken
-        iri = "NA"
-        version = "release"
+        print("Could not parse OWL definitions enough to locate version IRI."
        
     return (iri, version)
 
