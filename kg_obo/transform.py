@@ -14,7 +14,7 @@ from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
 import kg_obo.obolibrary_utils
-
+import kg_obo.upload
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
@@ -69,19 +69,24 @@ def kgx_transform(input_file: list, input_format: str,
         logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
     return (success, errors)
 
-def get_owl_iri(input_file_name: str) -> str:
+def get_owl_iri(input_file_name: str) -> tuple:
     """
     Extracts version IRI from OWL definitions.
     Here, the IRI is the full URL of the origin OWL, 
     as naming conventions vary.
-    Avoids parsing as the IRI should be near the top of the file.
+    Avoids much file parsing as the IRI should be near the top of the file.
+    Does some string parsing to get a shorter version number.
+    Versions may take multiple formats across OBOs.
 
     :param input_file_name: name of OWL format file to extract IRI from
-    :return: str of IRI
+    :return: tuple of (str of IRI, str of version)
     """
     
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     
+    iri = "NA"
+    version = "release"
+
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
@@ -89,41 +94,37 @@ def get_owl_iri(input_file_name: str) -> str:
             #mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
+                try:
+                    version = (iri.split("/"))[-2]
+                except IndexError:
+                    pass
             else:
                 print("Version IRI not found.")
-                iri = "NA"
     except ValueError: #Should not happen unless OWL definitions are missing/broken
-        iri = "NA"
+        print("Could not parse OWL definitions enough to locate version IRI.")
        
-    return iri
+    return (iri, version)
 
-def track_obo_version(name: str = "", iri: str = "") -> None:
+def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
-    Does some parsing to get a shorter version number.
-    Versions may take multiple formats across OBOs.
     
     :param name: name of OBO, as OBO ID
     :param iri: full OBO VersionIRI, as URL
+    :param version: short OBO version
     """
 
-    # TODO: In practice the tracking file should be copied to S3 storage
     # TODO: also need to compare versions before uploading anything
 
-    tracking_filename = "tracking.yaml"
-    
-    try:
-      version = (iri.split("/"))[-2]
-    except IndexError:
-      version = name
-
-    with open(tracking_filename, 'r') as track_file:
+    tracking_path = os.path.join("data", "tracking.yaml")
+   
+    with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
     
     tracking["ontologies"][name]["current_iri"] = iri
     tracking["ontologies"][name]["current_version"] = version
 
-    with open(tracking_filename, 'w') as track_file:
+    with open(tracking_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
 def download_ontology(url: str, file: str, logger: object) -> bool:
@@ -151,8 +152,8 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         return False
 
 
-def run_transform(skip_list: list = [], log_dir="logs") -> None:
-
+def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None:
+    
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
     log_path = os.path.join(log_dir, "obo_transform_" + timestring + ".log")
@@ -186,8 +187,15 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
         url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
         print(url)
 
-        # download url to tempfile
+        # download url
         # use kgx to convert OWL to KGX tsv
+        if not os.path.exists(data_dir):
+            os.mkdir(data_dir)
+        base_obo_path = os.path.join(data_dir, ontology_name)
+        if not os.path.exists(base_obo_path):
+            os.mkdir(base_obo_path)
+        
+        # Downloaded OBOs are still tempfiles as we don't intend to keep them
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
             success = True
@@ -200,33 +208,37 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
             
             # TODO: Decide whether we need to transform based on version IRI
             
-            owl_iri = get_owl_iri(tfile.name)
+            owl_iri, owl_version = get_owl_iri(tfile.name)
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}") 
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
-            tf_output_dir = tempfile.mkdtemp(prefix=ontology_name)
+            versioned_obo_path = os.path.join(base_obo_path, owl_version)
+            if not os.path.exists(versioned_obo_path):
+                os.mkdir(versioned_obo_path)
 
             # Use kgx to transform, but save errors to log
             transform_errors: list = []
             success, errors = kgx_transform(input_file=[tfile.name],
                                             input_format='owl',
-                                            output_file=os.path.join(tf_output_dir, ontology_name),
+                                            output_file=os.path.join(versioned_obo_path, ontology_name),
                                             output_format='tsv',
                                             logger=kgx_logger)
 
             # Check file size and fail/warn if nodes|edge file is empty
-            for filename in os.listdir(tf_output_dir):
-              if os.stat(os.path.join(tf_output_dir, filename)).st_size == 0:
+            for filename in os.listdir(versioned_obo_path):
+              if os.stat(os.path.join(versioned_obo_path, filename)).st_size == 0:
                   kg_obo_logger.warning("Output is empty - something went wrong during transformation.")
                   success = False
               else:
-                  kg_obo_logger.info(f"{filename} {os.stat(os.path.join(tf_output_dir, filename)).st_size} bytes")
+                  kg_obo_logger.info(f"{filename} {os.stat(os.path.join(versioned_obo_path, filename)).st_size} bytes")
 
             if success and not errors:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
 
-                track_obo_version(ontology_name, owl_iri)
+                track_obo_version(ontology_name, owl_iri, owl_version)
+
+                kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
 
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
@@ -235,14 +247,6 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
             
-        # TODO: upload to S3
-        # make a version file
-        # make an index.html for s3_bucket/kg-obo/[this ontology]/[version]/
-        # make an index.html for s3_bucket/kg-obo/[this ontology]/
-        # push to s3:
-        # push s3_bucket/kg-obo/[this ontology]/[version]
-        # push s3_bucket/kg-obo/[this ontology]/current
-
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
     if len(errored_transforms) > 0:
@@ -251,4 +255,10 @@ def run_transform(skip_list: list = [], log_dir="logs") -> None:
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
-    # TODO: make new index.html for s3_bucket/kg-obo/
+    # In practice, this happens once per transform so we can remove the raw download and move on
+    # But for now we are doing initial population of the collection so we'll do it all at once.
+    
+    with open("s3_config", "r") as config_file:
+        s3_bucket = config_file.read()
+    kg_obo_logger.info("Uploading...")
+    kg_obo.upload.upload_dir_to_s3("data",s3_bucket,"data")

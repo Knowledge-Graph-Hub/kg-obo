@@ -9,3 +9,5 @@ build/
 dist/
 *.egg-info/
 logs/*.log
+data/*
+!data/tracking.yaml
