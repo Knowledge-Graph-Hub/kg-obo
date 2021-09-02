@@ -266,7 +266,9 @@ def run_transform(skip: list = [], bucket="", local=False, log_dir="logs", data_
     # In practice, this happens once per transform so we can remove the raw download and move on
     # But for now we are doing initial population of the collection so we'll do it all at once.
     
-    with open("s3_config", "r") as config_file:
-        s3_bucket = config_file.read()
     kg_obo_logger.info("Uploading...")
-    kg_obo.upload.upload_dir_to_s3("data",s3_bucket,"data")
+    if bucket != "":
+      kg_obo.upload.upload_dir_to_s3("data",bucket,"data")
+    kg_obo_logger.info("Bucket name not provided. Not uploading.")
+    if local:
+      kg_obo.upload.upload_dir_to_s3("data","local_only","data")
