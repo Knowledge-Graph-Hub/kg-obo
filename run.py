@@ -13,6 +13,10 @@ from kg_obo.transform import run_transform
 @click.option("--skip",
                callback=lambda _,__,x: x.split(',') if x else [],
                help="One or more OBOs to ignore, comma-delimited and named by their IDs, e.g., bfo.")
+@click.option("--get_only",
+               callback=lambda _,__,x: x.split(',') if x else [],
+               help="""One or more OBOs to retreive and transform, and only these,
+                     comma-delimited and named by their IDs, e.g., bfo.""")
 @click.option("--bucket",
                default="",
                nargs=1,
@@ -24,8 +28,8 @@ from kg_obo.transform import run_transform
 @click.option("--s3_test",
                is_flag=True,
                help="If used, upload to S3 bucket is tested only.")
-def run(skip, bucket, local, s3_test):
-  run_transform(skip, bucket, local, s3_test)
+def run(skip, get_only, bucket, local, s3_test):
+  run_transform(skip, get_only, bucket, local, s3_test)
 
 if __name__ == '__main__':
   run()

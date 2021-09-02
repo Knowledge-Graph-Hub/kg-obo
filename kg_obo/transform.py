@@ -19,7 +19,8 @@ import kg_obo.upload
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
-        skip: list = []) -> list:
+        skip: list = [],
+        get_only: list = []) -> list:
     """ Retrieve YAML containing list of all ontologies in OBOFoundry
     :param yaml_url: a stable URL containing a YAML file that describes all the OBO ontologies:
     :param skip: which ontologies should we skip
@@ -32,10 +33,22 @@ def retrieve_obofoundry_yaml(
         raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
     else:
         yaml_onto_list: list = yaml_parsed['ontologies']
-    yaml_onto_list_filtered = \
-        [ontology for ontology in yaml_onto_list if ontology['id'] not in skip \
-          if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
-        ]
+    
+    if len(skip) > 0:
+        yaml_onto_list_filtered = \
+            [ontology for ontology in yaml_onto_list if ontology['id'] not in skip \
+            if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+            ]
+    elif len(get_only) > 0:
+        yaml_onto_list_filtered = \
+            [ontology for ontology in yaml_onto_list if ontology['id'] in get_only \
+            if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+            ]    
+    else:
+        yaml_onto_list_filtered = \
+            [ontology for ontology in yaml_onto_list \
+            if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+            ]
 
     return yaml_onto_list_filtered
 
@@ -153,7 +166,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         return False
 
 
-def run_transform(skip: list = [], bucket="", local=False, s3_test=False,
+def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, s3_test=False,
                   log_dir="logs", data_dir="data") -> None:
     
     # Set up logging
@@ -174,7 +187,7 @@ def run_transform(skip: list = [], bucket="", local=False, s3_test=False,
     kgx_logger.addHandler(root_logger_handler)
 
     # Get the OBO Foundry list YAML and process each
-    yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip)
+    yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
 
     successful_transforms = []
     errored_transforms = []
