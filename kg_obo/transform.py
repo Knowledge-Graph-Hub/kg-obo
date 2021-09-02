@@ -179,7 +179,7 @@ def run_transform(skip: list = [], bucket="", local=False, log_dir="logs", data_
     failed_transforms = []
     
     if len(skip) >0:
-      kg_obo_logger.info(f"Ignoring these OBOs: {skip_list}" )
+      kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
     
     if not local:
       kg_obo_logger.info(f"Will upload to: {bucket}")
