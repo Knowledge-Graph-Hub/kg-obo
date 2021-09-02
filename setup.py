@@ -67,7 +67,7 @@ setup(
         'pyyaml',
         'tqdm',
         'click',
-        'moto'
+        'moto[s3]'
     ],
     extras_require=extras,
 )
