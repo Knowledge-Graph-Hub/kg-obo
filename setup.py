@@ -66,7 +66,8 @@ setup(
         'botocore',
         'pyyaml',
         'tqdm',
-        'click'
+        'click',
+        'moto'
     ],
     extras_require=extras,
 )
