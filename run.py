@@ -18,11 +18,14 @@ from kg_obo.transform import run_transform
                nargs=1,
                help="The name of an AWS S3 bucket to upload transforms to.")
 @click.option("--local",
-               type=click.Path(),
                is_flag=True,
-               help="If used, saves all transforms, tracking file, and index files to a local_data directory.")
-def run(skip, bucket, local):
-  run_transform(skip,bucket,local)
+               help="""If used, keeps all transforms, tracking file, and index files in the directory.
+                     Otherwise, they are deleted.""")
+@click.option("--s3_test",
+               is_flag=True,
+               help="If used, upload to S3 bucket is tested only.")
+def run(skip, bucket, local, s3_test):
+  run_transform(skip, bucket, local, s3_test)
 
 if __name__ == '__main__':
   run()

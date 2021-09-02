@@ -6,6 +6,7 @@ import yaml  # type: ignore
 import requests  # type: ignore
 from datetime import datetime
 import os
+import shutil
 import logging
 import mmap
 import re
@@ -152,7 +153,8 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         return False
 
 
-def run_transform(skip: list = [], bucket="", local=False, log_dir="logs", data_dir="data") -> None:
+def run_transform(skip: list = [], bucket="", local=False, s3_test=False,
+                  log_dir="logs", data_dir="data") -> None:
     
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -179,12 +181,11 @@ def run_transform(skip: list = [], bucket="", local=False, log_dir="logs", data_
     failed_transforms = []
     
     if len(skip) >0:
-      kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
-    
-    if not local:
-      kg_obo_logger.info(f"Will upload to: {bucket}")
-    else:
-      kg_obo_logger.info(f"Will copy all files to local_data directory.")
+      kg_obo_logger.info(f"Ignoring these OBOs: {skip}" ) 
+    if local:
+      kg_obo_logger.info("Will retain all downloaded files.")
+    if s3_test:
+      kg_obo_logger.info("Will test S3 upload instead of actually uploading.")
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
         ontology_name = ontology['id']
@@ -270,5 +271,13 @@ def run_transform(skip: list = [], bucket="", local=False, log_dir="logs", data_
     if bucket != "":
       kg_obo.upload.upload_dir_to_s3("data",bucket,"data")
     kg_obo_logger.info("Bucket name not provided. Not uploading.")
-    if local:
-      kg_obo.upload.upload_dir_to_s3("data","local_only","data")
+
+    #Temporary - as above, this should happen on a per-obo basis
+    if not local:
+      for filename in os.listdir(data_dir):
+        file_path = os.path.join(data_dir, filename)
+        if filename != "tracking.yaml":
+          if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+          elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
