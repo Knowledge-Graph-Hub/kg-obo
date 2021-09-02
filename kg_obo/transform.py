@@ -269,15 +269,18 @@ def run_transform(skip: list = [], bucket="", local=False, s3_test=False,
     
     kg_obo_logger.info("Uploading...")
     if bucket != "":
-      kg_obo.upload.upload_dir_to_s3("data",bucket,"data")
+        if not s3_test:
+            kg_obo.upload.upload_dir_to_s3("data",bucket,"data", make_public=False)
+        else:
+            kg_obo.upload.mock_upload_dir_to_s3("data",bucket,"data", make_public=False)
     kg_obo_logger.info("Bucket name not provided. Not uploading.")
 
     #Temporary - as above, this should happen on a per-obo basis
     if not local:
-      for filename in os.listdir(data_dir):
-        file_path = os.path.join(data_dir, filename)
-        if filename != "tracking.yaml":
-          if os.path.isfile(file_path) or os.path.islink(file_path):
-            os.unlink(file_path)
-          elif os.path.isdir(file_path):
-            shutil.rmtree(file_path)
+        for filename in os.listdir(data_dir):
+            file_path = os.path.join(data_dir, filename)
+            if filename != "tracking.yaml":
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
