@@ -261,6 +261,24 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
                 track_obo_version(ontology_name, owl_iri, owl_version)
 
                 kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
+                
+                kg_obo_logger.info("Uploading...")
+                if bucket != "":
+                    if not s3_test:
+                        kg_obo.upload.upload_dir_to_s3("data",bucket,"data", make_public=False)
+                    else:
+                        kg_obo.upload.mock_upload_dir_to_s3("data",bucket,"data", make_public=False)
+                else:
+                    kg_obo_logger.info("Bucket name not provided. Not uploading.")
+                
+                if not local:
+                    for filename in os.listdir(data_dir):
+                        file_path = os.path.join(data_dir, filename)
+                        if filename != "tracking.yaml":
+                            if os.path.isfile(file_path) or os.path.islink(file_path):
+                                os.unlink(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
 
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
@@ -268,7 +286,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
-            
+
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
     if len(errored_transforms) > 0:
@@ -277,23 +295,3 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
-    # In practice, this happens once per transform so we can remove the raw download and move on
-    # But for now we are doing initial population of the collection so we'll do it all at once.
-    
-    kg_obo_logger.info("Uploading...")
-    if bucket != "":
-        if not s3_test:
-            kg_obo.upload.upload_dir_to_s3("data",bucket,"data", make_public=False)
-        else:
-            kg_obo.upload.mock_upload_dir_to_s3("data",bucket,"data", make_public=False)
-    kg_obo_logger.info("Bucket name not provided. Not uploading.")
-
-    #Temporary - as above, this should happen on a per-obo basis
-    if not local:
-        for filename in os.listdir(data_dir):
-            file_path = os.path.join(data_dir, filename)
-            if filename != "tracking.yaml":
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
