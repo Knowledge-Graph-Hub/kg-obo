@@ -152,7 +152,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         return False
 
 
-def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None:
+def run_transform(skip_list: list = [], bucket="", local=False, log_dir="logs", data_dir="data") -> None:
     
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
