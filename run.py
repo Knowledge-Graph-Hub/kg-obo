@@ -6,7 +6,7 @@ Transform all available OBO Foundry ontologies from OBO format
 to KGX TSV, with intermediate JSON.
 """
 
-import click
+import click  #type: ignore
 from kg_obo.transform import run_transform
 
 @click.command()
