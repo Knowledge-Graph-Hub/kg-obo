@@ -47,7 +47,7 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     :param s3_bucket_dir: str of name of directory to create on S3
     """
     
-    print(f"Mock uploading to {{s3_bucket_dir}} on {{s3_bucket}}")
+    print(f"Mock uploading to {s3_bucket_dir} on {s3_bucket}")
     
     conn = boto3.resource('s3', region_name='us-east-1')
     conn.create_bucket(Bucket=s3_bucket)
