@@ -18,10 +18,10 @@ import kg_obo.upload
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
-        skip_list: list = []) -> list:
+        skip: list = []) -> list:
     """ Retrieve YAML containing list of all ontologies in OBOFoundry
     :param yaml_url: a stable URL containing a YAML file that describes all the OBO ontologies:
-    :param skip_list: which ontologies should we skip
+    :param skip: which ontologies should we skip
     :return: parsed yaml describing ontologies to transform
     """
     yaml_req = requests.get(yaml_url)
@@ -32,7 +32,7 @@ def retrieve_obofoundry_yaml(
     else:
         yaml_onto_list: list = yaml_parsed['ontologies']
     yaml_onto_list_filtered = \
-        [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list \
+        [ontology for ontology in yaml_onto_list if ontology['id'] not in skip \
           if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
         ]
 
@@ -152,7 +152,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         return False
 
 
-def run_transform(skip_list: list = [], bucket="", local=False, log_dir="logs", data_dir="data") -> None:
+def run_transform(skip: list = [], bucket="", local=False, log_dir="logs", data_dir="data") -> None:
     
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -172,11 +172,19 @@ def run_transform(skip_list: list = [], bucket="", local=False, log_dir="logs", 
     kgx_logger.addHandler(root_logger_handler)
 
     # Get the OBO Foundry list YAML and process each
-    yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
+    yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip)
 
     successful_transforms = []
     errored_transforms = []
     failed_transforms = []
+    
+    if len(skip) >0:
+      kg_obo_logger.info(f"Ignoring these OBOs: {skip_list}" )
+    
+    if not local:
+      kg_obo_logger.info(f"Will upload to: {bucket}")
+    else:
+      kg_obo_logger.info(f"Will copy all files to local_data directory.")
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
         ontology_name = ontology['id']
