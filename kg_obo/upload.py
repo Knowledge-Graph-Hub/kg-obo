@@ -28,9 +28,9 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                 client.head_object(Bucket=s3_bucket, Key=s3_path)
                 logging.warning("Existing file {s3_path} found on S3! Skipping.")
             except botocore.exceptions.ClientError:  # Exception abuse
-                extra_args = None
+                extra_args = {'ContentType': 'plain/text'}
                 if make_public:
-                    extra_args = {'ACL': 'public-read'}
+                    extra_args['ACL'] = 'public-read'
                 logging.info(f"Uploading {s3_path}")
                 client.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
             except botocore.exceptions.ParamValidationError as e: #Raised when bucket ID is wrong
