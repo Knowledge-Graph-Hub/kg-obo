@@ -128,21 +128,47 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     :param version: short OBO version
     """
 
-    # TODO: also need to compare versions before uploading anything
-
     tracking_path = os.path.join("data", "tracking.yaml")
    
     with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
     
-    tracking["ontologies"][name]["current_iri"] = iri
-    tracking["ontologies"][name]["current_version"] = version
+    #If we already have a version, move it to archive
+    if tracking["ontologies"][name]["current_version"] != "NA":
+        if "archive" not in tracking["ontologies"][name]:
+            tracking["ontologies"][name] = []
+        tracking["ontologies"][name]["archive"].append({"iri": iri, "version": version})
+    else:
+        tracking["ontologies"][name]["current_iri"] = iri
+        tracking["ontologies"][name]["current_version"] = version
 
     with open(tracking_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
+def transformed_obo_exists(name: str, iri: str) -> bool:
+    """
+    Read tracking.yaml to determine if transformed version of this OBO exists.
+    
+    :param name: string of short logger name, e.g., bfo
+    :param iri: iri of OBO version
+    :return: boolean, True if this OBO and version already exist as transformed
+    """
+    
+    tracking_path = os.path.join("data", "tracking.yaml")
+    
+    with open(tracking_path, 'r') as track_file:
+        tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
+    
+    #We only check the most recent version - if we are transforming an old version,
+    #then let it happen
+    if tracking["ontologies"][name]["current_iri"] == iri:
+        return True
+    else:
+        return False
+
 def download_ontology(url: str, file: str, logger: object) -> bool:
-    """Download ontology from URL
+    """
+    Download ontology from URL
 
     :param url: url to download from
     :param file: file to download into
@@ -164,7 +190,6 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
     except KeyError as e:
         logger.error(e)  # type: ignore
         return False
-
 
 def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, s3_test=False,
                   log_dir="logs", data_dir="data") -> None:
@@ -228,11 +253,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
                 failed_transforms.append(ontology_name)
                 continue
             
-            # TODO: Decide whether we need to transform based on version IRI
-            
             owl_iri, owl_version = get_owl_iri(tfile.name)
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}") 
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
+
+            #Check version here
+            if transformed_obo_exists(ontology_name, owl_iri):
+                kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
+                print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
+                continue
 
             versioned_obo_path = os.path.join(base_obo_path, owl_version)
             if not os.path.exists(versioned_obo_path):
