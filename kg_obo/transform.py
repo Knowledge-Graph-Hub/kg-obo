@@ -293,10 +293,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
 
                 kg_obo_logger.info("Uploading...")
                 if bucket != "":
+                    remote_path = os.path.join("kg_obo", versioned_obo_path)
                     if not s3_test:
-                        kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,"kg_obo",make_public=True)
+                        kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,remote_path,make_public=True)
                     else:
-                        kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,"kg_obo",make_public=True)
+                        kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,remote_path,make_public=True)
                 else:
                     kg_obo_logger.info("Bucket name not provided. Not uploading.")
 
