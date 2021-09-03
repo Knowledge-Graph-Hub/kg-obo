@@ -29,6 +29,8 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                 logging.warning("Existing file {s3_path} found on S3! Skipping.")
             except botocore.exceptions.ClientError:  # Exception abuse
                 extra_args = {'ContentType': 'plain/text'}
+                if filename == "index.html":
+                    extra_args['ContentType'] = 'text/html'
                 if make_public:
                     extra_args['ACL'] = 'public-read'
                 logging.info(f"Uploading {s3_path}")
