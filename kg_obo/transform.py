@@ -191,7 +191,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         logger.error(e)  # type: ignore
         return False
 
-def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, s3_test=False,
+def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=False, s3_test=False,
                   log_dir="logs", data_dir="data") -> None:
 
     # Set up logging
@@ -301,7 +301,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
                     kg_obo_logger.info("Bucket name not provided. Not uploading.")
 
                 # TODO: possibly rename local var to something more descriptive
-                if not local:
+                if not save_local:
                     for filename in os.listdir(data_dir):
                         file_path = os.path.join(data_dir, filename)
                         if filename != "tracking.yaml":
