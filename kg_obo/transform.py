@@ -220,7 +220,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
 
     if len(skip) >0:
       kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
-    if local:
+    if save_local:
       kg_obo_logger.info("Will retain all downloaded files.")
     if s3_test:
       kg_obo_logger.info("Will test S3 upload instead of actually uploading.")
@@ -300,7 +300,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
                 else:
                     kg_obo_logger.info("Bucket name not provided. Not uploading.")
 
-                # TODO: possibly rename local var to something more descriptive
                 if not save_local:
                     for filename in os.listdir(data_dir):
                         file_path = os.path.join(data_dir, filename)
