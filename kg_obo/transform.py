@@ -294,10 +294,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
                 kg_obo_logger.info("Uploading...")
                 if bucket != "":
                     if not s3_test:
-                        # TODO: add ontology name and version to first arg here
-                        kg_obo.upload.upload_dir_to_s3("data",bucket,"data", make_public=False)
+                        kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,"kg_obo",make_public=True)
                     else:
-                        kg_obo.upload.mock_upload_dir_to_s3("data",bucket,"data", make_public=False)
+                        kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,"kg_obo",make_public=True)
                 else:
                     kg_obo_logger.info("Bucket name not provided. Not uploading.")
 
