@@ -33,7 +33,7 @@ def retrieve_obofoundry_yaml(
         raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
     else:
         yaml_onto_list: list = yaml_parsed['ontologies']
-    
+
     if len(skip) > 0:
         yaml_onto_list_filtered = \
             [ontology for ontology in yaml_onto_list if ontology['id'] not in skip \
@@ -43,7 +43,7 @@ def retrieve_obofoundry_yaml(
         yaml_onto_list_filtered = \
             [ontology for ontology in yaml_onto_list if ontology['id'] in get_only \
             if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
-            ]    
+            ]
     else:
         yaml_onto_list_filtered = \
             [ontology for ontology in yaml_onto_list \
@@ -86,7 +86,7 @@ def kgx_transform(input_file: list, input_format: str,
 def get_owl_iri(input_file_name: str) -> tuple:
     """
     Extracts version IRI from OWL definitions.
-    Here, the IRI is the full URL of the origin OWL, 
+    Here, the IRI is the full URL of the origin OWL,
     as naming conventions vary.
     Avoids much file parsing as the IRI should be near the top of the file.
     Does some string parsing to get a shorter version number.
@@ -95,9 +95,9 @@ def get_owl_iri(input_file_name: str) -> tuple:
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
-    
+
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
-    
+
     iri = "NA"
     version = "release"
 
@@ -116,23 +116,23 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 print("Version IRI not found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI.")
-       
+
     return (iri, version)
 
 def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
-    
+
     :param name: name of OBO, as OBO ID
     :param iri: full OBO VersionIRI, as URL
     :param version: short OBO version
     """
 
     tracking_path = os.path.join("data", "tracking.yaml")
-   
+
     with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
-    
+
     #If we already have a version, move it to archive
     if tracking["ontologies"][name]["current_version"] != "NA":
         if "archive" not in tracking["ontologies"][name]:
@@ -148,17 +148,17 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
 def transformed_obo_exists(name: str, iri: str) -> bool:
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
-    
+
     :param name: string of short logger name, e.g., bfo
     :param iri: iri of OBO version
     :return: boolean, True if this OBO and version already exist as transformed
     """
-    
+
     tracking_path = os.path.join("data", "tracking.yaml")
-    
+
     with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
-    
+
     #We only check the most recent version - if we are transforming an old version,
     #then let it happen
     if tracking["ontologies"][name]["current_iri"] == iri:
@@ -193,7 +193,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
 
 def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, s3_test=False,
                   log_dir="logs", data_dir="data") -> None:
-    
+
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
     log_path = os.path.join(log_dir, "obo_transform_" + timestring + ".log")
@@ -217,9 +217,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
     successful_transforms = []
     errored_transforms = []
     failed_transforms = []
-    
+
     if len(skip) >0:
-      kg_obo_logger.info(f"Ignoring these OBOs: {skip}" ) 
+      kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
     if local:
       kg_obo_logger.info("Will retain all downloaded files.")
     if s3_test:
@@ -241,7 +241,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
         base_obo_path = os.path.join(data_dir, ontology_name)
         if not os.path.exists(base_obo_path):
             os.mkdir(base_obo_path)
-        
+
         # Downloaded OBOs are still tempfiles as we don't intend to keep them
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
@@ -252,9 +252,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
                 continue
-            
+
             owl_iri, owl_version = get_owl_iri(tfile.name)
-            kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}") 
+            kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
             #Check version here
@@ -290,16 +290,18 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", local=False, 
                 track_obo_version(ontology_name, owl_iri, owl_version)
 
                 kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
-                
+
                 kg_obo_logger.info("Uploading...")
                 if bucket != "":
                     if not s3_test:
+                        # TODO: add ontology name and version to first arg here
                         kg_obo.upload.upload_dir_to_s3("data",bucket,"data", make_public=False)
                     else:
                         kg_obo.upload.mock_upload_dir_to_s3("data",bucket,"data", make_public=False)
                 else:
                     kg_obo_logger.info("Bucket name not provided. Not uploading.")
-                
+
+                # TODO: possibly rename local var to something more descriptive
                 if not local:
                     for filename in os.listdir(data_dir):
                         file_path = os.path.join(data_dir, filename)
