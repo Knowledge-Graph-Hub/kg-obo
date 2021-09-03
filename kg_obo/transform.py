@@ -293,7 +293,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
 
                 kg_obo_logger.info("Uploading...")
                 if bucket != "":
-                    remote_path = "kg_obo"
+                    remote_path = "kg-obo"
                     if not s3_test:
                         kg_obo.upload.upload_dir_to_s3(os.path.dirname(os.path.dirname(versioned_obo_path)),bucket,
                                                        remote_path,make_public=True)
