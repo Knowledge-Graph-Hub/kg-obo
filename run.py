@@ -9,6 +9,7 @@ to KGX TSV, with intermediate JSON.
 import click  #type: ignore
 import os
 import sys
+from pathlib import Path
 from kg_obo.transform import run_transform
 
 @click.command()
@@ -34,8 +35,9 @@ def run(skip, get_only, bucket, save_local, s3_test):
     if os.path.isfile("lock"):
         sys.exit("KG-OBO is already running. Exiting...")
     else:
-        lockfile = open
+        Path("lock").touch()
         run_transform(skip, get_only, bucket, save_local, s3_test)
+        os.remove("lock")
 
 if __name__ == '__main__':
   run()
