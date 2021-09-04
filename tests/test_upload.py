@@ -1,8 +1,7 @@
 from unittest import TestCase, mock
 import botocore.exceptions
 
-from kg_obo.upload import upload_dir_to_s3
-
+from kg_obo.upload import upload_dir_to_s3, mock_upload_dir_to_s3
 
 class TestUploadDirToS3(TestCase):
 
@@ -14,4 +13,9 @@ class TestUploadDirToS3(TestCase):
     @mock.patch('boto3.client')
     def test_upload_dir_to_s3(self, mock_boto):
         upload_dir_to_s3(self.local_dir, self.bucket, self.bucket_dir)
+        self.assertTrue(mock_boto.called)
+
+    # This is essentially testing a test
+    def test_mock_upload_dir_to_s3(self):
+        mock_upload_dir_to_s3(self.local_dir, self.bucket, self.bucket_dir)
         self.assertTrue(mock_boto.called)
