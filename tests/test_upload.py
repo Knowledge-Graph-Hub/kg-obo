@@ -17,6 +17,6 @@ class TestUploadDirToS3(TestCase):
 
     # This is essentially testing a test
     @mock.patch('boto3.client')
-    def test_mock_upload_dir_to_s3(self):
+    def test_mock_upload_dir_to_s3(self, mock_boto):
         mock_upload_dir_to_s3(self.local_dir, self.bucket, self.bucket_dir)
         self.assertTrue(mock_boto.called)
