@@ -17,6 +17,9 @@ from rdflib.exceptions import ParserError # type: ignore
 import kg_obo.obolibrary_utils
 import kg_obo.upload
 
+# Constants
+track_file_path = "tracking.yaml"
+
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
         skip: list = [],
@@ -128,7 +131,7 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     :param version: short OBO version
     """
 
-    tracking_path = os.path.join("data", "tracking.yaml")
+    tracking_path = os.path.join("data", track_file_path)
 
     with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
@@ -154,7 +157,7 @@ def transformed_obo_exists(name: str, iri: str) -> bool:
     :return: boolean, True if this OBO and version already exist as transformed
     """
 
-    tracking_path = os.path.join("data", "tracking.yaml")
+    tracking_path = os.path.join("data", track_file_path)
 
     with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
@@ -306,7 +309,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
                 if not save_local:
                     for filename in os.listdir(data_dir):
                         file_path = os.path.join(data_dir, filename)
-                        if filename != "tracking.yaml":
+                        if filename != track_file_path:
                             if os.path.isfile(file_path) or os.path.islink(file_path):
                                 os.unlink(file_path)
                             elif os.path.isdir(file_path):
