@@ -52,7 +52,7 @@ pipeline {
             }
         }
 
-        stage('Build obo2kghub') {
+        stage('Build kg-obo') {
             steps {
                 dir('./gitrepo') {
                     git(
@@ -70,7 +70,8 @@ pipeline {
             steps {
                 dir('./gitrepo') {
                     echo 'do nothing for now'
-                    // sh '. venv/bin/activate && env && python3.8 run.py'
+                    // TODO: remove --get_only bfo
+                    sh '. venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data'
                 }
             }
         }
