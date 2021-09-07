@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
-    get_owl_iri
+    get_owl_iri, retrieve_obofoundry_yaml
 
 
 class TestRunTransform(TestCase):
