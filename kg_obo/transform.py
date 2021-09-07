@@ -6,6 +6,7 @@ import yaml  # type: ignore
 import requests  # type: ignore
 from datetime import datetime
 import os
+import shutil
 import logging
 import mmap
 import re
@@ -16,12 +17,16 @@ from rdflib.exceptions import ParserError # type: ignore
 import kg_obo.obolibrary_utils
 import kg_obo.upload
 
+# Constants
+track_file_path = "tracking.yaml"
+
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
-        skip_list: list = []) -> list:
+        skip: list = [],
+        get_only: list = []) -> list:
     """ Retrieve YAML containing list of all ontologies in OBOFoundry
     :param yaml_url: a stable URL containing a YAML file that describes all the OBO ontologies:
-    :param skip_list: which ontologies should we skip
+    :param skip: which ontologies should we skip
     :return: parsed yaml describing ontologies to transform
     """
     yaml_req = requests.get(yaml_url)
@@ -31,10 +36,22 @@ def retrieve_obofoundry_yaml(
         raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
     else:
         yaml_onto_list: list = yaml_parsed['ontologies']
-    yaml_onto_list_filtered = \
-        [ontology for ontology in yaml_onto_list if ontology['id'] not in skip_list \
-          if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
-        ]
+
+    if len(skip) > 0:
+        yaml_onto_list_filtered = \
+            [ontology for ontology in yaml_onto_list if ontology['id'] not in skip \
+            if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+            ]
+    elif len(get_only) > 0:
+        yaml_onto_list_filtered = \
+            [ontology for ontology in yaml_onto_list if ontology['id'] in get_only \
+            if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+            ]
+    else:
+        yaml_onto_list_filtered = \
+            [ontology for ontology in yaml_onto_list \
+            if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+            ]
 
     return yaml_onto_list_filtered
 
@@ -72,7 +89,7 @@ def kgx_transform(input_file: list, input_format: str,
 def get_owl_iri(input_file_name: str) -> tuple:
     """
     Extracts version IRI from OWL definitions.
-    Here, the IRI is the full URL of the origin OWL, 
+    Here, the IRI is the full URL of the origin OWL,
     as naming conventions vary.
     Avoids much file parsing as the IRI should be near the top of the file.
     Does some string parsing to get a shorter version number.
@@ -81,9 +98,9 @@ def get_owl_iri(input_file_name: str) -> tuple:
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
-    
+
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
-    
+
     iri = "NA"
     version = "release"
 
@@ -102,33 +119,59 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 print("Version IRI not found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI.")
-       
+
     return (iri, version)
 
 def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
-    
+
     :param name: name of OBO, as OBO ID
     :param iri: full OBO VersionIRI, as URL
     :param version: short OBO version
     """
 
-    # TODO: also need to compare versions before uploading anything
+    tracking_path = os.path.join("data", track_file_path)
 
-    tracking_path = os.path.join("data", "tracking.yaml")
-   
     with open(tracking_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
-    
-    tracking["ontologies"][name]["current_iri"] = iri
-    tracking["ontologies"][name]["current_version"] = version
+
+    #If we already have a version, move it to archive
+    if tracking["ontologies"][name]["current_version"] != "NA":
+        if "archive" not in tracking["ontologies"][name]:
+            tracking["ontologies"][name] = []
+        tracking["ontologies"][name]["archive"].append({"iri": iri, "version": version})
+    else:
+        tracking["ontologies"][name]["current_iri"] = iri
+        tracking["ontologies"][name]["current_version"] = version
 
     with open(tracking_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
+def transformed_obo_exists(name: str, iri: str) -> bool:
+    """
+    Read tracking.yaml to determine if transformed version of this OBO exists.
+
+    :param name: string of short logger name, e.g., bfo
+    :param iri: iri of OBO version
+    :return: boolean, True if this OBO and version already exist as transformed
+    """
+
+    tracking_path = os.path.join("data", track_file_path)
+
+    with open(tracking_path, 'r') as track_file:
+        tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
+
+    #We only check the most recent version - if we are transforming an old version,
+    #then let it happen
+    if tracking["ontologies"][name]["current_iri"] == iri:
+        return True
+    else:
+        return False
+
 def download_ontology(url: str, file: str, logger: object) -> bool:
-    """Download ontology from URL
+    """
+    Download ontology from URL
 
     :param url: url to download from
     :param file: file to download into
@@ -151,9 +194,9 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         logger.error(e)  # type: ignore
         return False
 
+def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=False, s3_test=False,
+                  log_dir="logs", data_dir="data") -> None:
 
-def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None:
-    
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
     log_path = os.path.join(log_dir, "obo_transform_" + timestring + ".log")
@@ -172,11 +215,18 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
     kgx_logger.addHandler(root_logger_handler)
 
     # Get the OBO Foundry list YAML and process each
-    yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip_list=skip_list)
+    yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
 
     successful_transforms = []
     errored_transforms = []
     failed_transforms = []
+
+    if len(skip) >0:
+      kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
+    if save_local:
+      kg_obo_logger.info("Will retain all downloaded files.")
+    if s3_test:
+      kg_obo_logger.info("Will test S3 upload instead of actually uploading.")
 
     for ontology in tqdm(yaml_onto_list_filtered, "processing ontologies"):
         ontology_name = ontology['id']
@@ -194,7 +244,7 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
         base_obo_path = os.path.join(data_dir, ontology_name)
         if not os.path.exists(base_obo_path):
             os.mkdir(base_obo_path)
-        
+
         # Downloaded OBOs are still tempfiles as we don't intend to keep them
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
@@ -205,12 +255,16 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
                 continue
-            
-            # TODO: Decide whether we need to transform based on version IRI
-            
+
             owl_iri, owl_version = get_owl_iri(tfile.name)
-            kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}") 
+            kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
+
+            #Check version here
+            if transformed_obo_exists(ontology_name, owl_iri):
+                kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
+                print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
+                continue
 
             versioned_obo_path = os.path.join(base_obo_path, owl_version)
             if not os.path.exists(versioned_obo_path):
@@ -240,13 +294,34 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
 
                 kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
 
+                kg_obo_logger.info("Uploading...")
+                if bucket != "":
+                    remote_path = "kg-obo"
+                    if not s3_test:
+                        kg_obo.upload.upload_dir_to_s3(os.path.dirname(os.path.dirname(versioned_obo_path)),bucket,
+                                                       remote_path,make_public=True)
+                    else:
+                        kg_obo.upload.mock_upload_dir_to_s3(os.path.dirname(os.path.dirname(versioned_obo_path)),bucket,
+                                                       remote_path,make_public=True)
+                else:
+                    kg_obo_logger.info("Bucket name not provided. Not uploading.")
+
+                if not save_local:
+                    for filename in os.listdir(data_dir):
+                        file_path = os.path.join(data_dir, filename)
+                        if filename != track_file_path:
+                            if os.path.isfile(file_path) or os.path.islink(file_path):
+                                os.unlink(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
+
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
                 errored_transforms.append(ontology_name)
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
-            
+
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
     if len(errored_transforms) > 0:
@@ -255,10 +330,3 @@ def run_transform(skip_list: list = [], log_dir="logs", data_dir="data") -> None
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
-    # In practice, this happens once per transform so we can remove the raw download and move on
-    # But for now we are doing initial population of the collection so we'll do it all at once.
-    
-    with open("s3_config", "r") as config_file:
-        s3_bucket = config_file.read()
-    kg_obo_logger.info("Uploading...")
-    kg_obo.upload.upload_dir_to_s3("data",s3_bucket,"data")
