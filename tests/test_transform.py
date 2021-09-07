@@ -176,9 +176,9 @@ class TestRunTransform(TestCase):
         self.assertEqual(("NA", "release"), iri)
            
     def test_retrieve_obofoundry_yaml_select(self):
-        yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/version-control/tests/resources/ontologies.yml", skip=[],get_only=[])
+        yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=[])
         self.assertEqual(yaml_onto_list_filtered, self.parsed_obo_yaml_sample)
-        yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/version-control/tests/resources/ontologies.yml", skip=["chebi"],get_only=[])
+        yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=["chebi"],get_only=[])
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
-        yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/version-control/tests/resources/ontologies.yml", skip=[],get_only=["bfo"])
+        yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=["bfo"])
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
