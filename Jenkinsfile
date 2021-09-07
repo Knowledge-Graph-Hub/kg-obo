@@ -70,8 +70,10 @@ pipeline {
             steps {
                 dir('./gitrepo') {
                     echo 'do nothing for now'
-                    // TODO: remove --get_only bfo
-                    sh '. venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data'
+                    withCredentials([file(credentialsId: 's3cmd_kg_hub_push_configuration', variable: 'S3CMD_CFG')]) {
+                        // TODO: remove --get_only bfo
+                        sh '. venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data'
+                    }
                 }
             }
         }
