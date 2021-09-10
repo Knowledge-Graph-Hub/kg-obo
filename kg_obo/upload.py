@@ -4,6 +4,31 @@ from moto import mock_s3 # type: ignore
 import os
 import logging
 
+def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
+    """
+    Checks on existence of the tracking.yaml file on S3.
+    :param s3_bucket: str ID of the bucket to upload to
+    :param s3_bucket_dir: str of name of directory to create on S3
+    :return: boolean returns True if tracking file exists, and False otherwise.
+    """
+    
+    tracking_file_exists = False
+
+    tracking_file_name = "tracking.yaml"
+    
+    client = boto3.client('s3')
+    s3_path = os.path.join(s3_bucket_dir, tracking_file_name)
+    print(f"Searching {s3_path} in {s3_bucket}")
+    
+    try:
+        client.head_object(Bucket=s3_bucket, Key=s3_path)
+        tracking_file_exists = True
+    except botocore.exceptions.ClientError:
+        tracking_file_exists = False
+
+    return tracking_file_exists
+
+
 def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                      make_public=False) -> None:
     """
