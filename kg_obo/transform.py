@@ -159,6 +159,8 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
 
     client.upload_file(track_file_local_path, bucket)
 
+    os.unlink(track_local_file_path)
+
 def transformed_obo_exists(name: str, iri: str) -> bool:
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
