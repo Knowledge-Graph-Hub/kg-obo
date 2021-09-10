@@ -211,7 +211,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         logger.error(e)  # type: ignore
         return False
 
-def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=False, s3_test=False,
+def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_local=False, s3_test=False,
                   log_dir="logs", data_dir="data") -> None:
 
     # Set up logging
@@ -316,7 +316,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
                 kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
 
                 kg_obo_logger.info("Uploading...")
-                if bucket != "":
+                if bucket != "bucket":
                     if not s3_test:
                         kg_obo.upload.upload_dir_to_s3(os.path.dirname(os.path.dirname(versioned_obo_path)),bucket,
                                                        remote_path,make_public=True)
