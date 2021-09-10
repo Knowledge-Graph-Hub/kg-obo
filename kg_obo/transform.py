@@ -5,11 +5,15 @@ from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
 import requests  # type: ignore
 from datetime import datetime
+
+import boto3  # type: ignore
+
 import os
 import shutil
 import logging
 import mmap
 import re
+import sys
 
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
@@ -19,6 +23,9 @@ import kg_obo.upload
 
 # Constants
 track_file_path = "tracking.yaml"
+remote_path = "kg-obo"
+track_file_local_path = os.path.join("data", track_file_path)
+track_file_remote_path = os.path.join(remote_path, track_file_path)
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
@@ -125,15 +132,17 @@ def get_owl_iri(input_file_name: str) -> tuple:
 def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
-
+    Note this tracking file is on the root of the S3 kg-obo directory.
     :param name: name of OBO, as OBO ID
     :param iri: full OBO VersionIRI, as URL
     :param version: short OBO version
     """
 
-    tracking_path = os.path.join("data", track_file_path)
+    client = boto3.client('s3')
 
-    with open(tracking_path, 'r') as track_file:
+    client.download_file(bucket, track_file_remote_path, track_file_local_path)
+
+    with open(track_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
     #If we already have a version, move it to archive
@@ -145,8 +154,10 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
         tracking["ontologies"][name]["current_iri"] = iri
         tracking["ontologies"][name]["current_version"] = version
 
-    with open(tracking_path, 'w') as track_file:
+    with open(track_file_local_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
+
+    client.upload_file(track_file_local_path, bucket)
 
 def transformed_obo_exists(name: str, iri: str) -> bool:
     """
@@ -157,10 +168,14 @@ def transformed_obo_exists(name: str, iri: str) -> bool:
     :return: boolean, True if this OBO and version already exist as transformed
     """
 
-    tracking_path = os.path.join("data", track_file_path)
+    client = boto3.client('s3')
 
-    with open(tracking_path, 'r') as track_file:
+    client.download_file(bucket, track_file_remote_path, track_file_local_path)
+
+    with open(track_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
+
+    os.unlink(track_file_local_path)
 
     #We only check the most recent version - if we are transforming an old version,
     #then let it happen
@@ -213,6 +228,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
     kgx_logger = get_logger()
     kgx_logger.setLevel(log_level)
     kgx_logger.addHandler(root_logger_handler)
+    
+    # Check on existence of tracking file, and quit if it doesn't exist
+    if not kg_obo.upload.check_tracking(bucket,remote_path):
+        sys.exit("Cannot locate tracking file on remote storage. Exiting...")
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
@@ -296,7 +315,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="", save_local=Fa
 
                 kg_obo_logger.info("Uploading...")
                 if bucket != "":
-                    remote_path = "kg-obo"
                     if not s3_test:
                         kg_obo.upload.upload_dir_to_s3(os.path.dirname(os.path.dirname(versioned_obo_path)),bucket,
                                                        remote_path,make_public=True)
