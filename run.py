@@ -21,7 +21,8 @@ from kg_obo.transform import run_transform
                help="""One or more OBOs to retreive and transform, and only these,
                      comma-delimited and named by their IDs, e.g., bfo.""")
 @click.option("--bucket",
-               default="",
+               required=True,
+               default="bucket",
                nargs=1,
                help="The name of an AWS S3 bucket to upload transforms to.")
 @click.option("--save_local",
