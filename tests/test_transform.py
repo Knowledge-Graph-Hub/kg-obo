@@ -115,7 +115,7 @@ class TestRunTransform(TestCase):
                        'url': 'http://zfin.org/action/expression/experiment?id=ZDB-EXP-190627-10'
                        }], 'user': 'http://zfin.org'}],
             }]
-        
+
     @mock.patch('requests.get')
     @mock.patch('kg_obo.transform.retrieve_obofoundry_yaml')
     @mock.patch('kg_obo.obolibrary_utils.base_url_if_exists')
@@ -174,7 +174,7 @@ class TestRunTransform(TestCase):
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("NA", "release"), iri)
-           
+
     def test_retrieve_obofoundry_yaml_select(self):
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=[])
         self.assertEqual(yaml_onto_list_filtered, self.parsed_obo_yaml_sample)
@@ -189,5 +189,7 @@ class TestRunTransform(TestCase):
         iri = ""
         version = ""
         bucket = "test"
-        track_obo_version(name, iri, version, bucket)
+        track_obo_version(name, iri, version, bucket,
+                          "tests/resources/tracking.yaml",
+                          "kg-obo/tracking.yaml")
         self.assertTrue(mock_boto.called)

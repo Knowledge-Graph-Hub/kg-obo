@@ -21,12 +21,6 @@ from rdflib.exceptions import ParserError # type: ignore
 import kg_obo.obolibrary_utils
 import kg_obo.upload
 
-# Constants
-track_file_path = "tracking.yaml"
-remote_path = "kg-obo"
-track_file_local_path = os.path.join("data", track_file_path)
-track_file_remote_path = os.path.join(remote_path, track_file_path)
-
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
         skip: list = [],
@@ -129,13 +123,19 @@ def get_owl_iri(input_file_name: str) -> tuple:
 
     return (iri, version)
 
-def track_obo_version(name: str = "", iri: str = "", version: str = "", bucket: str = "") -> None:
+def track_obo_version(name: str = "", iri: str = "",
+                      version: str = "", bucket: str = "",
+                      track_file_local_path: str = "data/tracking.yaml",
+                      track_file_remote_path: str = "kg-obo/tracking.yaml"
+                      ) -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
     Note this tracking file is on the root of the S3 kg-obo directory.
     :param name: name of OBO, as OBO ID
     :param iri: full OBO VersionIRI, as URL
     :param version: short OBO version
+    :param track_file_local_path: where to look for local tracking.yaml file
+    :param track_file_remote_path: where to look for remote tracking.yaml file
     """
 
     client = boto3.client('s3')
@@ -161,7 +161,11 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "", bucket: 
 
     os.unlink(track_file_local_path)
 
-def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "") -> bool:
+
+def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
+                           tracking_file_local_path: str = "data/tracking.yaml",
+                           tracking_file_remote_path: str = "kg-obo/tracking.yaml"
+                           ) -> bool:
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
 
@@ -169,19 +173,19 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "")
     :param iri: iri of OBO version
     :return: boolean, True if this OBO and version already exist as transformed
     """
-    
+
     #If testing, assume OBO transform does not exist as we aren't really reading tracking
     if s3_test:
         return False
 
     client = boto3.client('s3')
 
-    client.download_file(bucket, track_file_remote_path, track_file_local_path)
+    client.download_file(bucket, tracking_file_remote_path, tracking_file_local_path)
 
-    with open(track_file_local_path, 'r') as track_file:
+    with open(tracking_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
-    os.unlink(track_file_local_path)
+    os.unlink(tracking_file_local_path)
 
     #We only check the most recent version - if we are transforming an old version,
     #then let it happen
@@ -215,8 +219,14 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         logger.error(e)  # type: ignore
         return False
 
-def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_local=False, s3_test=False,
-                  log_dir="logs", data_dir="data") -> None:
+
+def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
+                  save_local=False, s3_test=False,
+                  log_dir="logs", data_dir="data",
+                  remote_path="kg-obo",
+                  track_file_local_path: str = "data/tracking.yaml",
+                  tracking_file_remote_path: str = "kg-obo/tracking.yaml"
+                  ) -> None:
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -234,29 +244,29 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
     kgx_logger = get_logger()
     kgx_logger.setLevel(log_level)
     kgx_logger.addHandler(root_logger_handler)
-    
+
     # Check if there's already a run in progress (i.e., lock file exists)
     if s3_test:
-        if kg_obo.upload.mock_check_lock(bucket,remote_path):
+        if kg_obo.upload.mock_check_lock(bucket, tracking_file_remote_path):
             sys.exit("Could not mock checking for lock file. Exiting...")
     else:
-        if kg_obo.upload.check_lock(bucket,remote_path):
+        if kg_obo.upload.check_lock(bucket, tracking_file_remote_path):
             sys.exit("A kg-obo run appears to be in progress. Exiting...")
-    
+
     # Now set the lockfile
     if s3_test:
-        if not kg_obo.upload.mock_set_lock(bucket,remote_path,unlock=False):
+        if not kg_obo.upload.mock_set_lock(bucket, tracking_file_remote_path, unlock=False):
             sys.exit("Could not mock setting lock file. Exiting...")
     else:
-        if not kg_obo.upload.set_lock(bucket,remote_path,unlock=False):
+        if not kg_obo.upload.set_lock(bucket, tracking_file_remote_path, unlock=False):
             sys.exit("Could not set lock file on remote server. Exiting...")
-     
+
     # Check on existence of tracking file, and quit if it doesn't exist
     if s3_test:
-        if not kg_obo.upload.mock_check_tracking(bucket,remote_path):
+        if not kg_obo.upload.mock_check_tracking(bucket, tracking_file_remote_path):
             sys.exit("Could not mock checking tracking file. Exiting...")
     else:
-        if not kg_obo.upload.check_tracking(bucket,remote_path):
+        if not kg_obo.upload.check_tracking(bucket, tracking_file_remote_path):
             sys.exit("Cannot locate tracking file on remote storage. Exiting...")
 
     # Get the OBO Foundry list YAML and process each
@@ -334,7 +344,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
             if success and not errors:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
-                
+
                 if not s3_test:
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
 
@@ -354,7 +364,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
                 if not save_local:
                     for filename in os.listdir(data_dir):
                         file_path = os.path.join(data_dir, filename)
-                        if filename != track_file_path:
+                        if filename != track_file_local_path:
                             if os.path.isfile(file_path) or os.path.islink(file_path):
                                 os.unlink(file_path)
                             elif os.path.isdir(file_path):
@@ -382,4 +392,4 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
     else:
         if not kg_obo.upload.set_lock(bucket,remote_path,unlock=True):
             sys.exit("Could not set lock file on remote server. Exiting...")
-     
+
