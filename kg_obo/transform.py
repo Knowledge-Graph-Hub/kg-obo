@@ -245,10 +245,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
     
     # Now set the lockfile
     if s3_test:
-        if not kg_obo.upload.mock_set_lock(bucket,remote_path):
+        if not kg_obo.upload.mock_set_lock(bucket,remote_path,unlock=False):
             sys.exit("Could not mock setting lock file. Exiting...")
     else:
-        if not kg_obo.upload.set_lock(bucket,remote_path):
+        if not kg_obo.upload.set_lock(bucket,remote_path,unlock=False):
             sys.exit("Could not set lock file on remote server. Exiting...")
      
     # Check on existence of tracking file, and quit if it doesn't exist
@@ -375,3 +375,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
+    # Now un-set the lockfile
+    if s3_test:
+        if not kg_obo.upload.mock_set_lock(bucket,remote_path,unlock=True):
+            sys.exit("Could not mock setting lock file. Exiting...")
+    else:
+        if not kg_obo.upload.set_lock(bucket,remote_path,unlock=True):
+            sys.exit("Could not set lock file on remote server. Exiting...")
+     

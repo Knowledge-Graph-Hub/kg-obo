@@ -58,7 +58,7 @@ def check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
 
     return lock_exists
 
-def set_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
+def set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
     """
     Creates a lock file on S3 to avoid concurrent runs.
     :param s3_bucket: str ID of the bucket to upload to
@@ -74,13 +74,17 @@ def set_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     s3_path = os.path.join(s3_bucket_dir, lock_file_name)
     
     try:
-        client.put_object(Bucket=s3_bucket, Key=s3_path)
-        lock_created = True
+        if not unlock:
+            client.put_object(Bucket=s3_bucket, Key=s3_path)
+            lock_created = True
+        else:
+            client.delete_object(Bucket=s3_bucket, Key=s3_path)
+            lock_created = True
     except botocore.exceptions.ClientError as e:
         print(f"Encountered error in setting lockfile on S3: {e}")
         lock_created = False
     except botocore.exceptions.NoCredentialsError:
-        print("Could not find AWS S3 credentials, so could not create lock status.")
+        print("Could not find AWS S3 credentials, so could not set lock status.")
         lock_created = False #It doesn't really exist but we can't continue anyway
 
     return lock_created
@@ -181,7 +185,7 @@ def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     return lock_exists
 
 @mock_s3
-def mock_set_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
+def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
     """
     Mocks creating a lock file on S3 to avoid concurrent runs.
     :param s3_bucket: str ID of the bucket to upload to
@@ -203,14 +207,20 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     
     # For mock purposes, we need to create the virtual bucket first. 
     try:
-        client.create_bucket(Bucket=s3_bucket)
-        client.put_object(Bucket=s3_bucket, Key=s3_path)
-        lock_created = True
+        if not unlock:
+            client.create_bucket(Bucket=s3_bucket)
+            client.put_object(Bucket=s3_bucket, Key=s3_path)
+            lock_created = True
+        else:
+            client.create_bucket(Bucket=s3_bucket)
+            client.put_object(Bucket=s3_bucket, Key=s3_path)
+            client.delete_object(Bucket=s3_bucket, Key=s3_path)
+            lock_created = True
     except botocore.exceptions.ClientError as e:
         print(f"Encountered error in mock setting lockfile on S3: {e}")
         lock_created = False
     except botocore.exceptions.NoCredentialsError:
-        print("Could not find AWS S3 credentials, so could not mock create lock status.")
+        print("Could not find AWS S3 credentials, so could not mock set lock status.")
         lock_created = False #It doesn't really exist but we can't continue anyway
 
     return lock_created
