@@ -184,7 +184,7 @@ class TestRunTransform(TestCase):
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
 
     @mock.patch('boto3.client')
-    def test_track_obo_version(self, mock_boto)
+    def test_track_obo_version(self, mock_boto):
         name = "bfo"
         iri = ""
         version = ""
