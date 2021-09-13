@@ -129,7 +129,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
 
     return (iri, version)
 
-def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
+def track_obo_version(name: str = "", iri: str = "", version: str = "", bucket: str = "") -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
     Note this tracking file is on the root of the S3 kg-obo directory.
@@ -159,9 +159,9 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
 
     client.upload_file(track_file_local_path, bucket)
 
-    os.unlink(track_local_file_path)
+    os.unlink(track_file_local_path)
 
-def transformed_obo_exists(name: str, iri: str, s3_test=False) -> bool:
+def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "") -> bool:
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
 
@@ -306,7 +306,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
             #Check version here
-            if transformed_obo_exists(ontology_name, owl_iri, s3_test):
+            if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket):
                 kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
                 print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
                 continue
@@ -336,7 +336,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
                 successful_transforms.append(ontology_name)
                 
                 if not s3_test:
-                    track_obo_version(ontology_name, owl_iri, owl_version, s3_test)
+                    track_obo_version(ontology_name, owl_iri, owl_version, bucket)
 
                 kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
 
