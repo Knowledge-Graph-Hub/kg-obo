@@ -15,7 +15,7 @@ def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     tracking_file_exists = False
 
     tracking_file_name = "tracking.yaml"
-    
+
     client = boto3.client('s3')
     s3_path = os.path.join(s3_bucket_dir, tracking_file_name)
     print(f"Searching {s3_path} in {s3_bucket}")
@@ -65,6 +65,34 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                 client.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
             except botocore.exceptions.ParamValidationError as e: #Raised when bucket ID is wrong
                 print(e)
+
+@mock_s3
+def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
+    """
+    Mock checking on existence of the tracking.yaml file on S3.
+    :param s3_bucket: str ID of the bucket to upload to
+    :param s3_bucket_dir: str of name of directory to create on S3
+    :return: boolean returns True if tracking file exists, and False otherwise.
+    """
+    
+    os.environ['AWS_ACCESS_KEY_ID'] = 'test'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
+    os.environ['AWS_SECURITY_TOKEN'] = 'test'
+    os.environ['AWS_SESSION_TOKEN'] = 'test'
+
+    tracking_file_exists = False
+
+    tracking_file_name = "tracking.yaml"
+
+    client = boto3.client('s3')
+    s3_path = os.path.join(s3_bucket_dir, tracking_file_name)
+    print(f"Searching {s3_path} in {s3_bucket}")
+    
+    print("Testing S3 only, so assuming tracking.yaml exists.")
+    tracking_file_exists = True
+
+    return tracking_file_exists
+
 
 @mock_s3
 def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,

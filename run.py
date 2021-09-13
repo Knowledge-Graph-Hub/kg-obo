@@ -31,7 +31,7 @@ from kg_obo.transform import run_transform
                      Otherwise, they are deleted.""")
 @click.option("--s3_test",
                is_flag=True,
-               help="If used, upload to S3 bucket is tested only.")
+               help="If used, upload to S3 bucket is tested only and false credentials are used.")
 def run(skip, get_only, bucket, save_local, s3_test):
     run_transform(skip, get_only, bucket, save_local, s3_test)
 

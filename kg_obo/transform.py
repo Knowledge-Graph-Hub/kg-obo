@@ -161,7 +161,7 @@ def track_obo_version(name: str = "", iri: str = "", version: str = "") -> None:
 
     os.unlink(track_local_file_path)
 
-def transformed_obo_exists(name: str, iri: str) -> bool:
+def transformed_obo_exists(name: str, iri: str, s3_test=False) -> bool:
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
 
@@ -169,6 +169,10 @@ def transformed_obo_exists(name: str, iri: str) -> bool:
     :param iri: iri of OBO version
     :return: boolean, True if this OBO and version already exist as transformed
     """
+    
+    #If testing, assume OBO transform does not exist as we aren't really reading tracking
+    if s3_test:
+        return False
 
     client = boto3.client('s3')
 
@@ -232,8 +236,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
     kgx_logger.addHandler(root_logger_handler)
     
     # Check on existence of tracking file, and quit if it doesn't exist
-    if not kg_obo.upload.check_tracking(bucket,remote_path):
-        sys.exit("Cannot locate tracking file on remote storage. Exiting...")
+    if s3_test:
+        if not kg_obo.upload.mock_check_tracking(bucket,remote_path):
+            sys.exit("Could not mock checking tracking file. Exiting...")
+    else:
+        if not kg_obo.upload.check_tracking(bucket,remote_path):
+            sys.exit("Cannot locate tracking file on remote storage. Exiting...")
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
@@ -282,7 +290,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
             #Check version here
-            if transformed_obo_exists(ontology_name, owl_iri):
+            if transformed_obo_exists(ontology_name, owl_iri, s3_test):
                 kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
                 print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
                 continue
@@ -310,8 +318,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
             if success and not errors:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
-
-                track_obo_version(ontology_name, owl_iri, owl_version)
+                
+                if not s3_test:
+                    track_obo_version(ontology_name, owl_iri, owl_version, s3_test)
 
                 kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
 
