@@ -136,7 +136,7 @@ class TestRunTransform(TestCase):
         with mock.patch('kg_obo.transform.download_ontology', return_value=False),\
                 tempfile.TemporaryDirectory() as td:
             mock_kgx_transform.reset_mock()
-            run_transform(log_dir=td)
+            run_transform(log_dir=td,s3_test=True)
             self.assertFalse(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
