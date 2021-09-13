@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
-    get_owl_iri, retrieve_obofoundry_yaml
+    get_owl_iri, retrieve_obofoundry_yaml, track_obo_version
 
 
 class TestRunTransform(TestCase):
@@ -182,3 +182,12 @@ class TestRunTransform(TestCase):
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=["bfo"])
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
+
+    @mock.patch('boto3.client')
+    def test_track_obo_version(self, mock_boto)
+        name = "bfo"
+        iri = ""
+        version = ""
+        bucket = "test"
+        track_obo_version(name, iri, version, bucket)
+        self.assertTrue(mock_boto.called)
