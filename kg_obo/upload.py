@@ -25,6 +25,9 @@ def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
         tracking_file_exists = True
     except botocore.exceptions.ClientError:
         tracking_file_exists = False
+    except botocore.exceptions.NoCredentialsError:
+        print("Could not find AWS S3 credentials, so could not check tracking.")
+        tracking_file_exists = False
 
     return tracking_file_exists
 
