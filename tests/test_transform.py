@@ -189,7 +189,7 @@ class TestRunTransform(TestCase):
         iri = ""
         version = ""
         bucket = "test"
-        track_obo_version(name, iri, version, bucket,
-                          "tests/resources/tracking.yaml",
-                          "kg-obo/tracking.yaml")
+        track_obo_version(name, iri, version, bucket, 
+                          track_file_local_path="data/tracking.yaml",
+                          track_file_remote_path="test/resources/tracking.yaml")
         self.assertTrue(mock_boto.called)
