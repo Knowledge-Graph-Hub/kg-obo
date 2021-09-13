@@ -22,9 +22,9 @@ from kg_obo.transform import run_transform
                      comma-delimited and named by their IDs, e.g., bfo.""")
 @click.option("--bucket",
                required=True,
-               default="bucket",
                nargs=1,
-               help="The name of an AWS S3 bucket to upload transforms to.")
+               help="""The name of an AWS S3 bucket to upload transforms to.
+                     Can be anything if the s3_test option is set.""")
 @click.option("--save_local",
                is_flag=True,
                help="""If used, keeps all transforms, tracking file, and index files in the directory.
