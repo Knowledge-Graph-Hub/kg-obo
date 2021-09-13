@@ -235,6 +235,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
     kgx_logger.setLevel(log_level)
     kgx_logger.addHandler(root_logger_handler)
     
+    # Check if there's already a run in progress (i.e., lock file exists)
+    if s3_test:
+        if kg_obo.upload.mock_check_lock(bucket,remote_path):
+            sys.exit("Could not mock checking for lock file. Exiting...")
+    else:
+        if kg_obo.upload.check_lock(bucket,remote_path):
+            sys.exit("A kg-obo run appears to be in progress. Exiting...")
+     
     # Check on existence of tracking file, and quit if it doesn't exist
     if s3_test:
         if not kg_obo.upload.mock_check_tracking(bucket,remote_path):

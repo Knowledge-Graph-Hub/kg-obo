@@ -32,6 +32,33 @@ def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     return tracking_file_exists
 
 
+def check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
+    """
+    Checks on existence of a lock file on S3 to avoid concurrent runs.
+    :param s3_bucket: str ID of the bucket to upload to
+    :param s3_bucket_dir: str of name of directory to create on S3
+    :return: boolean returns True if lock file exists, and False otherwise.
+    """
+    
+    lock_exists = False
+
+    lock_file_name = "lock"
+
+    client = boto3.client('s3')
+    s3_path = os.path.join(s3_bucket_dir, lock_file_name)
+    
+    try:
+        client.head_object(Bucket=s3_bucket, Key=s3_path)
+        lock_exists = True
+    except botocore.exceptions.ClientError:
+        lock_exists = False
+    except botocore.exceptions.NoCredentialsError:
+        print("Could not find AWS S3 credentials, so could not check for lock status.")
+        lock_exists = True #It doesn't really exist but we can't continue anyway
+
+    return lock_exists
+
+
 def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                      make_public=False) -> None:
     """
@@ -92,6 +119,39 @@ def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     tracking_file_exists = True
 
     return tracking_file_exists
+
+@mock_s3
+def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
+    """
+    Mock checking on existence of a lock file on S3 to avoid concurrent runs.
+    :param s3_bucket: str ID of the bucket to upload to
+    :param s3_bucket_dir: str of name of directory to create on S3
+    :return: boolean returns True if lock file exists, and False otherwise.
+    """
+    
+    os.environ['AWS_ACCESS_KEY_ID'] = 'test'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
+    os.environ['AWS_SECURITY_TOKEN'] = 'test'
+    os.environ['AWS_SESSION_TOKEN'] = 'test'
+
+    lock_exists = False
+
+    lock_file_name = "lock"
+
+    client = boto3.client('s3')
+    s3_path = os.path.join(s3_bucket_dir, lock_file_name)
+    print("Testing S3 only, so assuming lock is not set.")
+    
+    try:
+        client.head_object(Bucket=s3_bucket, Key=s3_path)
+        lock_exists = True
+    except botocore.exceptions.ClientError:
+        lock_exists = False
+    except botocore.exceptions.NoCredentialsError:
+        print("Could not find AWS S3 credentials, so could not check for lock status.")
+        lock_exists = True #It doesn't really exist but we can't continue anyway
+
+    return lock_exists
 
 
 @mock_s3
