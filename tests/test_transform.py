@@ -125,7 +125,7 @@ class TestRunTransform(TestCase):
                            mock_retrieve_obofoundry_yaml, mock_get):
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
         with tempfile.TemporaryDirectory() as td:
-            run_transform(log_dir=td)
+            run_transform(log_dir=td,s3_test=True)
             self.assertTrue(mock_get.called)
             self.assertTrue(mock_base_url.called)
             self.assertTrue(mock_get_owl_iri.called)
