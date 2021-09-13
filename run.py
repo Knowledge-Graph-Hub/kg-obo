@@ -33,12 +33,7 @@ from kg_obo.transform import run_transform
                is_flag=True,
                help="If used, upload to S3 bucket is tested only.")
 def run(skip, get_only, bucket, save_local, s3_test):
-    if os.path.isfile("lock"):
-        sys.exit("KG-OBO is already running. Exiting...")
-    else:
-        Path("lock").touch()
-        run_transform(skip, get_only, bucket, save_local, s3_test)
-        os.remove("lock")
+    run_transform(skip, get_only, bucket, save_local, s3_test)
 
 if __name__ == '__main__':
   run()
