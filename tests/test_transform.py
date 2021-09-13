@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
-    get_owl_iri, retrieve_obofoundry_yaml
+    get_owl_iri, retrieve_obofoundry_yaml, track_obo_version
 
 
 class TestRunTransform(TestCase):
@@ -115,7 +115,7 @@ class TestRunTransform(TestCase):
                        'url': 'http://zfin.org/action/expression/experiment?id=ZDB-EXP-190627-10'
                        }], 'user': 'http://zfin.org'}],
             }]
-        
+
     @mock.patch('requests.get')
     @mock.patch('kg_obo.transform.retrieve_obofoundry_yaml')
     @mock.patch('kg_obo.obolibrary_utils.base_url_if_exists')
@@ -125,7 +125,7 @@ class TestRunTransform(TestCase):
                            mock_retrieve_obofoundry_yaml, mock_get):
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
         with tempfile.TemporaryDirectory() as td:
-            run_transform(log_dir=td)
+            run_transform(log_dir=td,s3_test=True)
             self.assertTrue(mock_get.called)
             self.assertTrue(mock_base_url.called)
             self.assertTrue(mock_get_owl_iri.called)
@@ -136,7 +136,7 @@ class TestRunTransform(TestCase):
         with mock.patch('kg_obo.transform.download_ontology', return_value=False),\
                 tempfile.TemporaryDirectory() as td:
             mock_kgx_transform.reset_mock()
-            run_transform(log_dir=td)
+            run_transform(log_dir=td,s3_test=True)
             self.assertFalse(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
@@ -174,7 +174,7 @@ class TestRunTransform(TestCase):
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("NA", "release"), iri)
-           
+
     def test_retrieve_obofoundry_yaml_select(self):
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=[])
         self.assertEqual(yaml_onto_list_filtered, self.parsed_obo_yaml_sample)
@@ -182,3 +182,14 @@ class TestRunTransform(TestCase):
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=["bfo"])
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
+
+    @mock.patch('boto3.client')
+    def test_track_obo_version(self, mock_boto):
+        name = "bfo"
+        iri = ""
+        version = ""
+        bucket = "test"
+        track_obo_version(name, iri, version, bucket, 
+                          track_file_local_path="tests/resources/tracking.yaml",
+                          track_file_remote_path="tests/resources/tracking.yaml")
+        self.assertTrue(mock_boto.called)
