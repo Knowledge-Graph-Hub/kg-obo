@@ -242,6 +242,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket", save_lo
     else:
         if kg_obo.upload.check_lock(bucket,remote_path):
             sys.exit("A kg-obo run appears to be in progress. Exiting...")
+    
+    # Now set the lockfile
+    if s3_test:
+        if not kg_obo.upload.mock_set_lock(bucket,remote_path):
+            sys.exit("Could not mock setting lock file. Exiting...")
+    else:
+        if not kg_obo.upload.set_lock(bucket,remote_path):
+            sys.exit("Could not set lock file on remote server. Exiting...")
      
     # Check on existence of tracking file, and quit if it doesn't exist
     if s3_test:
