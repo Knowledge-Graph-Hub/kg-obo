@@ -144,10 +144,20 @@ def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
 
     client = boto3.client('s3')
     s3_path = os.path.join(s3_bucket_dir, tracking_file_name)
-    print(f"Searching {s3_path} in {s3_bucket}")
+    print(f"Mock searching {s3_path} in {s3_bucket}")
     
-    print("Testing S3 only, so assuming tracking.yaml exists.")
-    tracking_file_exists = True
+    # Create simulated bucket and track file first
+    client.create_bucket(Bucket=s3_bucket)
+    client.put_object(Bucket=s3_bucket, Key=s3_path)
+    
+    try:
+        client.head_object(Bucket=s3_bucket, Key=s3_path)
+        tracking_file_exists = True
+    except botocore.exceptions.ClientError:
+        tracking_file_exists = False
+    except botocore.exceptions.NoCredentialsError:
+        print("Could not find AWS S3 credentials, so could not check tracking.")
+        tracking_file_exists = False
 
     return tracking_file_exists
 
