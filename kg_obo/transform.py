@@ -225,7 +225,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   log_dir="logs", data_dir="data",
                   remote_path="kg-obo",
                   track_file_local_path: str = "data/tracking.yaml",
-                  tracking_file_remote_path: str = "kg-obo/tracking.yaml"
+                  tracking_file_remote_path: str = "kg-obo/tracking.yaml",
+                  lock_file_remote_path: str = "kg-obo/lock"
                   ) -> None:
 
     # Set up logging
@@ -247,18 +248,18 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     # Check if there's already a run in progress (i.e., lock file exists)
     if s3_test:
-        if kg_obo.upload.mock_check_lock(bucket, tracking_file_remote_path):
+        if kg_obo.upload.mock_check_lock(bucket, lock_file_remote_path):
             sys.exit("Could not mock checking for lock file. Exiting...")
     else:
-        if kg_obo.upload.check_lock(bucket, tracking_file_remote_path):
+        if kg_obo.upload.check_lock(bucket, lock_file_remote_path):
             sys.exit("A kg-obo run appears to be in progress. Exiting...")
 
     # Now set the lockfile
     if s3_test:
-        if not kg_obo.upload.mock_set_lock(bucket, tracking_file_remote_path, unlock=False):
+        if not kg_obo.upload.mock_set_lock(bucket, lock_file_remote_path, unlock=False):
             sys.exit("Could not mock setting lock file. Exiting...")
     else:
-        if not kg_obo.upload.set_lock(bucket, tracking_file_remote_path, unlock=False):
+        if not kg_obo.upload.set_lock(bucket, lock_file_remote_path, unlock=False):
             sys.exit("Could not set lock file on remote server. Exiting...")
 
     # Check on existence of tracking file, and quit if it doesn't exist
@@ -326,7 +327,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 os.mkdir(versioned_obo_path)
 
             # Use kgx to transform, but save errors to log
-            transform_errors: list = []
             success, errors = kgx_transform(input_file=[tfile.name],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_name),
