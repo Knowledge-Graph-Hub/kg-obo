@@ -172,7 +172,7 @@ class TestRunTransform(TestCase):
         iri = get_owl_iri('tests/resources/download_ontology/bfo.owl')
         self.assertEqual(iri, ('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26'))
         with pytest.raises(Exception):
-            iri = get_owl_iri('tests/resources/tracking.yaml')
+            iri = get_owl_iri('')
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
