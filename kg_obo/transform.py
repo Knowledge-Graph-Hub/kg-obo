@@ -326,7 +326,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 os.mkdir(versioned_obo_path)
 
             # Use kgx to transform, but save errors to log
-            transform_errors: list = []
             success, errors = kgx_transform(input_file=[tfile.name],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_name),
