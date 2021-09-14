@@ -40,10 +40,8 @@ def check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     
     lock_exists = False
 
-    lock_file_name = "lock"
-
     client = boto3.client('s3')
-    s3_path = os.path.join(s3_bucket_dir, lock_file_name)
+    s3_path = s3_bucket_dir
     
     try:
         client.head_object(Bucket=s3_bucket, Key=s3_path)
@@ -66,10 +64,8 @@ def set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
     
     lock_created = False
 
-    lock_file_name = "lock"
-
     client = boto3.client('s3')
-    s3_path = os.path.join(s3_bucket_dir, lock_file_name)
+    s3_path = s3_bucket_dir
     
     try:
         if not unlock:
@@ -176,7 +172,7 @@ def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     lock_file_name = "lock"
 
     client = boto3.client('s3')
-    s3_path = os.path.join(s3_bucket_dir, lock_file_name)
+    s3_path = s3_bucket_dir
     print("Testing S3 only, so assuming lock is not set.")
     
     try:
@@ -206,10 +202,8 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
 
     lock_created = False
 
-    lock_file_name = "lock"
-
     client = boto3.client('s3')
-    s3_path = os.path.join(s3_bucket_dir, lock_file_name)
+    s3_path = s3_bucket_dir
     
     # For mock purposes, we need to create the virtual bucket first. 
     try:
