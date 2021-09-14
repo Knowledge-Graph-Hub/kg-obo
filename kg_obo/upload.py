@@ -17,7 +17,7 @@ def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     tracking_file_name = "tracking.yaml"
 
     client = boto3.client('s3')
-    s3_path = os.path.join(s3_bucket_dir, tracking_file_name)
+    s3_path = s3_bucket_dir
     print(f"Searching {s3_path} in {s3_bucket}")
     
     try:
@@ -143,7 +143,7 @@ def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     tracking_file_name = "tracking.yaml"
 
     client = boto3.client('s3')
-    s3_path = os.path.join(s3_bucket_dir, tracking_file_name)
+    s3_path = s3_bucket_dir
     print(f"Mock searching {s3_path} in {s3_bucket}")
     
     # Create simulated bucket and track file first
