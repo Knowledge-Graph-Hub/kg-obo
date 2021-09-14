@@ -69,14 +69,17 @@ pipeline {
         stage('Transform') {
             steps {
                 dir('./gitrepo') {
-                    echo 'do nothing for now'
-                    withCredentials([
-                        file(credentialsId: 's3cmd_kg_hub_push_configuration', variable: 'S3CMD_CFG'),
-                        file(credentialsId: 'aws_kg_hub_push_json', variable: 'AWS_JSON'),
-                        string(credentialsId: 'aws_kg_hub_access_key', variable: 'AWS_ACCESS_KEY_ID'),
-                        string(credentialsId: 'aws_kg_hub_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        // TODO: remove --get_only bfo
-                        sh '. venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data'
+                    if (env.BRANCH_NAME != 'main') {
+                        echo "Will not transform if not on correct branch."
+                    } else {
+                        withCredentials([
+                            file(credentialsId: 's3cmd_kg_hub_push_configuration', variable: 'S3CMD_CFG'),
+                            file(credentialsId: 'aws_kg_hub_push_json', variable: 'AWS_JSON'),
+                            string(credentialsId: 'aws_kg_hub_access_key', variable: 'AWS_ACCESS_KEY_ID'),
+                            string(credentialsId: 'aws_kg_hub_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
+                            // TODO: remove --get_only bfo
+                            sh '. venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data'
+                        }
                     }
                 }
             }
