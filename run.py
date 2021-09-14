@@ -21,24 +21,19 @@ from kg_obo.transform import run_transform
                help="""One or more OBOs to retreive and transform, and only these,
                      comma-delimited and named by their IDs, e.g., bfo.""")
 @click.option("--bucket",
-              default=None,
-              required=True,
-              nargs=1,
-              help="The name of an AWS S3 bucket to upload transforms to.")
+               required=True,
+               nargs=1,
+               help="""The name of an AWS S3 bucket to upload transforms to.
+                     Can be anything if the s3_test option is set.""")
 @click.option("--save_local",
                is_flag=True,
                help="""If used, keeps all transforms, tracking file, and index files in the directory.
                      Otherwise, they are deleted.""")
 @click.option("--s3_test",
                is_flag=True,
-               help="If used, upload to S3 bucket is tested only.")
+               help="If used, upload to S3 bucket is tested only and false credentials are used.")
 def run(skip, get_only, bucket, save_local, s3_test):
-    if os.path.isfile("lock"):
-        sys.exit("KG-OBO is already running. Exiting...")
-    else:
-        Path("lock").touch()
-        run_transform(skip, get_only, bucket, save_local, s3_test)
-        os.remove("lock")
+    run_transform(skip, get_only, bucket, save_local, s3_test)
 
 if __name__ == '__main__':
   run()
