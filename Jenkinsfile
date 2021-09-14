@@ -74,11 +74,13 @@ pipeline {
                             file(credentialsId: 'aws_kg_hub_push_json', variable: 'AWS_JSON'),
                             string(credentialsId: 'aws_kg_hub_access_key', variable: 'AWS_ACCESS_KEY_ID'),
                             string(credentialsId: 'aws_kg_hub_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
-                            if (env.BRANCH_NAME != 'main') {
-                                echo "Will not transform if not on correct branch."
-                            } else {
+                            script {
+                                if (env.BRANCH_NAME != 'main') {
+                                    echo "Will not transform if not on correct branch."
+                                } else {
                                 // TODO: remove --get_only bfo
-                                sh ". venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data"
+                                    sh '. venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data'
+                                }
                             }
                     }
                 }
