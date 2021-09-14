@@ -74,7 +74,8 @@ def kgx_transform(input_file: list, input_format: str,
         kgx.cli.transform(inputs=input_file,
                           input_format=input_format,
                           output=output_file,
-                          output_format=output_format)
+                          output_format=output_format,
+                          output_compression="tar.gz")
         if hasattr(logger, "_cache") and 30 in logger._cache and logger._cache[30]:  # type: ignore
             logger.error("Encountered errors in transforming or parsing.")  # type: ignore
             errors = True
