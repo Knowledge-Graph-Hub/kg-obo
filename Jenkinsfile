@@ -53,6 +53,7 @@ pipeline {
         }
 
         stage('Build kg-obo') {
+            when { anyOf { branch 'main' } }
             steps {
                 dir('./gitrepo') {
                     git(
