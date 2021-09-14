@@ -1,5 +1,6 @@
 import logging
 import tempfile
+import pytest
 from unittest import TestCase, mock
 from unittest.mock import Mock
 from botocore.exceptions import ClientError
@@ -170,6 +171,8 @@ class TestRunTransform(TestCase):
     def test_get_owl_iri(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo.owl')
         self.assertEqual(iri, ('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26'))
+        with pytest.raises(Exception):
+            iri = get_owl_iri('tests/resources/tracking.yaml')
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
