@@ -140,7 +140,7 @@ def track_obo_version(name: str = "", iri: str = "",
 
     client = boto3.client('s3')
 
-    client.download_file(bucket, track_file_remote_path, track_file_local_path)
+    client.download_file(Bucket=bucket, Key=track_file_remote_path, Filename=track_file_local_path)
 
     with open(track_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
@@ -157,7 +157,7 @@ def track_obo_version(name: str = "", iri: str = "",
     with open(track_file_local_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
-    client.upload_file(track_file_local_path, bucket)
+    client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path)
 
     os.unlink(track_file_local_path)
 
