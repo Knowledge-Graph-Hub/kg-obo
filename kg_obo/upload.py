@@ -169,8 +169,6 @@ def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
 
     lock_exists = False
 
-    lock_file_name = "lock"
-
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
     print("Testing S3 only, so assuming lock is not set.")
