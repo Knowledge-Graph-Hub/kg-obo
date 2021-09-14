@@ -78,8 +78,7 @@ pipeline {
                                 if (env.BRANCH_NAME != 'main') {
                                     echo "Will not transform if not on correct branch."
                                 } else {
-                                // TODO: remove --get_only bfo
-                                    sh '. venv/bin/activate && env && python3.8 run.py --get_only bfo --bucket kg-hub-public-data'
+                                    sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data'
                                 }
                             }
                     }
