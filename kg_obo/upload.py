@@ -14,8 +14,6 @@ def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     
     tracking_file_exists = False
 
-    tracking_file_name = "tracking.yaml"
-
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
     print(f"Searching {s3_path} in {s3_bucket}")
@@ -139,8 +137,6 @@ def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     os.environ['AWS_SESSION_TOKEN'] = 'test'
 
     tracking_file_exists = False
-
-    tracking_file_name = "tracking.yaml"
 
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
