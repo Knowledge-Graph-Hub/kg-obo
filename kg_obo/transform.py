@@ -387,9 +387,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     # Now un-set the lockfile
     if s3_test:
-        if not kg_obo.upload.mock_set_lock(bucket,remote_path,unlock=True):
+        if not kg_obo.upload.mock_set_lock(bucket,lock_file_remote_path,unlock=True):
             sys.exit("Could not mock setting lock file. Exiting...")
     else:
-        if not kg_obo.upload.set_lock(bucket,remote_path,unlock=True):
+        if not kg_obo.upload.set_lock(bucket,lock_file_remote_path,unlock=True):
             sys.exit("Could not set lock file on remote server. Exiting...")
 

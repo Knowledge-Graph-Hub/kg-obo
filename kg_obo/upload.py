@@ -11,13 +11,13 @@ def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     :param s3_bucket_dir: str of name of directory to create on S3
     :return: boolean returns True if tracking file exists, and False otherwise.
     """
-    
+
     tracking_file_exists = False
 
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
     print(f"Searching {s3_path} in {s3_bucket}")
-    
+
     try:
         client.head_object(Bucket=s3_bucket, Key=s3_path)
         tracking_file_exists = True
@@ -37,12 +37,12 @@ def check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     :param s3_bucket_dir: str of name of directory to create on S3
     :return: boolean returns True if lock file exists, and False otherwise.
     """
-    
+
     lock_exists = False
 
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
-    
+
     try:
         client.head_object(Bucket=s3_bucket, Key=s3_path)
         lock_exists = True
@@ -61,17 +61,19 @@ def set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
     :param s3_bucket_dir: str of name of directory to create on S3
     :return: boolean returns True if completed successfully, and False otherwise.
     """
-    
+
     lock_created = False
 
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
-    
+
     try:
         if not unlock:
+            print(f"creating lock file s3_bucket:{s3_bucket}, s3_path:{s3_path}")
             client.put_object(Bucket=s3_bucket, Key=s3_path)
             lock_created = True
         else:
+            print(f"deleting lock file s3_bucket:{s3_bucket}, s3_path:{s3_path}")
             client.delete_object(Bucket=s3_bucket, Key=s3_path)
             lock_created = True
     except botocore.exceptions.ClientError as e:
@@ -92,7 +94,7 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
     :param s3_bucket: str ID of the bucket to upload to
     :param s3_bucket_dir: str of name of directory to create on S3
     """
-    
+
     client = boto3.client('s3')
     for root, dirs, files in os.walk(local_directory):
 
@@ -126,7 +128,7 @@ def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     :param s3_bucket_dir: str of name of directory to create on S3
     :return: boolean returns True if tracking file exists, and False otherwise.
     """
-    
+
     os.environ['AWS_ACCESS_KEY_ID'] = 'test'
     os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
     os.environ['AWS_SECURITY_TOKEN'] = 'test'
@@ -137,11 +139,11 @@ def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
     print(f"Mock searching {s3_path} in {s3_bucket}")
-    
+
     # Create simulated bucket and track file first
     client.create_bucket(Bucket=s3_bucket)
     client.put_object(Bucket=s3_bucket, Key=s3_path)
-    
+
     try:
         client.head_object(Bucket=s3_bucket, Key=s3_path)
         tracking_file_exists = True
@@ -161,7 +163,7 @@ def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     :param s3_bucket_dir: str of name of directory to create on S3
     :return: boolean returns True if lock file exists, and False otherwise.
     """
-    
+
     os.environ['AWS_ACCESS_KEY_ID'] = 'test'
     os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
     os.environ['AWS_SECURITY_TOKEN'] = 'test'
@@ -172,7 +174,7 @@ def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
     print("Testing S3 only, so assuming lock is not set.")
-    
+
     try:
         client.head_object(Bucket=s3_bucket, Key=s3_path)
         lock_exists = True
@@ -192,7 +194,7 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
     :param s3_bucket_dir: str of name of directory to create on S3
     :return: boolean returns True if completed successfully, and False otherwise.
     """
-    
+
     os.environ['AWS_ACCESS_KEY_ID'] = 'test'
     os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
     os.environ['AWS_SECURITY_TOKEN'] = 'test'
@@ -202,8 +204,8 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
 
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
-    
-    # For mock purposes, we need to create the virtual bucket first. 
+
+    # For mock purposes, we need to create the virtual bucket first.
     try:
         if not unlock:
             client.create_bucket(Bucket=s3_bucket)
@@ -234,14 +236,14 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     :param s3_bucket: str ID of the bucket to upload to
     :param s3_bucket_dir: str of name of directory to create on S3
     """
-    
+
     print(f"Mock uploading to {s3_bucket_dir} on {s3_bucket}")
-    
+
     conn = boto3.resource('s3', region_name='us-east-1')
     conn.create_bucket(Bucket=s3_bucket)
-    
+
     upload_dir_to_s3(local_directory, s3_bucket, s3_bucket_dir, make_public)
-    
+
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
 
@@ -256,9 +258,9 @@ def upload_index_files(ontology_name: str, versioned_obo_path: str) -> None:
 
     # At present this will rebuild the root index at every transform/upload, which isn't great
     # so a different function or making this more generic may help
-    
+
     ifilename = "index.html"
-    
+
     index_head = """<!DOCTYPE html>
 <html>
 <head><title>Index of {this_dir}</title></head>
@@ -270,7 +272,7 @@ def upload_index_files(ontology_name: str, versioned_obo_path: str) -> None:
             <a href='../'>../</a>
         </li>
 """
-    
+
     index_tail = """
     </ul>
 </body>
@@ -280,12 +282,12 @@ def upload_index_files(ontology_name: str, versioned_obo_path: str) -> None:
     check_dirs = [versioned_obo_path,
                     os.path.dirname(versioned_obo_path),
                     os.path.dirname(os.path.dirname(versioned_obo_path))]
-    
+
     for dir in check_dirs:
-        
+
         current_path = os.path.join(dir,ifilename)
         current_files = os.listdir(dir)
-        
+
         #Even if index exists, just rebuild it
         with open(current_path, 'w') as ifile:
             ifile.write(index_head.format(this_dir=dir))
