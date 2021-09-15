@@ -11,6 +11,7 @@ import os
 import sys
 from pathlib import Path
 from kg_obo.transform import run_transform
+import kg_obo.upload
 
 @click.command()
 @click.option("--skip",
@@ -33,7 +34,23 @@ from kg_obo.transform import run_transform
                is_flag=True,
                help="If used, upload to S3 bucket is tested only and false credentials are used.")
 def run(skip, get_only, bucket, save_local, s3_test):
-    run_transform(skip, get_only, bucket, save_local, s3_test)
+    lock_file_remote_path = "kg-obo/lock"
+    try:
+        if run_transform(skip, get_only, bucket, save_local, s3_test, lock_file_remote_path):
+            print("Operation completed without errors.")
+        else:
+            print("Operation encountered errors. See logs for details.")
+    except Exception as e:
+        print(e)
+        print("Removing lock due to error...")
+        if s3_test:
+            if not kg_obo.upload.mock_set_lock(bucket,lock_file_remote_path,unlock=True):
+                print("Could not mock setting lock file.")
+        else:
+            if not kg_obo.upload.set_lock(bucket,lock_file_remote_path,unlock=True):
+                print("Could not remove lock file due to yet another error.")
+            else:
+                print("Lock removed.")
 
 if __name__ == '__main__':
   run()

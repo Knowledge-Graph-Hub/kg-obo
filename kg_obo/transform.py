@@ -158,7 +158,8 @@ def track_obo_version(name: str = "", iri: str = "",
     with open(track_file_local_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
-    client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path)
+    client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path,
+                        ExtraArgs={'ACL':'public-read'})
 
     os.unlink(track_file_local_path)
 
@@ -223,12 +224,27 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
 
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
+                  lock_file_remote_path: str = "kg-obo/lock",
                   log_dir="logs", data_dir="data",
                   remote_path="kg-obo",
                   track_file_local_path: str = "data/tracking.yaml",
-                  tracking_file_remote_path: str = "kg-obo/tracking.yaml",
-                  lock_file_remote_path: str = "kg-obo/lock"
-                  ) -> None:
+                  tracking_file_remote_path: str = "kg-obo/tracking.yaml"
+                  ) -> bool:
+    """
+    Perform setup, then kgx-mediated transforms for all specified OBOs.
+    :param skip: list of OBOs to skip, by ID
+    :param get_only: list of OBOs to transform, by ID (otherwise do all)
+    :param bucket: str of S3 bucket, to be specified as argument
+    :param save_local: bool for whether to retain transform results on local disk
+    :param s3_test: bool for whether to perform mock S3 upload only
+    :param lock_file_remote_path: str of path for lock file on S3
+    :param log_dir: str of local dir where any logs should be saved
+    :param data_dir: str of local dir where data should be saved
+    :param remote_path: str of remote path on S3 bucket
+    :param track_file_local_path: str of local path for tracking file
+    :param tracking_file_remote_path: str of path of tracking file on S3
+    :return: boolean indicating success or existing run encountered (False for unresolved error)
+    """
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -248,28 +264,35 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     kgx_logger.addHandler(root_logger_handler)
 
     # Check if there's already a run in progress (i.e., lock file exists)
+    # This isn't an error so it does not trigger an exit
     if s3_test:
         if kg_obo.upload.mock_check_lock(bucket, lock_file_remote_path):
-            sys.exit("Could not mock checking for lock file. Exiting...")
+            print("Could not mock checking for lock file. Exiting...")
+            return True
     else:
         if kg_obo.upload.check_lock(bucket, lock_file_remote_path):
-            sys.exit("A kg-obo run appears to be in progress. Exiting...")
+            print("A kg-obo run appears to be in progress. Exiting...")
+            return True
 
     # Now set the lockfile
     if s3_test:
         if not kg_obo.upload.mock_set_lock(bucket, lock_file_remote_path, unlock=False):
-            sys.exit("Could not mock setting lock file. Exiting...")
+            print("Could not mock setting lock file. Exiting...")
+            return False
     else:
         if not kg_obo.upload.set_lock(bucket, lock_file_remote_path, unlock=False):
-            sys.exit("Could not set lock file on remote server. Exiting...")
+            print("Could not set lock file on remote server. Exiting...")
+            return False
 
-    # Check on existence of tracking file, and quit if it doesn't exist
+    # Check on existence of tracking file
     if s3_test:
         if not kg_obo.upload.mock_check_tracking(bucket, tracking_file_remote_path):
-            sys.exit("Could not mock checking tracking file. Exiting...")
+            print("Could not mock checking tracking file. Exiting...")
+            return False
     else:
         if not kg_obo.upload.check_tracking(bucket, tracking_file_remote_path):
-            sys.exit("Cannot locate tracking file on remote storage. Exiting...")
+            print("Cannot locate tracking file on remote storage. Exiting...")
+            return False
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
@@ -393,4 +416,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     else:
         if not kg_obo.upload.set_lock(bucket,lock_file_remote_path,unlock=True):
             sys.exit("Could not set lock file on remote server. Exiting...")
+    
+    return True
 
