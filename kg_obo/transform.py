@@ -229,7 +229,20 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   track_file_local_path: str = "data/tracking.yaml",
                   tracking_file_remote_path: str = "kg-obo/tracking.yaml",
                   lock_file_remote_path: str = "kg-obo/lock"
-                  ) -> None:
+                  ) -> bool:
+    """
+    Perform setup, then kgx-mediated transforms for all specified OBOs.
+    :param skip: list of OBOs to skip, by ID
+    :param get_only: list of OBOs to transform, by ID (otherwise do all)
+    :param bucket: str of S3 bucket, to be specified as argument
+    :param log_dir: str of local dir where any logs should be saved
+    :param data_dir: str of local dir where data should be saved
+    :param remote_path: str of remote path on S3 bucket
+    :param track_file_local_path: str of local path for tracking file
+    :param tracking_file_remote_path: str of path of tracking file on S3
+    :param lock_file_remote_path: str of path for lock file on S3
+    :return: boolean indicating success or existing run encountered (False for unresolved error)
+    """
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -249,12 +262,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     kgx_logger.addHandler(root_logger_handler)
 
     # Check if there's already a run in progress (i.e., lock file exists)
+    # This isn't an error so it does not trigger an exit
     if s3_test:
         if kg_obo.upload.mock_check_lock(bucket, lock_file_remote_path):
-            sys.exit("Could not mock checking for lock file. Exiting...")
+            print("Could not mock checking for lock file. Exiting...")
+            return True
     else:
         if kg_obo.upload.check_lock(bucket, lock_file_remote_path):
-            sys.exit("A kg-obo run appears to be in progress. Exiting...")
+            print("A kg-obo run appears to be in progress. Exiting...")
+            return True
 
     # Now set the lockfile
     if s3_test:
@@ -394,4 +410,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     else:
         if not kg_obo.upload.set_lock(bucket,lock_file_remote_path,unlock=True):
             sys.exit("Could not set lock file on remote server. Exiting...")
+    
+    return True
 
