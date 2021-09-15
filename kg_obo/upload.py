@@ -256,8 +256,8 @@ def upload_index_files(ontology_name: str, versioned_obo_path: str) -> None:
     :param versioned_obo_path: str of directory containing this ontology version
     """
 
-    # At present this will rebuild the root index at every transform/upload, which isn't great
-    # so a different function or making this more generic may help
+    # At present this will rebuild the root index at every transform/upload -
+    # this is intentional, or we may not write updates if the process exits early
 
     ifilename = "index.html"
 
@@ -295,3 +295,5 @@ def upload_index_files(ontology_name: str, versioned_obo_path: str) -> None:
                 if filename != 'index.html':
                     ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
+        
+        print(f"Created index for {dir}")
