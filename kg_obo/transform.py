@@ -224,23 +224,25 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
 
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
+                  lock_file_remote_path: str = "kg-obo/lock",
                   log_dir="logs", data_dir="data",
                   remote_path="kg-obo",
                   track_file_local_path: str = "data/tracking.yaml",
-                  tracking_file_remote_path: str = "kg-obo/tracking.yaml",
-                  lock_file_remote_path: str = "kg-obo/lock"
+                  tracking_file_remote_path: str = "kg-obo/tracking.yaml"
                   ) -> bool:
     """
     Perform setup, then kgx-mediated transforms for all specified OBOs.
     :param skip: list of OBOs to skip, by ID
     :param get_only: list of OBOs to transform, by ID (otherwise do all)
     :param bucket: str of S3 bucket, to be specified as argument
+    :param save_local: bool for whether to retain transform results on local disk
+    :param s3_test: bool for whether to perform mock S3 upload only
+    :param lock_file_remote_path: str of path for lock file on S3
     :param log_dir: str of local dir where any logs should be saved
     :param data_dir: str of local dir where data should be saved
     :param remote_path: str of remote path on S3 bucket
     :param track_file_local_path: str of local path for tracking file
     :param tracking_file_remote_path: str of path of tracking file on S3
-    :param lock_file_remote_path: str of path for lock file on S3
     :return: boolean indicating success or existing run encountered (False for unresolved error)
     """
 
