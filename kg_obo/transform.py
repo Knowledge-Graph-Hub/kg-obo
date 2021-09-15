@@ -158,7 +158,8 @@ def track_obo_version(name: str = "", iri: str = "",
     with open(track_file_local_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
 
-    client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path)
+    client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path,
+                        ExtraArgs={'ACL':'public-read'})
 
     os.unlink(track_file_local_path)
 
