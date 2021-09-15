@@ -185,6 +185,8 @@ class TestRunTransform(TestCase):
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=["bfo"])
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
+        with pytest.raises(Exception):
+            yaml_onto_list_filtered = retreive_obofoundry_yaml(yaml_url="")
 
     @mock.patch('boto3.client')
     def test_track_obo_version(self, mock_boto):
