@@ -247,17 +247,20 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
 
-def upload_index_files(ontology_name: str, versioned_obo_path: str) -> None:
+def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False) -> None:
     """
-    Checks the root, obo directory, and version directory,
+    Checks the obo directory and version directory,
     creating index.html where it does not exist.
+    (Or, if update_root is True, just the given directory and not its parent).
     If index exists, update it if needed.
-    :param ontology_name: str of ontology ID
-    :param versioned_obo_path: str of directory containing this ontology version
+    :param bucket: str of S3 bucket
+    :param remote_path: str of path to upload to
+    :param versioned_obo_path: str of directory containing the files to create index for
+    :param data_dir: str of the data directory, so we can get the relative path
+    :param update_root: bool, True to update root index (in this case, versioned_obo_path will be the data_dir)
     """
 
-    # At present this will rebuild the root index at every transform/upload -
-    # this is intentional, or we may not write updates if the process exits early
+    client = boto3.client('s3')
 
     ifilename = "index.html"
 
@@ -279,21 +282,27 @@ def upload_index_files(ontology_name: str, versioned_obo_path: str) -> None:
 </html>
 """
 
-    check_dirs = [versioned_obo_path,
-                    os.path.dirname(versioned_obo_path),
-                    os.path.dirname(os.path.dirname(versioned_obo_path))]
+    if not update_root:
+        # Create/update index for current OBO version and all versions of this OBO
+        check_dirs = [local_path, os.path.dirname(local_path)]
+    else:
+        # Update root index
+        check_dirs = [local_path]
 
     for dir in check_dirs:
 
         current_path = os.path.join(dir,ifilename)
         current_files = os.listdir(dir)
 
-        #Even if index exists, just rebuild it
         with open(current_path, 'w') as ifile:
             ifile.write(index_head.format(this_dir=dir))
             for filename in current_files:
-                if filename != 'index.html':
+                if filename != ifilename:
                     ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
-        
         print(f"Created index for {dir}")
+        
+        path_only = os.path.relpath(local_path, data_dir)
+        current_remote_path = os.path.join(remote_path, path_only)
+
+        client.put_object(Bucket=bucket, Key=current_remote_path)
