@@ -374,16 +374,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
                 kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
 
+                # Upload the most recently transformed version only
                 kg_obo_logger.info("Uploading...")
-                if bucket != "bucket":
-                    if not s3_test:
-                        kg_obo.upload.upload_dir_to_s3(os.path.dirname(os.path.dirname(versioned_obo_path)),bucket,
-                                                       remote_path,make_public=True)
-                    else:
-                        kg_obo.upload.mock_upload_dir_to_s3(os.path.dirname(os.path.dirname(versioned_obo_path)),bucket,
-                                                       remote_path,make_public=True)
+                if s3_test:
+                    kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,remote_path,make_public=True)
                 else:
-                    kg_obo_logger.info("Bucket name not provided. Not uploading.")
+                    kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,remote_path,make_public=True)
 
                 if not save_local:
                     for filename in os.listdir(data_dir):
