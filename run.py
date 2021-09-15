@@ -33,7 +33,14 @@ from kg_obo.transform import run_transform
                is_flag=True,
                help="If used, upload to S3 bucket is tested only and false credentials are used.")
 def run(skip, get_only, bucket, save_local, s3_test):
-    run_transform(skip, get_only, bucket, save_local, s3_test)
+    try:
+        if run_transform(skip, get_only, bucket, save_local, s3_test):
+            print("Operation completed without errors.")
+        else:
+            print("Operation encountered errors. See logs for details.")
+    except Exception as e:
+        print(e)
+        # Remove lockfile - but need to know where it is first
 
 if __name__ == '__main__':
   run()
