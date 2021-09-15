@@ -277,18 +277,22 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     # Now set the lockfile
     if s3_test:
         if not kg_obo.upload.mock_set_lock(bucket, lock_file_remote_path, unlock=False):
-            sys.exit("Could not mock setting lock file. Exiting...")
+            print("Could not mock setting lock file. Exiting...")
+            return False
     else:
         if not kg_obo.upload.set_lock(bucket, lock_file_remote_path, unlock=False):
-            sys.exit("Could not set lock file on remote server. Exiting...")
+            print("Could not set lock file on remote server. Exiting...")
+            return False
 
-    # Check on existence of tracking file, and quit if it doesn't exist
+    # Check on existence of tracking file
     if s3_test:
         if not kg_obo.upload.mock_check_tracking(bucket, tracking_file_remote_path):
-            sys.exit("Could not mock checking tracking file. Exiting...")
+            print("Could not mock checking tracking file. Exiting...")
+            return False
     else:
         if not kg_obo.upload.check_tracking(bucket, tracking_file_remote_path):
-            sys.exit("Cannot locate tracking file on remote storage. Exiting...")
+            print("Cannot locate tracking file on remote storage. Exiting...")
+            return False
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
