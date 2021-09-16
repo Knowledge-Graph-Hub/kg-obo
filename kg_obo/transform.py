@@ -371,9 +371,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
                 if not s3_test:
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
-
-                # Update indexes for this version and OBO only
-                kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False)
+                    # Update indexes for this version and OBO only
+                    kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False)
 
                 kg_obo_logger.info("Uploading...")
                 if bucket != "bucket":
@@ -401,8 +400,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
-    # Update the root index
-    kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True)
+    if not s3_test:
+        # Update the root index
+        kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True)
     
     if not save_local:
         for filename in os.listdir(data_dir):
