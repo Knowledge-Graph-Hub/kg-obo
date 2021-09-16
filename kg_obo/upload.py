@@ -113,7 +113,7 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
             except botocore.exceptions.ClientError:  # Exception abuse
                 extra_args = {'ContentType': 'plain/text'}
                 if filename == "index.html":
-                    extra_args['ContentType'] = 'text/html'
+                    continue #Index is uploaded separately
                 if make_public:
                     extra_args['ACL'] = 'public-read'
                 logging.info(f"Uploading {s3_path}")
@@ -248,7 +248,7 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
 
-def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False) -> None:
+def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False) -> bool:
     """
     Checks the obo directory and version directory,
     creating index.html where it does not exist.
@@ -259,7 +259,10 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
     :param versioned_obo_path: str of directory containing the files to create index for
     :param data_dir: str of the data directory, so we can get the relative path
     :param update_root: bool, True to update root index (in this case, versioned_obo_path will be the data_dir)
+    :return: bool returns True if all index files created successfully
     """
+
+    errors = 0
 
     client = boto3.client('s3')
 
@@ -302,15 +305,20 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
                     ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
         
-        
-        path_only = os.path.relpath(local_path, data_dir)
+        path_only = os.path.relpath(current_path, data_dir)
         current_remote_path = os.path.join(remote_path, path_only)
         print(f"Created index for {current_remote_path}")
 
-        # Just to be safe, delete the index if it already exists
-        # Shouln't really be necessary but I am superstitious
         try:
-            client.delete_object(Bucket=bucket, Key=current_remote_path)
-        except Exception:
-            pass
-        client.put_object(Bucket=bucket, Key=current_remote_path)
+            client.upload_file(current_path, Bucket=bucket, Key=current_remote_path,
+                          ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
+        except botocore.exceptions.ClientError as e:
+            print(f"Encountered error in writing index to S3: {e}")
+            errors = errors+1
+
+    if errors >0:
+        success = False
+    else:
+        success = True
+
+    return success
