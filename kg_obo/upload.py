@@ -305,12 +305,12 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
                     ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
         
-        path_only = os.path.relpath(local_path, data_dir)
+        path_only = os.path.relpath(current_path, data_dir)
         current_remote_path = os.path.join(remote_path, path_only)
         print(f"Created index for {current_remote_path}")
 
         try:
-            client.put_object(Bucket=bucket, Key=current_remote_path,
+            client.upload_file(current_path, Bucket=bucket, Key=current_remote_path,
                           ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
         except botocore.exceptions.ClientError as e:
             print(f"Encountered error in writing index to S3: {e}")
