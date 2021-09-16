@@ -371,8 +371,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
                 if not s3_test:
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
-
-                kg_obo.upload.upload_index_files(ontology_name, versioned_obo_path)
+                    # Update indexes for this version and OBO only
+                    kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False)
 
                 # Upload the most recently transformed version only
                 # TODO: ignore uploading index files - they should be handled by upload_index_files
@@ -382,15 +382,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
                 else:
                     kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
-
-                if not save_local:
-                    for filename in os.listdir(data_dir):
-                        file_path = os.path.join(data_dir, filename)
-                        if filename != track_file_local_path:
-                            if os.path.isfile(file_path) or os.path.islink(file_path):
-                                os.unlink(file_path)
-                            elif os.path.isdir(file_path):
-                                shutil.rmtree(file_path)
 
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
@@ -406,6 +397,19 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
+
+    if not s3_test:
+        # Update the root index
+        kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True)
+    
+    if not save_local:
+        for filename in os.listdir(data_dir):
+            file_path = os.path.join(data_dir, filename)
+            if filename != track_file_local_path:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
 
     # Now un-set the lockfile
     if s3_test:
