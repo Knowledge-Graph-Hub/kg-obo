@@ -372,10 +372,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 if not s3_test:
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
-                    kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False)
+                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False):
+                        pass
+                    else:
+                        kg_obo_logger.info(f"Failed to create index for {ontology_name}")
 
                 # Upload the most recently transformed version only
-                # TODO: ignore uploading index files - they should be handled by upload_index_files
                 kg_obo_logger.info("Uploading...")
                 versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if s3_test:
@@ -400,7 +402,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if not s3_test:
         # Update the root index
-        kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True)
+        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
+            pass
+        else:
+            kg_obo_logger.info(f"Failed to create root index at {remote_path}")
     
     if not save_local:
         for filename in os.listdir(data_dir):
