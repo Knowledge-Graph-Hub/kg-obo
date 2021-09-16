@@ -3,6 +3,7 @@ import boto3  # type: ignore
 from moto import mock_s3 # type: ignore
 import os
 import logging
+from time import time
 
 def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     """
@@ -300,9 +301,16 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
                 if filename != ifilename:
                     ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
-        print(f"Created index for {dir}")
+        
         
         path_only = os.path.relpath(local_path, data_dir)
         current_remote_path = os.path.join(remote_path, path_only)
+        print(f"Created index for {current_remote_path}")
 
+        # Just to be safe, delete the index if it already exists
+        # Shouln't really be necessary but I am superstitious
+        try:
+            client.delete_object(Bucket=bucket, Key=current_remote_path)
+        except Exception:
+            pass
         client.put_object(Bucket=bucket, Key=current_remote_path)
