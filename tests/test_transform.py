@@ -176,7 +176,7 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
-        self.assertEqual(("NA", "release"), iri)
+        self.assertEqual(("release", "release"), iri)
 
     def test_retrieve_obofoundry_yaml_select(self):
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=[])
