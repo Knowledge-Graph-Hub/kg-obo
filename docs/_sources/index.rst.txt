@@ -6,6 +6,9 @@
 Welcome to kg-obo's documentation!
 ==================================
 
+A package to transform all OBO ontologies into KGX TSV format, and put the transformed graph in KGhub
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
