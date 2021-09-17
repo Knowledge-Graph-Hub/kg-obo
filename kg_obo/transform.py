@@ -96,20 +96,24 @@ def get_owl_iri(input_file_name: str) -> tuple:
     Avoids much file parsing as the IRI should be near the top of the file.
     Does some string parsing to get a shorter version number.
     Versions may take multiple formats across OBOs.
+    If an IRI is not provided (i.e., the OWL does not contain owl:versionIRI
+    in its header) then we try the value of oboInOwl:date instead.
 
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
 
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
+    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">(.*)'>
 
-    iri = "NA"
+    iri = "release"
     version = "release"
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
             iri_search = re.search(iri_tag, owl_string) #type: ignore
+            date_search = re.search(date_dag, owl_string)
             #mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
@@ -119,8 +123,16 @@ def get_owl_iri(input_file_name: str) -> tuple:
                     pass
             else:
                 print("Version IRI not found.")
+            elif date_search:
+                iri = (date_search.group(1)).decode("utf-8")
+                try:
+                    version = date
+                except IndexError:
+                    pass
+            else:
+                print("Release date not found.")       
     except ValueError: #Should not happen unless OWL definitions are missing/broken
-        print("Could not parse OWL definitions enough to locate version IRI.")
+        print("Could not parse OWL definitions enough to locate version IRI or release date.")
 
     return (iri, version)
 
