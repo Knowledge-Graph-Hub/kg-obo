@@ -391,6 +391,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
+            
+            # Clean up any incomplete transform leftovers
+            if not success:
+                for filename in os.listdir(base_obo_path):
+                    file_path = os.path.join(base_obo_path, filename)
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
 
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
