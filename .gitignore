@@ -10,3 +10,6 @@ dist/
 *.egg-info/
 logs/*.log
 data/*
+sphinx/_build/
+sphinx/_templates/
+sphinx/_static/
