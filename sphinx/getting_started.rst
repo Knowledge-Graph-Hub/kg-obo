@@ -58,6 +58,7 @@ Contributors
 
 -  `Harry Caufield <https://github.com/caufieldjh>`__
 -  `Justin Reese <https://github.com/justaddcoffee>`__
+-  `Harshad Hegde <https://github.com/hrshdhgd>`__
 
 
 Acknowledgements
