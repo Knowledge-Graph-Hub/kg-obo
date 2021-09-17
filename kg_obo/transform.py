@@ -113,7 +113,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
             iri_search = re.search(iri_tag, owl_string) #type: ignore
-            date_search = re.search(date_tag, owl_string)
+            date_search = re.search(date_tag, owl_string) #type: ignore
             #mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
@@ -124,7 +124,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
             else:
                 print("Version IRI not found.")
                 if date_search:
-                    iri = (date_search.group(1)).decode("utf-8")
+                    date = (date_search.group(1)).decode("utf-8")
+                    iri = date
                     version = date
                 else:
                     print("Release date not found.")
