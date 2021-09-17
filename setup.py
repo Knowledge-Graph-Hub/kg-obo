@@ -67,7 +67,9 @@ setup(
         'pyyaml',
         'tqdm',
         'click',
-        'moto[s3]'
+        'moto[s3]',
+        'sphinx_rtd_theme',
+        'recommonmark'
     ],
     extras_require=extras,
 )

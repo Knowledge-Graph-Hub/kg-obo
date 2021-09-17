@@ -1,0 +1,269 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Quick Start &mdash; kg-obo 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="kg_obo package" href="kg_obo.html" />
+    <link rel="prev" title="Welcome to kg-obo’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> kg-obo
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#download-ontologies-in-kgx-format">Download ontologies in KGX format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#how-to-contribute">How to Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#contributors">Contributors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kg_obo.html">kg_obo package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">kg-obo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Quick Start</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/getting_started.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/Knowledge-Graph-Hub/kg-obo
+<span class="nb">cd</span> kg-obo
+python3 -m venv venv <span class="o">&amp;&amp;</span> <span class="nb">source</span> venv/bin/activate <span class="c1"># optional</span>
+pip install .
+python run.py --bucket <span class="o">[</span>your s3 bucket<span class="o">]</span>
+</pre></div>
+</div>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p><cite>run.py</cite> iterates through ontologies found in <a class="reference external" href="https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml">this YAML file</a>, checks whether an existing transform for each ontologies exists on the target s3 bucket directory using the <cite>tracking.yaml</cite> file, and if not transforms the ontology from OWL to KGX TSV, and puts the KGX nodes/edges TSV files up on the bucket at:
+<cite>s3_bucket/[target directory]/[ontology name]/[version]/</cite></p>
+<p><a class="reference external" href="https://kg-hub.berkeleybop.io/kg-obo/tracking.yaml">tracking.yaml</a> file: OBO to Node/Edge Transform Tracking
+The OBO to Node/Edge Transform Tracking (tracking.yaml) file is used to keep track of current and previous version of transformed ontologies.</p>
+<p>Each entry, named by its OBO ID, must contain the following:</p>
+<dl class="simple">
+<dt><cite>‘current_iri’</cite>: the most recent version of the ontology, expressed as a full IRI, e.g.,</dt><dd><p><a class="reference external" href="http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl">http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl</a></p>
+</dd>
+<dt><cite>‘current_version’</cite>: the most recent version of the ontology, expressed as a version string, e.g.,</dt><dd><p>2019-08-26</p>
+</dd>
+</dl>
+<p>The following two items may not exist if only one version is available:</p>
+<p><cite>‘archive_iris’</cite>: previous versions of the ontology, expressed in the format of ‘current_iri’.</p>
+<p><cite>‘archive_versions’</cite>: previous versions of the ontology, expressed in the format of ‘current_version’.</p>
+</div>
+</div>
+<div class="section" id="download-ontologies-in-kgx-format">
+<h1>Download ontologies in KGX format<a class="headerlink" href="#download-ontologies-in-kgx-format" title="Permalink to this headline">¶</a></h1>
+<p>OBO ontologies transformed into are available here:</p>
+<p><cite>https://kg-hub.berkeleybop.io/kg-obo/</cite></p>
+<p>See <a class="reference external" href="https://github.com/biolink/kgx/blob/master/specification/kgx-format.md">here</a>
+for a description of the KGX TSV format</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/Knowledge-Graph-Hub/kg-obo
+<span class="nb">cd</span> kg-obo
+python3 -m venv venv <span class="o">&amp;&amp;</span> <span class="nb">source</span> venv/bin/activate <span class="c1"># optional</span>
+pip install .
+</pre></div>
+</div>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python3 run.py --bucket <span class="o">[</span>your s3 bucket<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-to-contribute">
+<h1>How to Contribute<a class="headerlink" href="#how-to-contribute" title="Permalink to this headline">¶</a></h1>
+<p>Download and use the code, and any issues and questions
+<a class="reference external" href="https://github.com/Knowledge-Graph-Hub/kg-obo/issues/new/choose">here</a>.</p>
+</div>
+<div class="section" id="contributors">
+<h1>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/caufieldjh">Harry Caufield</a></p></li>
+<li><p><a class="reference external" href="https://github.com/justaddcoffee">Justin Reese</a></p></li>
+<li><p><a class="reference external" href="https://github.com/hrshdhgd">Harshad Hegde</a></p></li>
+</ul>
+</div>
+<div class="section" id="acknowledgements">
+<h1>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Permalink to this headline">¶</a></h1>
+<p>We gratefully acknowledge the OBO community and thank all participants for
+making their data available.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kg_obo.html" class="btn btn-neutral float-right" title="kg_obo package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to kg-obo’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Harry Caufield, Justin Reese
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
