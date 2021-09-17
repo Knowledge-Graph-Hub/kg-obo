@@ -1,0 +1,464 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>kg_obo package &#8212; kg-obo 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Quick Start" href="getting_started.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="kg-obo-package">
+<h1>kg_obo package<a class="headerlink" href="#kg-obo-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kg_obo.obolibrary_utils">
+<span id="kg-obo-obolibrary-utils-module"></span><h2>kg_obo.obolibrary_utils module<a class="headerlink" href="#module-kg_obo.obolibrary_utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kg_obo.obolibrary_utils.base_url_if_exists">
+<code class="sig-prename descclassname">kg_obo.obolibrary_utils.</code><code class="sig-name descname">base_url_if_exists</code><span class="sig-paren">(</span><em class="sig-param">oid</em><span class="sig-paren">)</span><a class="headerlink" href="#kg_obo.obolibrary_utils.base_url_if_exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kg_obo.transform">
+<span id="kg-obo-transform-module"></span><h2>kg_obo.transform module<a class="headerlink" href="#module-kg_obo.transform" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kg_obo.transform.download_ontology">
+<code class="sig-prename descclassname">kg_obo.transform.</code><code class="sig-name descname">download_ontology</code><span class="sig-paren">(</span><em class="sig-param">url: str</em>, <em class="sig-param">file: str</em>, <em class="sig-param">logger: object</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.transform.download_ontology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download ontology from URL</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> – url to download from</p></li>
+<li><p><strong>file</strong> – file to download into</p></li>
+<li><p><strong>logger</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>boolean indicating whether download worked</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.transform.get_owl_iri">
+<code class="sig-prename descclassname">kg_obo.transform.</code><code class="sig-name descname">get_owl_iri</code><span class="sig-paren">(</span><em class="sig-param">input_file_name: str</em><span class="sig-paren">)</span> &#x2192; tuple<a class="headerlink" href="#kg_obo.transform.get_owl_iri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts version IRI from OWL definitions.
+Here, the IRI is the full URL of the origin OWL,
+as naming conventions vary.
+Avoids much file parsing as the IRI should be near the top of the file.
+Does some string parsing to get a shorter version number.
+Versions may take multiple formats across OBOs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>input_file_name</strong> – name of OWL format file to extract IRI from</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tuple of (str of IRI, str of version)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.transform.kgx_transform">
+<code class="sig-prename descclassname">kg_obo.transform.</code><code class="sig-name descname">kgx_transform</code><span class="sig-paren">(</span><em class="sig-param">input_file: list</em>, <em class="sig-param">input_format: str</em>, <em class="sig-param">output_file: str</em>, <em class="sig-param">output_format: str</em>, <em class="sig-param">logger: object</em><span class="sig-paren">)</span> &#x2192; tuple<a class="headerlink" href="#kg_obo.transform.kgx_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call KGX transform and report success status (bool)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_file</strong> – list of files to transform</p></li>
+<li><p><strong>input_format</strong> – input format</p></li>
+<li><p><strong>output_file</strong> – output file root (appended with nodes/edges.[format])</p></li>
+<li><p><strong>output_format</strong> – output format</p></li>
+<li><p><strong>logger</strong> – logger</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tuple - (bool for did transform work?, bool for any errors encountered)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.transform.retrieve_obofoundry_yaml">
+<code class="sig-prename descclassname">kg_obo.transform.</code><code class="sig-name descname">retrieve_obofoundry_yaml</code><span class="sig-paren">(</span><em class="sig-param">yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml'</em>, <em class="sig-param">skip: list = []</em>, <em class="sig-param">get_only: list = []</em><span class="sig-paren">)</span> &#x2192; list<a class="headerlink" href="#kg_obo.transform.retrieve_obofoundry_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve YAML containing list of all ontologies in OBOFoundry
+:param yaml_url: a stable URL containing a YAML file that describes all the OBO ontologies:
+:param skip: which ontologies should we skip
+:return: parsed yaml describing ontologies to transform</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.transform.run_transform">
+<code class="sig-prename descclassname">kg_obo.transform.</code><code class="sig-name descname">run_transform</code><span class="sig-paren">(</span><em class="sig-param">skip: list = []</em>, <em class="sig-param">get_only: list = []</em>, <em class="sig-param">bucket='bucket'</em>, <em class="sig-param">save_local=False</em>, <em class="sig-param">s3_test=False</em>, <em class="sig-param">lock_file_remote_path: str = 'kg-obo/lock'</em>, <em class="sig-param">log_dir='logs'</em>, <em class="sig-param">data_dir='data'</em>, <em class="sig-param">remote_path='kg-obo'</em>, <em class="sig-param">track_file_local_path: str = 'data/tracking.yaml'</em>, <em class="sig-param">tracking_file_remote_path: str = 'kg-obo/tracking.yaml'</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.transform.run_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform setup, then kgx-mediated transforms for all specified OBOs.
+:param skip: list of OBOs to skip, by ID
+:param get_only: list of OBOs to transform, by ID (otherwise do all)
+:param bucket: str of S3 bucket, to be specified as argument
+:param save_local: bool for whether to retain transform results on local disk
+:param s3_test: bool for whether to perform mock S3 upload only
+:param lock_file_remote_path: str of path for lock file on S3
+:param log_dir: str of local dir where any logs should be saved
+:param data_dir: str of local dir where data should be saved
+:param remote_path: str of remote path on S3 bucket
+:param track_file_local_path: str of local path for tracking file
+:param tracking_file_remote_path: str of path of tracking file on S3
+:return: boolean indicating success or existing run encountered (False for unresolved error)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.transform.track_obo_version">
+<code class="sig-prename descclassname">kg_obo.transform.</code><code class="sig-name descname">track_obo_version</code><span class="sig-paren">(</span><em class="sig-param">name: str = ''</em>, <em class="sig-param">iri: str = ''</em>, <em class="sig-param">version: str = ''</em>, <em class="sig-param">bucket: str = ''</em>, <em class="sig-param">track_file_local_path: str = 'data/tracking.yaml'</em>, <em class="sig-param">track_file_remote_path: str = 'kg-obo/tracking.yaml'</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#kg_obo.transform.track_obo_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes OBO version as per IRI to tracking.yaml.
+Note this tracking file is on the root of the S3 kg-obo directory.
+:param name: name of OBO, as OBO ID
+:param iri: full OBO VersionIRI, as URL
+:param version: short OBO version
+:param track_file_local_path: where to look for local tracking.yaml file
+:param track_file_remote_path: where to look for remote tracking.yaml file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.transform.transformed_obo_exists">
+<code class="sig-prename descclassname">kg_obo.transform.</code><code class="sig-name descname">transformed_obo_exists</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">iri: str</em>, <em class="sig-param">s3_test=False</em>, <em class="sig-param">bucket: str = ''</em>, <em class="sig-param">tracking_file_local_path: str = 'data/tracking.yaml'</em>, <em class="sig-param">tracking_file_remote_path: str = 'kg-obo/tracking.yaml'</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.transform.transformed_obo_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read tracking.yaml to determine if transformed version of this OBO exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – string of short logger name, e.g., bfo</p></li>
+<li><p><strong>iri</strong> – iri of OBO version</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>boolean, True if this OBO and version already exist as transformed</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-kg_obo.upload">
+<span id="kg-obo-upload-module"></span><h2>kg_obo.upload module<a class="headerlink" href="#module-kg_obo.upload" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kg_obo.upload.check_lock">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">check_lock</code><span class="sig-paren">(</span><em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload.check_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks on existence of a lock file on S3 to avoid concurrent runs.
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3
+:return: boolean returns True if lock file exists, and False otherwise.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.check_tracking">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">check_tracking</code><span class="sig-paren">(</span><em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload.check_tracking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks on existence of the tracking.yaml file on S3.
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3
+:return: boolean returns True if tracking file exists, and False otherwise.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.mock_check_lock">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">mock_check_lock</code><span class="sig-paren">(</span><em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload.mock_check_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mock checking on existence of a lock file on S3 to avoid concurrent runs.
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3
+:return: boolean returns True if lock file exists, and False otherwise.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.mock_check_tracking">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">mock_check_tracking</code><span class="sig-paren">(</span><em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload.mock_check_tracking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mock checking on existence of the tracking.yaml file on S3.
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3
+:return: boolean returns True if tracking file exists, and False otherwise.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.mock_set_lock">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">mock_set_lock</code><span class="sig-paren">(</span><em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em>, <em class="sig-param">unlock: bool</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload.mock_set_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mocks creating a lock file on S3 to avoid concurrent runs.
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3
+:return: boolean returns True if completed successfully, and False otherwise.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.mock_upload_dir_to_s3">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">mock_upload_dir_to_s3</code><span class="sig-paren">(</span><em class="sig-param">local_directory: str</em>, <em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em>, <em class="sig-param">make_public=False</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#kg_obo.upload.mock_upload_dir_to_s3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mock the upload of a local directory to a specified AWS S3 bucket.
+Though this is a test, it is here so it may be more easily called through command options.
+:param local_directory: str name of directory to upload
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.set_lock">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">set_lock</code><span class="sig-paren">(</span><em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em>, <em class="sig-param">unlock: bool</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload.set_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a lock file on S3 to avoid concurrent runs.
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3
+:return: boolean returns True if completed successfully, and False otherwise.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.upload_dir_to_s3">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">upload_dir_to_s3</code><span class="sig-paren">(</span><em class="sig-param">local_directory: str</em>, <em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em>, <em class="sig-param">make_public=False</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#kg_obo.upload.upload_dir_to_s3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload a local directory to a specified AWS S3 bucket.
+:param local_directory: str name of directory to upload
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload.upload_index_files">
+<code class="sig-prename descclassname">kg_obo.upload.</code><code class="sig-name descname">upload_index_files</code><span class="sig-paren">(</span><em class="sig-param">bucket: str</em>, <em class="sig-param">remote_path: str</em>, <em class="sig-param">local_path: str</em>, <em class="sig-param">data_dir: str</em>, <em class="sig-param">update_root=False</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload.upload_index_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the obo directory and version directory,
+creating index.html where it does not exist.
+(Or, if update_root is True, just the given directory and not its parent).
+If index exists, update it if needed.
+:param bucket: str of S3 bucket
+:param remote_path: str of path to upload to
+:param versioned_obo_path: str of directory containing the files to create index for
+:param data_dir: str of the data directory, so we can get the relative path
+:param update_root: bool, True to update root index (in this case, versioned_obo_path will be the data_dir)
+:return: bool returns True if all index files created successfully</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-kg_obo">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-kg_obo" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kg_obo.base_url_if_exists">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">base_url_if_exists</code><span class="sig-paren">(</span><em class="sig-param">oid</em><span class="sig-paren">)</span><a class="headerlink" href="#kg_obo.base_url_if_exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.retrieve_obofoundry_yaml">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">retrieve_obofoundry_yaml</code><span class="sig-paren">(</span><em class="sig-param">yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml'</em>, <em class="sig-param">skip: list = []</em>, <em class="sig-param">get_only: list = []</em><span class="sig-paren">)</span> &#x2192; list<a class="headerlink" href="#kg_obo.retrieve_obofoundry_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve YAML containing list of all ontologies in OBOFoundry
+:param yaml_url: a stable URL containing a YAML file that describes all the OBO ontologies:
+:param skip: which ontologies should we skip
+:return: parsed yaml describing ontologies to transform</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.kgx_transform">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">kgx_transform</code><span class="sig-paren">(</span><em class="sig-param">input_file: list</em>, <em class="sig-param">input_format: str</em>, <em class="sig-param">output_file: str</em>, <em class="sig-param">output_format: str</em>, <em class="sig-param">logger: object</em><span class="sig-paren">)</span> &#x2192; tuple<a class="headerlink" href="#kg_obo.kgx_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call KGX transform and report success status (bool)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_file</strong> – list of files to transform</p></li>
+<li><p><strong>input_format</strong> – input format</p></li>
+<li><p><strong>output_file</strong> – output file root (appended with nodes/edges.[format])</p></li>
+<li><p><strong>output_format</strong> – output format</p></li>
+<li><p><strong>logger</strong> – logger</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tuple - (bool for did transform work?, bool for any errors encountered)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.get_owl_iri">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">get_owl_iri</code><span class="sig-paren">(</span><em class="sig-param">input_file_name: str</em><span class="sig-paren">)</span> &#x2192; tuple<a class="headerlink" href="#kg_obo.get_owl_iri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts version IRI from OWL definitions.
+Here, the IRI is the full URL of the origin OWL,
+as naming conventions vary.
+Avoids much file parsing as the IRI should be near the top of the file.
+Does some string parsing to get a shorter version number.
+Versions may take multiple formats across OBOs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>input_file_name</strong> – name of OWL format file to extract IRI from</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tuple of (str of IRI, str of version)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.track_obo_version">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">track_obo_version</code><span class="sig-paren">(</span><em class="sig-param">name: str = ''</em>, <em class="sig-param">iri: str = ''</em>, <em class="sig-param">version: str = ''</em>, <em class="sig-param">bucket: str = ''</em>, <em class="sig-param">track_file_local_path: str = 'data/tracking.yaml'</em>, <em class="sig-param">track_file_remote_path: str = 'kg-obo/tracking.yaml'</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#kg_obo.track_obo_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes OBO version as per IRI to tracking.yaml.
+Note this tracking file is on the root of the S3 kg-obo directory.
+:param name: name of OBO, as OBO ID
+:param iri: full OBO VersionIRI, as URL
+:param version: short OBO version
+:param track_file_local_path: where to look for local tracking.yaml file
+:param track_file_remote_path: where to look for remote tracking.yaml file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.download_ontology">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">download_ontology</code><span class="sig-paren">(</span><em class="sig-param">url: str</em>, <em class="sig-param">file: str</em>, <em class="sig-param">logger: object</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.download_ontology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download ontology from URL</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> – url to download from</p></li>
+<li><p><strong>file</strong> – file to download into</p></li>
+<li><p><strong>logger</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>boolean indicating whether download worked</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.run_transform">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">run_transform</code><span class="sig-paren">(</span><em class="sig-param">skip: list = []</em>, <em class="sig-param">get_only: list = []</em>, <em class="sig-param">bucket='bucket'</em>, <em class="sig-param">save_local=False</em>, <em class="sig-param">s3_test=False</em>, <em class="sig-param">lock_file_remote_path: str = 'kg-obo/lock'</em>, <em class="sig-param">log_dir='logs'</em>, <em class="sig-param">data_dir='data'</em>, <em class="sig-param">remote_path='kg-obo'</em>, <em class="sig-param">track_file_local_path: str = 'data/tracking.yaml'</em>, <em class="sig-param">tracking_file_remote_path: str = 'kg-obo/tracking.yaml'</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.run_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform setup, then kgx-mediated transforms for all specified OBOs.
+:param skip: list of OBOs to skip, by ID
+:param get_only: list of OBOs to transform, by ID (otherwise do all)
+:param bucket: str of S3 bucket, to be specified as argument
+:param save_local: bool for whether to retain transform results on local disk
+:param s3_test: bool for whether to perform mock S3 upload only
+:param lock_file_remote_path: str of path for lock file on S3
+:param log_dir: str of local dir where any logs should be saved
+:param data_dir: str of local dir where data should be saved
+:param remote_path: str of remote path on S3 bucket
+:param track_file_local_path: str of local path for tracking file
+:param tracking_file_remote_path: str of path of tracking file on S3
+:return: boolean indicating success or existing run encountered (False for unresolved error)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload_dir_to_s3">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">upload_dir_to_s3</code><span class="sig-paren">(</span><em class="sig-param">local_directory: str</em>, <em class="sig-param">s3_bucket: str</em>, <em class="sig-param">s3_bucket_dir: str</em>, <em class="sig-param">make_public=False</em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#kg_obo.upload_dir_to_s3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload a local directory to a specified AWS S3 bucket.
+:param local_directory: str name of directory to upload
+:param s3_bucket: str ID of the bucket to upload to
+:param s3_bucket_dir: str of name of directory to create on S3</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kg_obo.upload_index_files">
+<code class="sig-prename descclassname">kg_obo.</code><code class="sig-name descname">upload_index_files</code><span class="sig-paren">(</span><em class="sig-param">bucket: str</em>, <em class="sig-param">remote_path: str</em>, <em class="sig-param">local_path: str</em>, <em class="sig-param">data_dir: str</em>, <em class="sig-param">update_root=False</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#kg_obo.upload_index_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the obo directory and version directory,
+creating index.html where it does not exist.
+(Or, if update_root is True, just the given directory and not its parent).
+If index exists, update it if needed.
+:param bucket: str of S3 bucket
+:param remote_path: str of path to upload to
+:param versioned_obo_path: str of directory containing the files to create index for
+:param data_dir: str of the data directory, so we can get the relative path
+:param update_root: bool, True to update root index (in this case, versioned_obo_path will be the data_dir)
+:return: bool returns True if all index files created successfully</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">kg-obo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html#download-ontologies-in-kgx-format">Download ontologies in KGX format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html#how-to-contribute">How to Contribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html#contributors">Contributors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">kg_obo package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-kg_obo.obolibrary_utils">kg_obo.obolibrary_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-kg_obo.transform">kg_obo.transform module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-kg_obo.upload">kg_obo.upload module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-kg_obo">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="getting_started.html" title="previous chapter">Quick Start</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Harry Caufield, Justin Reese.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/kg_obo.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
