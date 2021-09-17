@@ -12,11 +12,27 @@ Quick Start
 Overview
 ________
 
-`run.py` iterates through ontologies found in [this YAML file](https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/mas\
-ter/registry/ontologies.yml), checks whether an existing transform for each ontologies exists on the target s3 bucket directory usin\
-g the `tracking.yaml` file (see below), and if not transforms the ontology from OWL to KGX TSV, and puts the KGX nodes/edges TSV fil\
+`run.py` iterates through ontologies found in `this YAML file <https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml>`__, checks whether an existing transform for each ontologies exists on the target s3 bucket directory usin\
+g the `tracking.yaml` file, and if not transforms the ontology from OWL to KGX TSV, and puts the KGX nodes/edges TSV fil\
 es up on the bucket at:
 `s3_bucket/[target directory]/[ontology name]/[version]/`
+
+`tracking.yaml <https://kg-hub.berkeleybop.io/kg-obo/tracking.yaml>`__ file: OBO to Node/Edge Transform Tracking
+The OBO to Node/Edge Transform Tracking (tracking.yaml) file is used to keep track of current and previous version of transformed ontologies.
+
+Each entry, named by its OBO ID, must contain the following:
+
+`'current_iri'`: the most recent version of the ontology, expressed as a full IRI, e.g.,
+          http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl
+
+`'current_version'`: the most recent version of the ontology, expressed as a version string, e.g.,
+          2019-08-26
+
+The following two items may not exist if only one version is available:
+
+`'archive_iris'`: previous versions of the ontology, expressed in the format of 'current_iri'.
+
+`'archive_versions'`: previous versions of the ontology, expressed in the format of 'current_version'.
 
 Download ontologies in KGX format
 ---------------------------------

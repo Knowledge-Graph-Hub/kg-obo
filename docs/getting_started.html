@@ -166,8 +166,20 @@ python run.py --bucket <span class="o">[</span>your s3 bucket<span class="o">]</
 </div>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p><cite>run.py</cite> iterates through ontologies found in [this YAML file](<a class="reference external" href="https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/mas">https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/mas</a>ter/registry/ontologies.yml), checks whether an existing transform for each ontologies exists on the target s3 bucket directory using the <cite>tracking.yaml</cite> file (see below), and if not transforms the ontology from OWL to KGX TSV, and puts the KGX nodes/edges TSV files up on the bucket at:
+<p><cite>run.py</cite> iterates through ontologies found in <a class="reference external" href="https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml">this YAML file</a>, checks whether an existing transform for each ontologies exists on the target s3 bucket directory using the <cite>tracking.yaml</cite> file, and if not transforms the ontology from OWL to KGX TSV, and puts the KGX nodes/edges TSV files up on the bucket at:
 <cite>s3_bucket/[target directory]/[ontology name]/[version]/</cite></p>
+<p><a class="reference external" href="https://kg-hub.berkeleybop.io/kg-obo/tracking.yaml">tracking.yaml</a> file: OBO to Node/Edge Transform Tracking
+The OBO to Node/Edge Transform Tracking (tracking.yaml) file is used to keep track of current and previous version of transformed ontologies.</p>
+<p>Each entry, named by its OBO ID, must contain the following:</p>
+<dl class="simple">
+<dt><cite>‘current_iri’</cite>: the most recent version of the ontology, expressed as a full IRI, e.g.,</dt><dd><p><a class="reference external" href="http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl">http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl</a></p>
+</dd>
+<dt><cite>‘current_version’</cite>: the most recent version of the ontology, expressed as a version string, e.g.,</dt><dd><p>2019-08-26</p>
+</dd>
+</dl>
+<p>The following two items may not exist if only one version is available:</p>
+<p><cite>‘archive_iris’</cite>: previous versions of the ontology, expressed in the format of ‘current_iri’.</p>
+<p><cite>‘archive_versions’</cite>: previous versions of the ontology, expressed in the format of ‘current_version’.</p>
 </div>
 </div>
 <div class="section" id="download-ontologies-in-kgx-format">
