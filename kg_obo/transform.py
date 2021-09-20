@@ -85,14 +85,15 @@ def kgx_transform(input_file: list, input_format: str,
                           output_compression="tar.gz")
 
         # Need to parse the log output to aggregate it
-        error_collect = {"BNode Errors":0}
+        error_collect = {"BNode Errors":0, "Other Errors":0}
 
         for line in log_stream.getvalue().splitlines():
-            print(line)
             if line[0:31] == "Do not know how to handle BNode":
                 error_collect["BNode Errors"] = error_collect["BNode Errors"] + 1
+            else:
+                error_collect["Other Errors"] = error_collect["Other Errors"] + 1
 
-        if len(error_collect) > 0:  # type: ignore
+        if sum(error_collect.values()) > 0:  # type: ignore
             logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
             errors = True
             logger._cache.clear()  # type: ignore
