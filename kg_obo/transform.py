@@ -5,6 +5,7 @@ from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
 import requests  # type: ignore
 from datetime import datetime
+from io import StringIO
 
 import boto3  # type: ignore
 
@@ -70,16 +71,32 @@ def kgx_transform(input_file: list, input_format: str,
     """
     success = True
     errors = False
+
+    # We stream the KGX logs to their own output to capture them
+    log_stream = StringIO()
+    log_handler = logging.StreamHandler(log_stream)
+    logger.addHandler(log_handler)
+
     try:
         kgx.cli.transform(inputs=input_file,
                           input_format=input_format,
                           output=output_file,
                           output_format=output_format,
                           output_compression="tar.gz")
-        if hasattr(logger, "_cache") and 30 in logger._cache and logger._cache[30]:  # type: ignore
-            logger.error("Encountered errors in transforming or parsing.")  # type: ignore
+
+        # Need to parse the log output to aggregate it
+        error_collect = {"BNode Errors":0}
+
+        for line in log_stream.getvalue().splitlines():
+            print(line)
+            if line[0:31] == "Do not know how to handle BNode":
+                error_collect["BNode Errors"] = error_collect["BNode Errors"] + 1
+
+        if len(error_collect) > 0:  # type: ignore
+            logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
             errors = True
             logger._cache.clear()  # type: ignore
+    
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
