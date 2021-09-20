@@ -75,7 +75,12 @@ def kgx_transform(input_file: list, input_format: str,
     # We stream the KGX logs to their own output to capture them
     log_stream = StringIO()
     log_handler = logging.StreamHandler(log_stream)
-    logger.addHandler(hdlr=log_handler)
+    log_handler.setLevel(logging.WARNING)
+    # Logger doesn't know it's already an instance, so it throws an error
+    try:
+        logger.addHandler(hdlr=log_handler)  # type: ignore
+    except TypeError:
+        pass
 
     try:
         kgx.cli.transform(inputs=input_file,
