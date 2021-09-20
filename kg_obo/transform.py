@@ -96,7 +96,6 @@ def kgx_transform(input_file: list, input_format: str,
         if sum(error_collect.values()) > 0:  # type: ignore
             logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
             errors = True
-            logger._cache.clear()  # type: ignore
     
     except (FileNotFoundError,
             SAXParseException,
@@ -104,6 +103,9 @@ def kgx_transform(input_file: list, input_format: str,
             Exception) as e:
         success = False
         logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
+
+    log_handler.flush()
+
     return (success, errors)
 
 def get_owl_iri(input_file_name: str) -> tuple:
