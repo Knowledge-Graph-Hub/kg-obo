@@ -72,6 +72,9 @@ def kgx_transform(input_file: list, input_format: str,
     success = True
     errors = False
 
+    bnode_errors = "BNode Errors"
+    other_errors = "Other Errors"
+
     # We stream the KGX logs to their own output to capture them
     log_stream = StringIO()
     log_handler = logging.StreamHandler(log_stream)
@@ -90,13 +93,13 @@ def kgx_transform(input_file: list, input_format: str,
                           output_compression="tar.gz")
 
         # Need to parse the log output to aggregate it
-        error_collect = {"BNode Errors":0, "Other Errors":0}
+        error_collect = {bnode_errors:0, other_errors:0}
 
         for line in log_stream.getvalue().splitlines():
             if line[0:31] == "Do not know how to handle BNode":
-                error_collect["BNode Errors"] = error_collect["BNode Errors"] + 1
+                error_collect[bnode_errors] = error_collect[bnode_errors] + 1
             else:
-                error_collect["Other Errors"] = error_collect["Other Errors"] + 1
+                error_collect[other_errors] = error_collect[other_errors] + 1
 
         if sum(error_collect.values()) > 0:  # type: ignore
             logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
