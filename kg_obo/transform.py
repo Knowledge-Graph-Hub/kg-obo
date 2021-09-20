@@ -75,7 +75,7 @@ def kgx_transform(input_file: list, input_format: str,
     # We stream the KGX logs to their own output to capture them
     log_stream = StringIO()
     log_handler = logging.StreamHandler(log_stream)
-    logger.addHandler(log_handler)
+    logger.addHandler(hdlr=log_handler)
 
     try:
         kgx.cli.transform(inputs=input_file,
