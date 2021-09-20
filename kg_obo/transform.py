@@ -5,6 +5,7 @@ from tqdm import tqdm  # type: ignore
 import yaml  # type: ignore
 import requests  # type: ignore
 from datetime import datetime
+from io import StringIO
 
 import boto3  # type: ignore
 
@@ -70,22 +71,49 @@ def kgx_transform(input_file: list, input_format: str,
     """
     success = True
     errors = False
+
+    bnode_errors = "BNode Errors"
+    other_errors = "Other Errors"
+
+    # We stream the KGX logs to their own output to capture them
+    log_stream = StringIO()
+    log_handler = logging.StreamHandler(log_stream)
+    log_handler.setLevel(logging.WARNING)
+    # Logger doesn't know it's already an instance, so it throws an error
+    try:
+        logger.addHandler(hdlr=log_handler)  # type: ignore
+    except TypeError:
+        pass
+
     try:
         kgx.cli.transform(inputs=input_file,
                           input_format=input_format,
                           output=output_file,
                           output_format=output_format,
                           output_compression="tar.gz")
-        if hasattr(logger, "_cache") and 30 in logger._cache and logger._cache[30]:  # type: ignore
-            logger.error("Encountered errors in transforming or parsing.")  # type: ignore
+
+        # Need to parse the log output to aggregate it
+        error_collect = {bnode_errors:0, other_errors:0}
+
+        for line in log_stream.getvalue().splitlines():
+            if line[0:31] == "Do not know how to handle BNode":
+                error_collect[bnode_errors] = error_collect[bnode_errors] + 1
+            else:
+                error_collect[other_errors] = error_collect[other_errors] + 1
+
+        if sum(error_collect.values()) > 0:  # type: ignore
+            logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
             errors = True
-            logger._cache.clear()  # type: ignore
+    
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
             Exception) as e:
         success = False
         logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
+
+    log_handler.flush()
+
     return (success, errors)
 
 def get_owl_iri(input_file_name: str) -> tuple:
@@ -96,20 +124,24 @@ def get_owl_iri(input_file_name: str) -> tuple:
     Avoids much file parsing as the IRI should be near the top of the file.
     Does some string parsing to get a shorter version number.
     Versions may take multiple formats across OBOs.
+    If an IRI is not provided (i.e., the OWL does not contain owl:versionIRI
+    in its header) then we try the value of oboInOwl:date instead.
 
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
 
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
+    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">(.*)'
 
-    iri = "NA"
+    iri = "release"
     version = "release"
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
             iri_search = re.search(iri_tag, owl_string) #type: ignore
+            date_search = re.search(date_tag, owl_string) #type: ignore
             #mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
@@ -119,8 +151,14 @@ def get_owl_iri(input_file_name: str) -> tuple:
                     pass
             else:
                 print("Version IRI not found.")
+                if date_search:
+                    date = (date_search.group(1)).decode("utf-8")
+                    iri = date
+                    version = date
+                else:
+                    print("Release date not found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
-        print("Could not parse OWL definitions enough to locate version IRI.")
+        print("Could not parse OWL definitions enough to locate version IRI or release date.")
 
     return (iri, version)
 
@@ -160,9 +198,6 @@ def track_obo_version(name: str = "", iri: str = "",
 
     client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path,
                         ExtraArgs={'ACL':'public-read'})
-
-    os.unlink(track_file_local_path)
-
 
 def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
                            tracking_file_local_path: str = "data/tracking.yaml",
@@ -391,6 +426,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
+            
+            # Clean up any incomplete transform leftovers
+            if not success:
+                for filename in os.listdir(base_obo_path):
+                    file_path = os.path.join(base_obo_path, filename)
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
 
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
