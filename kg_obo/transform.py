@@ -189,9 +189,6 @@ def track_obo_version(name: str = "", iri: str = "",
     client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path,
                         ExtraArgs={'ACL':'public-read'})
 
-    os.unlink(track_file_local_path)
-
-
 def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
                            tracking_file_local_path: str = "data/tracking.yaml",
                            tracking_file_remote_path: str = "kg-obo/tracking.yaml"
