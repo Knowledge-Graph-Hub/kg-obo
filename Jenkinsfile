@@ -76,7 +76,8 @@ pipeline {
                             string(credentialsId: 'aws_kg_hub_secret_key', variable: 'AWS_SECRET_ACCESS_KEY')]) {
                             script {
                                 if (env.BRANCH_NAME != 'main') {
-                                    echo "Will not transform if not on correct branch."
+                                    echo "Transforming with --s3_test since we aren't on main/master branch"
+                                    sh '. venv/bin/activate && env && python3.8 run.py --s3_test -bucket fake_bucket'
                                 } else {
                                     sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data'
                                 }
