@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
     get_owl_iri, retrieve_obofoundry_yaml, track_obo_version
-
+from urllib.parse import quote
 
 class TestRunTransform(TestCase):
 
@@ -174,6 +174,10 @@ class TestRunTransform(TestCase):
         with pytest.raises(Exception):
             iri = get_owl_iri('')
 
+    def test_get_owl_iri_for_aro(self):
+        iri = get_owl_iri('tests/resources/download_ontology/aro_SNIPPET.owl')
+        self.assertEqual(iri, ('', quote('05:07:2021 15:21')))
+
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("release", "release"), iri)
@@ -194,7 +198,7 @@ class TestRunTransform(TestCase):
         iri = ""
         version = ""
         bucket = "test"
-        track_obo_version(name, iri, version, bucket, 
+        track_obo_version(name, iri, version, bucket,
                           track_file_local_path="tests/resources/tracking.yaml",
                           track_file_remote_path="tests/resources/tracking.yaml")
         self.assertTrue(mock_boto.called)
