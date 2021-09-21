@@ -51,6 +51,7 @@ def run(skip, get_only, bucket, save_local, s3_test):
                 print("Could not remove lock file due to yet another error.")
             else:
                 print("Lock removed.")
+        sys.exit(-1)
 
 if __name__ == '__main__':
   run()
