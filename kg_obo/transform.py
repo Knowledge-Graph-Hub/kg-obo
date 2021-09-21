@@ -131,7 +131,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
-
+ 
+    # Most IRIs take this format - there are some exceptions
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
 
@@ -147,7 +148,11 @@ def get_owl_iri(input_file_name: str) -> tuple:
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
                 try:
-                    version = quote((iri.split("/"))[-2])
+                    raw_version = (iri.split("/"))[-2]
+                    if raw_version == "fao":
+                        version = quote((iri.split("/"))[-3])
+                    else:
+                        version = quote(raw_version)
                 except IndexError:
                     pass
             else:
