@@ -109,7 +109,7 @@ def kgx_transform(input_file: list, input_format: str,
                 error_collect[other_errors] = error_collect[other_errors] + 1
 
         if sum(error_collect.values()) > 0:  # type: ignore
-            logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
+            logger.error(f"Encountered errors in transforming or parsing to {output_format}: {error_collect}")  # type: ignore
             errors = True
 
     except (FileNotFoundError,
@@ -243,13 +243,14 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     else:
         return False
 
-def download_ontology(url: str, file: str, logger: object) -> bool:
+def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool) -> bool:
     """
     Download ontology from URL
 
     :param url: url to download from
     :param file: file to download into
     :param logger:
+    :param no_dl_progress: bool, if True then download progress bar is suppressed
     :return: boolean indicating whether download worked
     """
     try:
@@ -257,11 +258,13 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         file_size = int(req.headers['Content-Length'])
         chunk_size = 1024
         with open(file, 'wb') as outfile:
-            pbar = tqdm(unit="B", total=file_size, unit_scale=True,
+            if not no_dl_progress:
+                pbar = tqdm(unit="B", total=file_size, unit_scale=True,
                         unit_divisor=chunk_size)
             for chunk in req.iter_content(chunk_size=chunk_size):
                 if chunk:
-                    pbar.update(len(chunk))
+                    if not no_dl_progress:
+                        pbar.update(len(chunk))
                     outfile.write(chunk)
         return True
     except KeyError as e:
@@ -271,6 +274,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
 
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
+                  no_dl_progress=False,
                   lock_file_remote_path: str = "kg-obo/lock",
                   log_dir="logs", data_dir="data",
                   remote_path="kg-obo",
@@ -284,6 +288,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :param bucket: str of S3 bucket, to be specified as argument
     :param save_local: bool for whether to retain transform results on local disk
     :param s3_test: bool for whether to perform mock S3 upload only
+    :param no_dl_progress: bool for whether to hide download progress bars
     :param lock_file_remote_path: str of path for lock file on S3
     :param log_dir: str of local dir where any logs should be saved
     :param data_dir: str of local dir where data should be saved
@@ -377,7 +382,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             success = True
 
-            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger):
+            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, no_dl_progress=no_dl_progress):
                 success = False
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
