@@ -65,7 +65,7 @@ def kgx_transform(input_file: list, input_format: str,
 
     :param input_file: list of files to transform
     :param input_format: input format
-    :param output_file: output file root (appended with nodes/edges.[format])
+    :param output_file: output file root, as tar.gz
     :param output_format: output format
     :param logger: logger
     :return: tuple - (bool for did transform work?, bool for any errors encountered)
@@ -87,12 +87,18 @@ def kgx_transform(input_file: list, input_format: str,
         pass
 
     try:
-        kgx.cli.transform(inputs=input_file,
+        if output_format == "tsv":
+            kgx.cli.transform(inputs=input_file,
                           input_format=input_format,
                           output=output_file,
                           output_format=output_format,
                           output_compression="tar.gz")
-
+        else:
+            kgx.cli.transform(inputs=input_file,
+                          input_format=input_format,
+                          output=f"{output_file}.{output_format}",
+                          output_format=output_format)
+        
         # Need to parse the log output to aggregate it
         error_collect = {bnode_errors:0, other_errors:0}
 
@@ -111,7 +117,7 @@ def kgx_transform(input_file: list, input_format: str,
             ParserError,
             Exception) as e:
         success = False
-        logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
+        logger.error(e, f"KGX problem while transforming {input_file} to {output_format}")  # type: ignore
 
     log_handler.flush()
 
@@ -392,11 +398,29 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 os.mkdir(versioned_obo_path)
 
             # Use kgx to transform, but save errors to log
-            success, errors = kgx_transform(input_file=[tfile.name],
+            # Do separate transforms for different output formats
+            success = True # for all transforms 
+            errors = False # for all transforms
+            all_success_and_errors = {}
+            desired_output_formats = ['tsv', 'json']
+            for output_format in desired_output_formats:
+                kg_obo_logger.info(f"Transforming to {output_format}...")
+                this_success, this_errors = kgx_transform(input_file=[tfile.name],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_name),
-                                            output_format='tsv',
+                                            output_format=output_format,
                                             logger=kgx_logger)
+                all_success_and_errors[output_format] = (this_success, this_errors)
+
+            # Check results of all transforms
+            for output_format in desired_output_formats:
+                if not all_success_and_errors[output_format][0]:
+                    success = False
+                    break
+            for output_format in desired_output_formats:
+                if all_success_and_errors[output_format][1]:
+                    errors = False
+                    break
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(versioned_obo_path):
