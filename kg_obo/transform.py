@@ -218,7 +218,7 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
 
-    :param name: string of short logger name, e.g., bfo
+    :param name: string of short OBO name, e.g., bfo
     :param iri: iri of OBO version
     :return: boolean, True if this OBO and version already exist as transformed
     """
@@ -236,9 +236,10 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
 
     os.unlink(tracking_file_local_path)
 
-    #We only check the most recent version - if we are transforming an old version,
-    #then let it happen
+    # Check current and previous versions
     if tracking["ontologies"][name]["current_iri"] == iri:
+        return True
+    elif iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
         return True
     else:
         return False
