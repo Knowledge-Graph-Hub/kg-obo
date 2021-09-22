@@ -6,7 +6,6 @@ import yaml  # type: ignore
 import requests  # type: ignore
 from datetime import datetime
 from io import StringIO
-
 import boto3  # type: ignore
 
 import os
@@ -21,6 +20,8 @@ from rdflib.exceptions import ParserError # type: ignore
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
+from urllib.parse import quote
+
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
@@ -104,7 +105,7 @@ def kgx_transform(input_file: list, input_format: str,
         if sum(error_collect.values()) > 0:  # type: ignore
             logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
             errors = True
-    
+
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
@@ -130,9 +131,10 @@ def get_owl_iri(input_file_name: str) -> tuple:
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
-
+ 
+    # Most IRIs take this format - there are some exceptions
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
-    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">(.*)'
+    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
 
     iri = "release"
     version = "release"
@@ -140,21 +142,25 @@ def get_owl_iri(input_file_name: str) -> tuple:
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
-            iri_search = re.search(iri_tag, owl_string) #type: ignore
-            date_search = re.search(date_tag, owl_string) #type: ignore
-            #mypy doesn't like re and mmap objects
+            iri_search = re.search(iri_tag, owl_string)  # type: ignore
+            date_search = re.search(date_tag, owl_string)  # type: ignore
+            # mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
                 try:
-                    version = (iri.split("/"))[-2]
+                    raw_version = (iri.split("/"))[-2]
+                    if raw_version == "fao":
+                        version = quote((iri.split("/"))[-3])
+                    else:
+                        version = quote(raw_version)
                 except IndexError:
                     pass
             else:
                 print("Version IRI not found.")
                 if date_search:
                     date = (date_search.group(1)).decode("utf-8")
-                    iri = date
-                    version = date
+                    iri = ''
+                    version = quote(date)
                 else:
                     print("Release date not found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
@@ -426,7 +432,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
-            
+
             # Clean up any incomplete transform leftovers
             if not success:
                 for filename in os.listdir(base_obo_path):
@@ -450,7 +456,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             kg_obo_logger.info(f"Created root index at {remote_path}")
         else:
             kg_obo_logger.info(f"Failed to create root index at {remote_path}")
-    
+
     if not save_local:
         for filename in os.listdir(data_dir):
             file_path = os.path.join(data_dir, filename)
@@ -467,6 +473,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     else:
         if not kg_obo.upload.set_lock(bucket,lock_file_remote_path,unlock=True):
             sys.exit("Could not set lock file on remote server. Exiting...")
-    
+
     return True
 
