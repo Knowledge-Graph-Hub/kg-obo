@@ -40,7 +40,7 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress):
     lock_file_remote_path = "kg-obo/lock"
     try:
         if run_transform(skip, get_only, bucket, save_local, s3_test, no_dl_progress, lock_file_remote_path):
-            print("Operation completed without errors.")
+            print("Operation completed without errors (not counting any OBO-specific errors).")
         else:
             print("Operation encountered errors. See logs for details.")
     except Exception as e:
