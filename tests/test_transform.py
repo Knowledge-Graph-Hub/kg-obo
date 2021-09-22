@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
-    get_owl_iri, retrieve_obofoundry_yaml, track_obo_version
+    get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -195,19 +195,49 @@ class TestRunTransform(TestCase):
 
     @mock.patch('boto3.client')
     def test_track_obo_version(self, mock_boto):
+        track_path = "tests/resources/tracking.yaml"
         # Test adding to tracking when no version exists
         name = "bfo"
         iri = "iri-1"
         version = "version-1"
         bucket = "test"
         track_obo_version(name, iri, version, bucket,
-                          track_file_local_path="tests/resources/tracking.yaml",
-                          track_file_remote_path="tests/resources/tracking.yaml")
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
         self.assertTrue(mock_boto.called)
         # Now test adding to tracking when old version exists
         iri = "iri-2"
         version = "version-2"
         track_obo_version(name, iri, version, bucket,
-                          track_file_local_path="tests/resources/tracking.yaml",
-                          track_file_remote_path="tests/resources/tracking.yaml")
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
+        self.assertTrue(mock_boto.called)
+
+    @mock.patch('boto3.client')
+    def test_transformed_obo_exists(self, mock_boto):
+        track_path = "tests/resources/tracking.yaml"
+        # First track obo existence
+        name = "bfo"
+        iri = "iri_old"
+        version = "version_old"
+        bucket = "test"
+        track_obo_version(name, iri, version, bucket,
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
+        # Now see if it exits in the tracking
+        transformed_obo_exists(name, iri,
+                          tracking_file_local_path=track_path,
+                          tracking_file_remote_path=track_path)
+        self.assertTrue(mock_boto.called)
+
+        iri = "iri_new"
+        version = "version_new"
+        track_obo_version(name, iri, version, bucket,
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
+        # Now see if it exits in the tracking, again
+        iri = "iri_old"
+        transformed_obo_exists(name, iri,
+                          tracking_file_local_path=track_path,
+                          tracking_file_remote_path=track_path)
         self.assertTrue(mock_boto.called)
