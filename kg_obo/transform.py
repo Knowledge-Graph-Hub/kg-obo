@@ -234,8 +234,6 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     with open(tracking_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
-    os.unlink(tracking_file_local_path)
-
     # Check current and previous versions
     if tracking["ontologies"][name]["current_iri"] == iri:
         return True
