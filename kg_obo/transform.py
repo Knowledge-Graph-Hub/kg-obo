@@ -199,7 +199,7 @@ def track_obo_version(name: str = "", iri: str = "",
     #If we already have a version, move it to archive
     if tracking["ontologies"][name]["current_version"] != "NA":
         if "archive" not in tracking["ontologies"][name]:
-            tracking["ontologies"][name] = []
+            tracking["ontologies"][name]["archive"] = []
         tracking["ontologies"][name]["archive"].append({"iri": iri, "version": version})
     else:
         tracking["ontologies"][name]["current_iri"] = iri

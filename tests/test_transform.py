@@ -195,10 +195,18 @@ class TestRunTransform(TestCase):
 
     @mock.patch('boto3.client')
     def test_track_obo_version(self, mock_boto):
+        # Test adding to tracking when no version exists
         name = "bfo"
-        iri = ""
-        version = ""
+        iri = "iri-1"
+        version = "version-1"
         bucket = "test"
+        track_obo_version(name, iri, version, bucket,
+                          track_file_local_path="tests/resources/tracking.yaml",
+                          track_file_remote_path="tests/resources/tracking.yaml")
+        self.assertTrue(mock_boto.called)
+        # Now test adding to tracking when old version exists
+        iri = "iri-2"
+        version = "version-2"
         track_obo_version(name, iri, version, bucket,
                           track_file_local_path="tests/resources/tracking.yaml",
                           track_file_remote_path="tests/resources/tracking.yaml")
