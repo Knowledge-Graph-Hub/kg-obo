@@ -22,6 +22,28 @@ import kg_obo.obolibrary_utils
 import kg_obo.upload
 from urllib.parse import quote
 
+def delete_path(root_dir: str, omit: list = []) -> bool:
+    """ Deletes a path recursively, i.e., everything in
+    the provided directory and all its subdirectories.
+    :param root_dir: str of the path to begin with
+    :param omit: list of path(s) to keep, i.e., don't delete them
+    :return: bool, True if successful
+    """
+    success = True
+
+    try:
+        for filename in os.listdir(base_obo_path):
+            file_path = os.path.join(base_obo_path, filename)
+            if filename not in omit:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+    except OSError as e:
+        print(f"Error in deleting {root_dir}: {e}")
+        success = False
+
+    return success
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
@@ -463,12 +485,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             # Clean up any incomplete transform leftovers
             if not success:
-                for filename in os.listdir(base_obo_path):
-                    file_path = os.path.join(base_obo_path, filename)
-                    if os.path.isfile(file_path) or os.path.islink(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
+                if delete_path(base_obo_path):
+                    pass
+                else:
+                    kg_obo_logger.warning(f"Incomplete version of {ontology_name} may be present.")
 
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
@@ -486,13 +506,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             kg_obo_logger.info(f"Failed to create root index at {remote_path}")
 
     if not save_local:
-        for filename in os.listdir(data_dir):
-            file_path = os.path.join(data_dir, filename)
-            if filename != track_file_local_path:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
+        if delete_path(data_dir, omit = [track_file_local_path]):
+            pass
+        else:
+            kg_obo_logger.warning(f"Local data not deleted from {data_dir}.")
 
     # Now un-set the lockfile
     if s3_test:
