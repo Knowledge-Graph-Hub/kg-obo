@@ -261,9 +261,10 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     # Check current and previous versions
     if tracking["ontologies"][name]["current_iri"] == iri:
         exists = True
-    elif iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
-        exists = True
-    
+    elif "archive" in tracking["ontologies"][name] and \
+        iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
+            exists = True
+
     return exists
 
 def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool) -> bool:
