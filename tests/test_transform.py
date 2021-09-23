@@ -141,6 +141,30 @@ class TestRunTransform(TestCase):
             mock_kgx_transform.reset_mock()
             run_transform(log_dir=td,s3_test=True)
             self.assertFalse(mock_kgx_transform.called)
+        
+        # also don't run transform if lockfile not settable
+        with mock.patch('kg_obo.upload.mock_set_lock', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=True)
+            self.assertFalse(mock_kgx_transform.called)
+        with mock.patch('kg_obo.upload.set_lock', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=False)
+            self.assertFalse(mock_kgx_transform.called)
+
+        # also don't run transform if tracking file not accessible
+        with mock.patch('kg_obo.upload.mock_check_tracking', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=True)
+            self.assertFalse(mock_kgx_transform.called)
+        with mock.patch('kg_obo.upload.check_tracking', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=False)
+            self.assertFalse(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
