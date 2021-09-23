@@ -259,8 +259,9 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     # Check current and previous versions
     if tracking["ontologies"][name]["current_iri"] == iri:
         return True
-    elif iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
-        return True
+    elif "archive" in tracking["ontologies"][name]:
+        if iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
+            return True
     else:
         return False
 
