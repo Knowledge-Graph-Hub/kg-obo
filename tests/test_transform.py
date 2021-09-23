@@ -6,7 +6,8 @@ from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
-    get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version
+    get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
+    delete_path
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -241,3 +242,8 @@ class TestRunTransform(TestCase):
                           tracking_file_local_path=track_path,
                           tracking_file_remote_path=track_path)
         self.assertTrue(mock_boto.called)
+
+    def test_delete_path(self):
+        data_path = "tests/resources/fake_upload_dir/"
+        self.assertTrue(delete_path(data_path, omit=[]))
+
