@@ -246,4 +246,5 @@ class TestRunTransform(TestCase):
     def test_delete_path(self):
         data_path = "tests/resources/fake_upload_dir/"
         self.assertTrue(delete_path(data_path, omit=[]))
-
+        data_path = "tests/resources/a_dir_that_definitely_does_not_exist/"
+        self.assertFalse(delete_path(data_path, omit=[]))

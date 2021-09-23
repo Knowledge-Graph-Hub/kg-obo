@@ -39,7 +39,7 @@ def delete_path(root_dir: str, omit: list = []) -> bool:
                     os.unlink(file_path)
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
-    except OSError as e:
+    except IOError as e:
         print(f"Error in deleting {root_dir}: {e}")
         success = False
 
