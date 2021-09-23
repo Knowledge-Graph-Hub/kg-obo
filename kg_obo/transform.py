@@ -244,11 +244,13 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     :param iri: iri of OBO version
     :return: boolean, True if this OBO and version already exist as transformed
     """
-
+    
+    exists = False # Assume we don't have the OBO yet unless proven otherwise
+    
     #If testing, assume OBO transform does not exist as we aren't really reading tracking
     if s3_test:
-        return False
-
+        return exists
+    
     client = boto3.client('s3')
 
     client.download_file(bucket, tracking_file_remote_path, tracking_file_local_path)
@@ -258,12 +260,12 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
 
     # Check current and previous versions
     if tracking["ontologies"][name]["current_iri"] == iri:
-        return True
+        exists = True
     elif "archive" in tracking["ontologies"][name]:
         if iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
-            return True
-    else:
-        return False
+            exists = True
+
+    return exists
 
 def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool) -> bool:
     """
