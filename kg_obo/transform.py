@@ -486,7 +486,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             # Clean up any incomplete transform leftovers
             if not success:
                 if delete_path(base_obo_path):
-                    pass
+                    kg_obo.logger.info(f"Removed incomplete transform files for {ontology_name}.")
                 else:
                     kg_obo_logger.warning(f"Incomplete version of {ontology_name} may be present.")
 
@@ -507,7 +507,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if not save_local:
         if delete_path(data_dir, omit = [track_file_local_path]):
-            pass
+            kg_obo_logger.info(f"Removed local data from {data_dir}.")
         else:
             kg_obo_logger.warning(f"Local data not deleted from {data_dir}.")
 
