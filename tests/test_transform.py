@@ -6,7 +6,8 @@ from unittest.mock import Mock
 from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
-    get_owl_iri, retrieve_obofoundry_yaml, track_obo_version
+    get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
+    delete_path
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -18,7 +19,8 @@ class TestRunTransform(TestCase):
 
         self.download_ontology_kwargs = {'url': 'https://some/url',
                                          'file': tempfile.NamedTemporaryFile().name,
-                                         'logger': logging.getLogger("fake-log")}
+                                         'logger': logging.getLogger("fake-log"),
+                                         'no_dl_progress': 'False'}
         self.parsed_obo_yaml_sample = [{'activity_status': 'active',
             'browsers': [{'label': 'BioPortal', 'title': 'BioPortal Browser',
                          'url': 'http://bioportal.bioontology.org/ontologies/BFO?p=classes'
@@ -139,6 +141,30 @@ class TestRunTransform(TestCase):
             mock_kgx_transform.reset_mock()
             run_transform(log_dir=td,s3_test=True)
             self.assertFalse(mock_kgx_transform.called)
+        
+        # also don't run transform if lockfile not settable
+        with mock.patch('kg_obo.upload.mock_set_lock', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=True)
+            self.assertFalse(mock_kgx_transform.called)
+        with mock.patch('kg_obo.upload.set_lock', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=False)
+            self.assertFalse(mock_kgx_transform.called)
+
+        # also don't run transform if tracking file not accessible
+        with mock.patch('kg_obo.upload.mock_check_tracking', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=True)
+            self.assertFalse(mock_kgx_transform.called)
+        with mock.patch('kg_obo.upload.check_tracking', return_value=False),\
+                tempfile.TemporaryDirectory() as td:
+            mock_kgx_transform.reset_mock()
+            run_transform(log_dir=td,s3_test=False)
+            self.assertFalse(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
@@ -194,11 +220,55 @@ class TestRunTransform(TestCase):
 
     @mock.patch('boto3.client')
     def test_track_obo_version(self, mock_boto):
+        track_path = "tests/resources/tracking.yaml"
+        # Test adding to tracking when no version exists
         name = "bfo"
-        iri = ""
-        version = ""
+        iri = "iri-1"
+        version = "version-1"
         bucket = "test"
         track_obo_version(name, iri, version, bucket,
-                          track_file_local_path="tests/resources/tracking.yaml",
-                          track_file_remote_path="tests/resources/tracking.yaml")
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
         self.assertTrue(mock_boto.called)
+        # Now test adding to tracking when old version exists
+        iri = "iri-2"
+        version = "version-2"
+        track_obo_version(name, iri, version, bucket,
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
+        self.assertTrue(mock_boto.called)
+
+    @mock.patch('boto3.client')
+    def test_transformed_obo_exists(self, mock_boto):
+        track_path = "tests/resources/tracking.yaml"
+        # First track obo existence
+        name = "bfo"
+        iri = "iri_old"
+        version = "version_old"
+        bucket = "test"
+        track_obo_version(name, iri, version, bucket,
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
+        # Now see if it exits in the tracking
+        transformed_obo_exists(name, iri,
+                          tracking_file_local_path=track_path,
+                          tracking_file_remote_path=track_path)
+        self.assertTrue(mock_boto.called)
+
+        iri = "iri_new"
+        version = "version_new"
+        track_obo_version(name, iri, version, bucket,
+                          track_file_local_path=track_path,
+                          track_file_remote_path=track_path)
+        # Now see if it exits in the tracking, again
+        iri = "iri_old"
+        transformed_obo_exists(name, iri,
+                          tracking_file_local_path=track_path,
+                          tracking_file_remote_path=track_path)
+        self.assertTrue(mock_boto.called)
+
+    def test_delete_path(self):
+        data_path = "tests/resources/fake_upload_dir/"
+        self.assertTrue(delete_path(data_path, omit=[]))
+        data_path = "tests/resources/a_dir_that_definitely_does_not_exist/"
+        self.assertFalse(delete_path(data_path, omit=[]))

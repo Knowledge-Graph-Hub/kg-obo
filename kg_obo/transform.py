@@ -22,6 +22,28 @@ import kg_obo.obolibrary_utils
 import kg_obo.upload
 from urllib.parse import quote
 
+def delete_path(root_dir: str, omit: list = []) -> bool:
+    """ Deletes a path recursively, i.e., everything in
+    the provided directory and all its subdirectories.
+    :param root_dir: str of the path to begin with
+    :param omit: list of path(s) to keep, i.e., don't delete them
+    :return: bool, True if successful
+    """
+    success = True
+
+    try:
+        for filename in os.listdir(root_dir):
+            file_path = os.path.join(root_dir, filename)
+            if filename not in omit:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+    except IOError as e:
+        print(f"Error in deleting {root_dir}: {e}")
+        success = False
+
+    return success
 
 def retrieve_obofoundry_yaml(
         yaml_url: str = 'https://raw.githubusercontent.com/OBOFoundry/OBOFoundry.github.io/master/registry/ontologies.yml',
@@ -65,7 +87,7 @@ def kgx_transform(input_file: list, input_format: str,
 
     :param input_file: list of files to transform
     :param input_format: input format
-    :param output_file: output file root (appended with nodes/edges.[format])
+    :param output_file: output file root, as tar.gz
     :param output_format: output format
     :param logger: logger
     :return: tuple - (bool for did transform work?, bool for any errors encountered)
@@ -87,12 +109,18 @@ def kgx_transform(input_file: list, input_format: str,
         pass
 
     try:
-        kgx.cli.transform(inputs=input_file,
+        if output_format == "tsv":
+            kgx.cli.transform(inputs=input_file,
                           input_format=input_format,
                           output=output_file,
                           output_format=output_format,
                           output_compression="tar.gz")
-
+        else:
+            kgx.cli.transform(inputs=input_file,
+                          input_format=input_format,
+                          output=f"{output_file}.{output_format}",
+                          output_format=output_format)
+        
         # Need to parse the log output to aggregate it
         error_collect = {bnode_errors:0, other_errors:0}
 
@@ -103,7 +131,7 @@ def kgx_transform(input_file: list, input_format: str,
                 error_collect[other_errors] = error_collect[other_errors] + 1
 
         if sum(error_collect.values()) > 0:  # type: ignore
-            logger.error(f"Encountered errors in transforming or parsing: {error_collect}")  # type: ignore
+            logger.error(f"Encountered errors in transforming or parsing to {output_format}: {error_collect}")  # type: ignore
             errors = True
 
     except (FileNotFoundError,
@@ -111,7 +139,7 @@ def kgx_transform(input_file: list, input_format: str,
             ParserError,
             Exception) as e:
         success = False
-        logger.error(e, f"KGX problem while transforming {input_file}")  # type: ignore
+        logger.error(e, f"KGX problem while transforming {input_file} to {output_format}")  # type: ignore
 
     log_handler.flush()
 
@@ -193,7 +221,7 @@ def track_obo_version(name: str = "", iri: str = "",
     #If we already have a version, move it to archive
     if tracking["ontologies"][name]["current_version"] != "NA":
         if "archive" not in tracking["ontologies"][name]:
-            tracking["ontologies"][name] = []
+            tracking["ontologies"][name]["archive"] = []
         tracking["ontologies"][name]["archive"].append({"iri": iri, "version": version})
     else:
         tracking["ontologies"][name]["current_iri"] = iri
@@ -212,7 +240,7 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
 
-    :param name: string of short logger name, e.g., bfo
+    :param name: string of short OBO name, e.g., bfo
     :param iri: iri of OBO version
     :return: boolean, True if this OBO and version already exist as transformed
     """
@@ -228,22 +256,22 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     with open(tracking_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
-    os.unlink(tracking_file_local_path)
-
-    #We only check the most recent version - if we are transforming an old version,
-    #then let it happen
+    # Check current and previous versions
     if tracking["ontologies"][name]["current_iri"] == iri:
+        return True
+    elif iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
         return True
     else:
         return False
 
-def download_ontology(url: str, file: str, logger: object) -> bool:
+def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool) -> bool:
     """
     Download ontology from URL
 
     :param url: url to download from
     :param file: file to download into
     :param logger:
+    :param no_dl_progress: bool, if True then download progress bar is suppressed
     :return: boolean indicating whether download worked
     """
     try:
@@ -251,11 +279,13 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
         file_size = int(req.headers['Content-Length'])
         chunk_size = 1024
         with open(file, 'wb') as outfile:
-            pbar = tqdm(unit="B", total=file_size, unit_scale=True,
+            if not no_dl_progress:
+                pbar = tqdm(unit="B", total=file_size, unit_scale=True,
                         unit_divisor=chunk_size)
             for chunk in req.iter_content(chunk_size=chunk_size):
                 if chunk:
-                    pbar.update(len(chunk))
+                    if not no_dl_progress:
+                        pbar.update(len(chunk))
                     outfile.write(chunk)
         return True
     except KeyError as e:
@@ -265,6 +295,7 @@ def download_ontology(url: str, file: str, logger: object) -> bool:
 
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
+                  no_dl_progress=False,
                   lock_file_remote_path: str = "kg-obo/lock",
                   log_dir="logs", data_dir="data",
                   remote_path="kg-obo",
@@ -278,6 +309,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :param bucket: str of S3 bucket, to be specified as argument
     :param save_local: bool for whether to retain transform results on local disk
     :param s3_test: bool for whether to perform mock S3 upload only
+    :param no_dl_progress: bool for whether to hide download progress bars
     :param lock_file_remote_path: str of path for lock file on S3
     :param log_dir: str of local dir where any logs should be saved
     :param data_dir: str of local dir where data should be saved
@@ -371,7 +403,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             success = True
 
-            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger):
+            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, no_dl_progress=no_dl_progress):
                 success = False
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
@@ -392,11 +424,29 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 os.mkdir(versioned_obo_path)
 
             # Use kgx to transform, but save errors to log
-            success, errors = kgx_transform(input_file=[tfile.name],
+            # Do separate transforms for different output formats
+            success = True # for all transforms 
+            errors = False # for all transforms
+            all_success_and_errors = {}
+            desired_output_formats = ['tsv', 'json']
+            for output_format in desired_output_formats:
+                kg_obo_logger.info(f"Transforming to {output_format}...")
+                this_success, this_errors = kgx_transform(input_file=[tfile.name],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_name),
-                                            output_format='tsv',
+                                            output_format=output_format,
                                             logger=kgx_logger)
+                all_success_and_errors[output_format] = (this_success, this_errors)
+
+            # Check results of all transforms
+            for output_format in desired_output_formats:
+                if not all_success_and_errors[output_format][0]:
+                    success = False
+                    break
+            for output_format in desired_output_formats:
+                if all_success_and_errors[output_format][1]:
+                    errors = False
+                    break
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(versioned_obo_path):
@@ -435,12 +485,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             # Clean up any incomplete transform leftovers
             if not success:
-                for filename in os.listdir(base_obo_path):
-                    file_path = os.path.join(base_obo_path, filename)
-                    if os.path.isfile(file_path) or os.path.islink(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
+                if delete_path(base_obo_path):
+                    kg_obo_logger.info(f"Removed incomplete transform files for {ontology_name}.")
+                else:
+                    kg_obo_logger.warning(f"Incomplete version of {ontology_name} may be present.")
 
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
@@ -458,13 +506,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             kg_obo_logger.info(f"Failed to create root index at {remote_path}")
 
     if not save_local:
-        for filename in os.listdir(data_dir):
-            file_path = os.path.join(data_dir, filename)
-            if filename != track_file_local_path:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
+        if delete_path(data_dir, omit = [track_file_local_path]):
+            kg_obo_logger.info(f"Removed local data from {data_dir}.")
+        else:
+            kg_obo_logger.warning(f"Local data not deleted from {data_dir}.")
 
     # Now un-set the lockfile
     if s3_test:
