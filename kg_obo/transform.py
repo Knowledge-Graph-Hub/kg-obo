@@ -32,8 +32,8 @@ def delete_path(root_dir: str, omit: list = []) -> bool:
     success = True
 
     try:
-        for filename in os.listdir(base_obo_path):
-            file_path = os.path.join(base_obo_path, filename)
+        for filename in os.listdir(root_dir):
+            file_path = os.path.join(root_dir, filename)
             if filename not in omit:
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.unlink(file_path)
