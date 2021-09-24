@@ -133,7 +133,7 @@ def kgx_transform(input_file: list, input_format: str,
                 error_collect[other_errors] = error_collect[other_errors] + 1
 
         if sum(error_collect.values()) > 0:  # type: ignore
-            output_msg = "Encountered errors in transforming or parsing to {output_format}: {error_collect}"
+            output_msg = f"Encountered errors in transforming or parsing to {output_format}: {error_collect}"
             errors = True
 
     except (FileNotFoundError,
