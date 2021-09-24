@@ -1,6 +1,7 @@
 import logging
 import tempfile
 import pytest
+import requests
 from unittest import TestCase, mock
 from unittest.mock import Mock
 from botocore.exceptions import ClientError
@@ -190,6 +191,13 @@ class TestRunTransform(TestCase):
     @mock.patch('requests.get')
     def test_download_ontology_fail(self, mock_get):
         mock_get.side_effect = KeyError(mock.Mock())
+        ret_val = download_ontology(**self.download_ontology_kwargs)
+        self.assertTrue(mock_get.called)
+        self.assertFalse(ret_val)
+
+    @mock.patch('requests.get')
+    def test_download_ontology_connectionerror(self, mock_get):
+        mock_get.side_effect = requests.ConnectionError(mock.Mock())
         ret_val = download_ontology(**self.download_ontology_kwargs)
         self.assertTrue(mock_get.called)
         self.assertFalse(ret_val)

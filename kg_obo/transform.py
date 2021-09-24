@@ -22,6 +22,7 @@ import kg_obo.obolibrary_utils
 import kg_obo.upload
 from urllib.parse import quote
 
+
 def delete_path(root_dir: str, omit: list = []) -> bool:
     """ Deletes a path recursively, i.e., everything in
     the provided directory and all its subdirectories.
@@ -97,6 +98,7 @@ def kgx_transform(input_file: list, input_format: str,
 
     bnode_errors = "BNode Errors"
     other_errors = "Other Errors"
+    output_msg = f"No errors in transformation of {input_file} to {output_format}"
 
     # We stream the KGX logs to their own output to capture them
     log_stream = StringIO()
@@ -131,19 +133,20 @@ def kgx_transform(input_file: list, input_format: str,
                 error_collect[other_errors] = error_collect[other_errors] + 1
 
         if sum(error_collect.values()) > 0:  # type: ignore
-            logger.error(f"Encountered errors in transforming or parsing to {output_format}: {error_collect}")  # type: ignore
+            output_msg = "Encountered errors in transforming or parsing to {output_format}: {error_collect}"
             errors = True
 
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
-            Exception) as e:
+            Exception,
+            TypeError) as e:
         success = False
-        logger.error(e, f"KGX problem while transforming {input_file} to {output_format}")  # type: ignore
+        output_msg = f"KGX problem while transforming {input_file} to {output_format} due to {e}"
 
     log_handler.flush()
 
-    return (success, errors)
+    return (success, errors, output_msg)
 
 def get_owl_iri(input_file_name: str) -> tuple:
     """
@@ -291,7 +294,7 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool)
                         pbar.update(len(chunk))
                     outfile.write(chunk)
         return True
-    except KeyError as e:
+    except (KeyError, requests.exceptions.RequestException) as e:
         logger.error(e)  # type: ignore
         return False
 
@@ -393,8 +396,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
         print(url)
 
-        # download url
-        # use kgx to convert OWL to KGX tsv
+        # Set up local directories
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
         base_obo_path = os.path.join(data_dir, ontology_name)
@@ -434,12 +436,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             desired_output_formats = ['tsv', 'json']
             for output_format in desired_output_formats:
                 kg_obo_logger.info(f"Transforming to {output_format}...")
-                this_success, this_errors = kgx_transform(input_file=[tfile.name],
+                this_success, this_errors, this_output_msg = kgx_transform(input_file=[tfile.name],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_name),
                                             output_format=output_format,
                                             logger=kgx_logger)
                 all_success_and_errors[output_format] = (this_success, this_errors)
+                kg_obo_logger.info(this_output_msg)
 
             # Check results of all transforms
             for output_format in desired_output_formats:
