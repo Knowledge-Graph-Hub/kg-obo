@@ -138,9 +138,10 @@ def kgx_transform(input_file: list, input_format: str,
     except (FileNotFoundError,
             SAXParseException,
             ParserError,
-            Exception) as e:
+            Exception,
+            TypeError) as e:
         success = False
-        logger.error(e, f"KGX problem while transforming {input_file} to {output_format}")  # type: ignore
+        logger.error(f"KGX problem while transforming {input_file} to {output_format} due to {e}")  # type: ignore
 
     log_handler.flush()
 
