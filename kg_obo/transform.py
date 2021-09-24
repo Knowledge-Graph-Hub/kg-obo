@@ -22,6 +22,7 @@ import kg_obo.obolibrary_utils
 import kg_obo.upload
 from urllib.parse import quote
 
+
 def delete_path(root_dir: str, omit: list = []) -> bool:
     """ Deletes a path recursively, i.e., everything in
     the provided directory and all its subdirectories.
@@ -291,7 +292,7 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool)
                         pbar.update(len(chunk))
                     outfile.write(chunk)
         return True
-    except KeyError as e:
+    except (KeyError, requests.exceptions.RequestException) as e:
         logger.error(e)  # type: ignore
         return False
 
@@ -393,8 +394,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
         print(url)
 
-        # download url
-        # use kgx to convert OWL to KGX tsv
+        # Set up local directories
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
         base_obo_path = os.path.join(data_dir, ontology_name)
