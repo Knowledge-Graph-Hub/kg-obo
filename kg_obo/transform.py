@@ -157,7 +157,9 @@ def get_owl_iri(input_file_name: str) -> tuple:
     Does some string parsing to get a shorter version number.
     Versions may take multiple formats across OBOs.
     If an IRI is not provided (i.e., the OWL does not contain owl:versionIRI
-    in its header) then we try the value of oboInOwl:date instead.
+    in its header metadata) then we try the value of oboInOwl:date instead.
+    The date value, if present, is used as a replacement version identifier,
+    not a replacement IRI.
 
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
@@ -270,7 +272,8 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
 
     return exists
 
-def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool) -> bool:
+def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool,
+                      header_only: bool) -> bool:
     """
     Download ontology from URL
 
@@ -278,6 +281,7 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool)
     :param file: file to download into
     :param logger:
     :param no_dl_progress: bool, if True then download progress bar is suppressed
+    :param header_only: bool, if True then only download enough of file to check IRI/version
     :return: boolean indicating whether download worked
     """
     try:
@@ -286,13 +290,19 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool)
         chunk_size = 1024
         with open(file, 'wb') as outfile:
             if not no_dl_progress:
-                pbar = tqdm(unit="B", total=file_size, unit_scale=True,
+                if not header_only:
+                    pbar = tqdm(unit="B", total=file_size, unit_scale=True,
+                        unit_divisor=chunk_size)
+                else:
+                    pbar = tqdm(unit="B", total=chunk_size, unit_scale=True,
                         unit_divisor=chunk_size)
             for chunk in req.iter_content(chunk_size=chunk_size):
                 if chunk:
                     if not no_dl_progress:
                         pbar.update(len(chunk))
                     outfile.write(chunk)
+                if header_only:
+                    break
         return True
     except (KeyError, requests.exceptions.RequestException) as e:
         logger.error(e)  # type: ignore
@@ -407,8 +417,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
 
             success = True
-
-            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, no_dl_progress=no_dl_progress):
+            
+            # Some OBOs are quite large, so we download selection first to check IRI/version
+            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, 
+                                     no_dl_progress=no_dl_progress, header_only=True):
                 success = False
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
@@ -418,10 +430,18 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
 
-            #Check version here
+            # Check version here
             if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket):
                 kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
                 print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
+                continue
+
+            # If this version is new, download the whole OBO
+            if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, 
+                                     no_dl_progress=no_dl_progress, header_only=False):
+                success = False
+                kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
+                failed_transforms.append(ontology_name)
                 continue
 
             versioned_obo_path = os.path.join(base_obo_path, owl_version)
@@ -511,6 +531,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         else:
             kg_obo_logger.info(f"Failed to create root index at {remote_path}")
 
+    # Remove all local data files
+    # TODO: check to ensure no empty folders remain, whether we're using save_local or not
     if not save_local:
         if delete_path(data_dir, omit = [track_file_local_path]):
             kg_obo_logger.info(f"Removed local data from {data_dir}.")

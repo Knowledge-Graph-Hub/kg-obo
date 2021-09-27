@@ -21,7 +21,8 @@ class TestRunTransform(TestCase):
         self.download_ontology_kwargs = {'url': 'https://some/url',
                                          'file': tempfile.NamedTemporaryFile().name,
                                          'logger': logging.getLogger("fake-log"),
-                                         'no_dl_progress': 'False'}
+                                         'no_dl_progress': 'False',
+                                         'header_only': 'False'}
         self.parsed_obo_yaml_sample = [{'activity_status': 'active',
             'browsers': [{'label': 'BioPortal', 'title': 'BioPortal Browser',
                          'url': 'http://bioportal.bioontology.org/ontologies/BFO?p=classes'
