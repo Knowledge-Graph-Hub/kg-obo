@@ -21,8 +21,7 @@ class TestRunTransform(TestCase):
         self.download_ontology_kwargs = {'url': 'https://some/url',
                                          'file': tempfile.NamedTemporaryFile().name,
                                          'logger': logging.getLogger("fake-log"),
-                                         'no_dl_progress': 'False',
-                                         'header_only': 'False'}
+                                         'no_dl_progress': 'False'}
         self.parsed_obo_yaml_sample = [{'activity_status': 'active',
             'browsers': [{'label': 'BioPortal', 'title': 'BioPortal Browser',
                          'url': 'http://bioportal.bioontology.org/ontologies/BFO?p=classes'
@@ -185,21 +184,27 @@ class TestRunTransform(TestCase):
 
     @mock.patch('requests.get')
     def test_download_ontology(self, mock_get):
-        ret_val = download_ontology(**self.download_ontology_kwargs)
+        ret_val = download_ontology(**self.download_ontology_kwargs, header_only=False)
+        self.assertTrue(mock_get.called)
+        self.assertTrue(ret_val)
+
+    @mock.patch('requests.get')
+    def test_download_ontology_headeronly(self, mock_get):
+        ret_val = download_ontology(**self.download_ontology_kwargs, header_only=True)
         self.assertTrue(mock_get.called)
         self.assertTrue(ret_val)
 
     @mock.patch('requests.get')
     def test_download_ontology_fail(self, mock_get):
         mock_get.side_effect = KeyError(mock.Mock())
-        ret_val = download_ontology(**self.download_ontology_kwargs)
+        ret_val = download_ontology(**self.download_ontology_kwargs, header_only=False)
         self.assertTrue(mock_get.called)
         self.assertFalse(ret_val)
 
     @mock.patch('requests.get')
     def test_download_ontology_connectionerror(self, mock_get):
         mock_get.side_effect = requests.ConnectionError(mock.Mock())
-        ret_val = download_ontology(**self.download_ontology_kwargs)
+        ret_val = download_ontology(**self.download_ontology_kwargs, header_only=False)
         self.assertTrue(mock_get.called)
         self.assertFalse(ret_val)
 
