@@ -389,6 +389,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     successful_transforms = []
     errored_transforms = []
     failed_transforms = []
+    all_completed_transforms = []
 
     if len(skip) >0:
       kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
@@ -434,6 +435,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket):
                 kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
                 print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
+                all_completed_transforms.append(ontology_name)
                 continue
 
             # If this version is new, download the whole OBO
@@ -485,6 +487,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if success and not errors:
                 kg_obo_logger.info(f"Successfully completed transform of {ontology_name}")
                 successful_transforms.append(ontology_name)
+                all_completed_transforms.append(ontology_name)
 
                 if not s3_test:
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
@@ -523,6 +526,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
+
+    if len(all_completed_transforms) > 0:
+        kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}: "
+                            f"{all_completed_transforms}")
 
     if not s3_test:
         # Update the root index
