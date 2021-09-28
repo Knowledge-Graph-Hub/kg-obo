@@ -99,17 +99,27 @@ def kgx_transform(input_file: list, input_format: str,
     bnode_errors = "BNode Errors"
     other_errors = "Other Errors"
     output_msg = f"No errors in transformation of {input_file} to {output_format}"
+    
+    log_file_name = f"{output_format}_transform.log"
+    log_file_path = os.path.join(os.path.dirname(output_file),log_file_name)
 
     # We stream the KGX logs to their own output to capture them
+    # and also set up log output to a file which will accompany the transformed output
     log_stream = StringIO()
     log_handler = logging.StreamHandler(log_stream)
+    log_file_handler = logging.FileHandler(log_file_path)
     log_handler.setLevel(logging.WARNING)
+    log_file_handler.setLevel(logging.INFO)
     # Logger doesn't know it's already an instance, so it throws an error
     try:
         logger.addHandler(hdlr=log_handler)  # type: ignore
     except TypeError:
         pass
-
+    try:
+        logger.addHandler(hdlr=log_file_handler)  # type: ignore
+    except TypeError:
+        pass
+ 
     try:
         if output_format == "tsv":
             kgx.cli.transform(inputs=input_file,
@@ -145,6 +155,7 @@ def kgx_transform(input_file: list, input_format: str,
         output_msg = f"KGX problem while transforming {input_file} to {output_format} due to {e}"
 
     log_handler.flush()
+    log_file_handler.flush()
 
     return (success, errors, output_msg)
 
