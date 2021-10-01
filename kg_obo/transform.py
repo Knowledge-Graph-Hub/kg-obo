@@ -319,6 +319,30 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool,
         logger.error(e)  # type: ignore
         return False
 
+def imports_requested(input_file_name: str) -> list:
+    """
+    Given an OWL file, searches for and returns list of import statements.
+    :param file: file to parse
+    :return: list of strings, each the name of an import, e.g. "upheno/metazoa.owl"
+    """
+
+    imports = []
+    import_tag = b'owl:imports rdf:resource=\"(.*)\"'
+
+    try:
+        with open(input_file_name, 'rb', 0) as owl_file, \
+            mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
+            import_search = re.findall(import_tag, owl_string)  # type: ignore
+            # mypy doesn't like re and mmap objects
+            if len(import_search) > 0:
+                for match in import_search:
+                    imports.append(match.decode("utf-8"))
+            else:
+                print("No imports found.")
+    except ValueError: #Should not happen unless OWL definitions are missing/broken
+        print("Could not parse OWL definitions enough to locate any imports.")
+
+    return imports
 
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
@@ -447,6 +471,18 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
                 print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
                 all_completed_transforms.append(ontology_name)
+                continue
+
+            # Check for imports and skip this OBO if they're present
+            # TODO: actually retrieve imports
+            imports = imports_requested(tfile.name)
+            if len(imports) > 0:
+                fimports = ", ".join(imports)
+                kg_obo_logger.info(f"Header for {ontology_name} requests these imports: {fimports}")
+                kg_obo_logger.warning(f"Imports not currently supported. Skipping {ontology_name}.")
+                print(f"Header for {ontology_name} requests these imports: {fimports}")
+                print(f"Imports not currently supported. Skipping {ontology_name}.")
+                failed_transforms.append(ontology_name)
                 continue
 
             # If this version is new, download the whole OBO
