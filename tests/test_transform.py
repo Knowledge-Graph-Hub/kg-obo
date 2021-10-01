@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
     get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
-    delete_path
+    delete_path, imports_requested
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -221,6 +221,10 @@ class TestRunTransform(TestCase):
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("release", "release"), iri)
+
+    def test_imports_requested(self):
+        imports = imports_requested('tests/resources/download_ontology/upheno_SNIPPET.owl')
+        self.assertEqual(imports, ["&obo;upheno/metazoa.owl"])
 
     def test_retrieve_obofoundry_yaml_select(self):
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=[])
