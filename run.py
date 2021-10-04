@@ -37,7 +37,7 @@ import kg_obo.upload
                is_flag=True,
                help="If used, progress bar output is suppressed. Makes for nicer build output.")
 @click.option("--force_index_refresh",
-               is_flag,True,
+               is_flag=True,
                help="If used, rebuilds root index.html before beginning any transforms.")
 def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index_refresh):
     lock_file_remote_path = "kg-obo/lock"
