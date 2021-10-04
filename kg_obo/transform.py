@@ -347,6 +347,7 @@ def imports_requested(input_file_name: str) -> list:
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
                   no_dl_progress=False,
+                  force_index_refresh=False,
                   lock_file_remote_path: str = "kg-obo/lock",
                   log_dir="logs", data_dir="data",
                   remote_path="kg-obo",
@@ -417,6 +418,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         if not kg_obo.upload.check_tracking(bucket, tracking_file_remote_path):
             print("Cannot locate tracking file on remote storage. Exiting...")
             return False
+
+    # If requested, refresh the root index.html
+    if force_index_refresh and not s3_test:
+        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
+            kg_obo_logger.info(f"Refreshed root index at {remote_path}")
+        else:
+            kg_obo_logger.info(f"Failed to refresh root index at {remote_path}")
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
