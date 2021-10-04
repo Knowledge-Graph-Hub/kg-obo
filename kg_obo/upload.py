@@ -296,12 +296,13 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 
     for dir in check_dirs:
 
-        path_only = os.path.relpath(current_path, data_dir)
-        current_remote_path = os.path.join(remote_path, path_only)
-
         # Get the list of local files
         current_path = os.path.join(dir,ifilename)
         current_files = os.listdir(dir)
+
+        # Set local and remote paths
+        path_only = os.path.relpath(current_path, data_dir)
+        current_remote_path = os.path.join(remote_path, path_only)
 
         # Append the list of remote files
         for key in client.list_objects(Bucket=bucket)['Contents']:
