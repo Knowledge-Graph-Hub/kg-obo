@@ -548,6 +548,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 successful_transforms.append(ontology_name)
                 all_completed_transforms.append(ontology_name)
 
+            elif success and errors:
+                kg_obo_logger.info(f"Completed transform of {ontology_name} with errors - see logs for details.")
+                errored_transforms.append(ontology_name)
+            else:
+                kg_obo_logger.warning(f"Failed to transform {ontology_name}")
+                failed_transforms.append(ontology_name)
+
+            if success:
+                versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if not s3_test:
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
@@ -555,21 +564,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         kg_obo_logger.info(f"Created index for {ontology_name}")
                     else:
                         kg_obo_logger.info(f"Failed to create index for {ontology_name}")
-
-                # Upload the most recently transformed version only
-                kg_obo_logger.info("Uploading...")
-                versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
-                if s3_test:
-                    kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
-                else:
+                    
+                    # Upload the most recently transformed version only
+                    kg_obo_logger.info("Uploading...")
                     kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
-
-            elif success and errors:
-                kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
-                errored_transforms.append(ontology_name)
-            else:
-                kg_obo_logger.warning(f"Failed to transform {ontology_name}")
-                failed_transforms.append(ontology_name)
+                else:
+                    kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
 
             # Clean up any incomplete transform leftovers
             if not success:
@@ -581,7 +581,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
     if len(errored_transforms) > 0:
-        kg_obo_logger.info(f"Incompletely transformed due to errors {len(errored_transforms)}: {errored_transforms}")
+        kg_obo_logger.info(f"Successfully transformed, with errors {len(errored_transforms)}: {errored_transforms}")
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
