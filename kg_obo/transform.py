@@ -181,6 +181,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     iri_about_tag = b'owl:Ontology rdf:about=\"(.*)\"'
     date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
+    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">(.*)'
 
     #The default IRI/version - only used if values aren't provided.
     iri = "release"
@@ -189,9 +190,12 @@ def get_owl_iri(input_file_name: str) -> tuple:
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
+            for line in iter(owl_string.readline, b""):
+                print(line)
             iri_search = re.search(iri_tag, owl_string)  # type: ignore
             iri_about_tag_search = re.search(iri_about_tag, owl_string) # type: ignore
             date_search = re.search(date_tag, owl_string)  # type: ignore
+            version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
@@ -208,9 +212,13 @@ def get_owl_iri(input_file_name: str) -> tuple:
             else:
                 print("Version IRI not found.")
             
+            # If we didn't get a version out of the IRI, look elsewhere
             if date_search and version == "release":
-                    date = (date_search.group(1)).decode("utf-8")
-                    version = quote(date)
+                date = (date_search.group(1)).decode("utf-8")
+                version = quote(date)
+            elif version_info_search and version == "release":
+                version_info = (version_info_search.group(1)).decode("utf-8")
+                version = quote(version_info)
             else:
                 print("Neither versioned IRI or release date found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
@@ -304,7 +312,7 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool,
     try:
         req = requests.get(url, stream=True)
         file_size = int(req.headers['Content-Length'])
-        chunk_size = 1024
+        chunk_size = 2048
         with open(file, 'wb') as outfile:
             if not no_dl_progress:
                 if not header_only:
@@ -479,6 +487,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             owl_iri, owl_version = get_owl_iri(tfile.name)
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
+            kg_obo_logger.info(f"Current version for {ontology_name}: {owl_version}")
+            print(f"Current version for {ontology_name}: {owl_version}")
 
             # Check version here
             if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket):
