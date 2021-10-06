@@ -215,18 +215,11 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 print("Version IRI not found.")
             
             # If we didn't get a version out of the IRI, look elsewhere
-            if date_search and version == "release":
-                date = (date_search.group(1)).decode("utf-8")
-                version = quote(date)
-            elif date_dc_search and version == "release":
-                date = (date_dc_search.group(1)).decode("utf-8")
-                version = quote(date)
-            elif version_info_search and version == "release":
-                version_info = (version_info_search.group(1)).decode("utf-8")
-                version = quote(version_info)
-            elif short_version_info_search and version == "release":
-                version_info = (short_version_info_search.group(1)).decode("utf-8")
-                version = quote(version_info)
+            for search_type in [date_search, date_dc_search, 
+                                version_info_search, short_version_info_search]:
+                if search_type and version == "release":
+                    version_info = (search_type.group(1)).decode("utf-8")
+                    version = quote(version_info)
             else:
                 print("Neither versioned IRI or release date found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
