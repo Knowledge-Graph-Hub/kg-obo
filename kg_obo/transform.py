@@ -181,7 +181,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     iri_about_tag = b'owl:Ontology rdf:about=\"(.*)\"'
     date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
-    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">(.*)'
+    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
 
     #The default IRI/version - only used if values aren't provided.
     iri = "release"
@@ -190,8 +190,6 @@ def get_owl_iri(input_file_name: str) -> tuple:
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
-            for line in iter(owl_string.readline, b""):
-                print(line)
             iri_search = re.search(iri_tag, owl_string)  # type: ignore
             iri_about_tag_search = re.search(iri_about_tag, owl_string) # type: ignore
             date_search = re.search(date_tag, owl_string)  # type: ignore
