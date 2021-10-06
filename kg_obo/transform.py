@@ -220,7 +220,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 if search_type and version == "release":
                     version_info = (search_type.group(1)).decode("utf-8")
                     version = quote(version_info)
-            else:
+            if version == "release":
                 print("Neither versioned IRI or release date found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
