@@ -181,6 +181,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     iri_about_tag = b'owl:Ontology rdf:about=\"(.*)\"'
     date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
+    date_dc_tag = b'dc:date xml:lang=\"en\">([^\<]+)'
     version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
 
     #The default IRI/version - only used if values aren't provided.
@@ -193,6 +194,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
             iri_search = re.search(iri_tag, owl_string)  # type: ignore
             iri_about_tag_search = re.search(iri_about_tag, owl_string) # type: ignore
             date_search = re.search(date_tag, owl_string)  # type: ignore
+            date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
             version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
@@ -213,6 +215,9 @@ def get_owl_iri(input_file_name: str) -> tuple:
             # If we didn't get a version out of the IRI, look elsewhere
             if date_search and version == "release":
                 date = (date_search.group(1)).decode("utf-8")
+                version = quote(date)
+            elif date_dc_search and version == "release":
+                date = (date_dc_search.group(1)).decode("utf-8")
                 version = quote(date)
             elif version_info_search and version == "release":
                 version_info = (version_info_search.group(1)).decode("utf-8")
