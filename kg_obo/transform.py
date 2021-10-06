@@ -171,15 +171,21 @@ def get_owl_iri(input_file_name: str) -> tuple:
     in its header metadata) then we try the value of oboInOwl:date instead.
     The date value, if present, is used as a replacement version identifier,
     not a replacement IRI.
-
+    The rdf:about value is also checked - this may not contain a version,
+    but it may contain a URL we can use as an IRI.
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
  
     # Most IRIs take this format - there are some exceptions
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
+    iri_about_tag = b'owl:Ontology rdf:about=\"(.*)\"'
     date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
+    date_dc_tag = b'dc:date xml:lang=\"en\">([^\<]+)'
+    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
+    short_version_info_tag = b'<owl:versionInfo>([^\<]+)'
 
+    #The default IRI/version - only used if values aren't provided.
     iri = "release"
     version = "release"
 
@@ -187,7 +193,11 @@ def get_owl_iri(input_file_name: str) -> tuple:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
             iri_search = re.search(iri_tag, owl_string)  # type: ignore
+            iri_about_tag_search = re.search(iri_about_tag, owl_string) # type: ignore
             date_search = re.search(date_tag, owl_string)  # type: ignore
+            date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
+            version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
+            short_version_info_search = re.search(short_version_info_tag, owl_string)  # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
@@ -199,14 +209,19 @@ def get_owl_iri(input_file_name: str) -> tuple:
                         version = quote(raw_version)
                 except IndexError:
                     pass
+            elif iri_about_tag_search: #In this case, we likely don't have a version
+                iri = (iri_about_tag_search.group(1)).decode("utf-8")
             else:
                 print("Version IRI not found.")
-                if date_search:
-                    date = (date_search.group(1)).decode("utf-8")
-                    iri = ''
-                    version = quote(date)
-                else:
-                    print("Release date not found.")
+            
+            # If we didn't get a version out of the IRI, look elsewhere
+            for search_type in [date_search, date_dc_search, 
+                                version_info_search, short_version_info_search]:
+                if search_type and version == "release":
+                    version_info = (search_type.group(1)).decode("utf-8")
+                    version = quote(version_info)
+            if version == "release":
+                print("Neither versioned IRI or release date found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
 
@@ -298,7 +313,7 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool,
     try:
         req = requests.get(url, stream=True)
         file_size = int(req.headers['Content-Length'])
-        chunk_size = 1024
+        chunk_size = 2048
         with open(file, 'wb') as outfile:
             if not no_dl_progress:
                 if not header_only:
@@ -347,6 +362,7 @@ def imports_requested(input_file_name: str) -> list:
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
                   no_dl_progress=False,
+                  force_index_refresh=False,
                   lock_file_remote_path: str = "kg-obo/lock",
                   log_dir="logs", data_dir="data",
                   remote_path="kg-obo",
@@ -418,6 +434,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             print("Cannot locate tracking file on remote storage. Exiting...")
             return False
 
+    # If requested, refresh the root index.html
+    if force_index_refresh and not s3_test:
+        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
+            kg_obo_logger.info(f"Refreshed root index at {remote_path}")
+        else:
+            kg_obo_logger.info(f"Failed to refresh root index at {remote_path}")
+
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
 
@@ -465,6 +488,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             owl_iri, owl_version = get_owl_iri(tfile.name)
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
+            kg_obo_logger.info(f"Current version for {ontology_name}: {owl_version}")
+            print(f"Current version for {ontology_name}: {owl_version}")
 
             # Check version here
             if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket):
@@ -540,6 +565,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 successful_transforms.append(ontology_name)
                 all_completed_transforms.append(ontology_name)
 
+            elif success and errors:
+                kg_obo_logger.info(f"Completed transform of {ontology_name} with errors - see logs for details.")
+                errored_transforms.append(ontology_name)
+            else:
+                kg_obo_logger.warning(f"Failed to transform {ontology_name}")
+                failed_transforms.append(ontology_name)
+
+            if success:
+                versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if not s3_test:
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
@@ -547,21 +581,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         kg_obo_logger.info(f"Created index for {ontology_name}")
                     else:
                         kg_obo_logger.info(f"Failed to create index for {ontology_name}")
-
-                # Upload the most recently transformed version only
-                kg_obo_logger.info("Uploading...")
-                versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
-                if s3_test:
-                    kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
-                else:
+                    
+                    # Upload the most recently transformed version only
+                    kg_obo_logger.info("Uploading...")
                     kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
-
-            elif success and errors:
-                kg_obo_logger.info(f"Completed transform of {ontology_name} with errors")
-                errored_transforms.append(ontology_name)
-            else:
-                kg_obo_logger.warning(f"Failed to transform {ontology_name}")
-                failed_transforms.append(ontology_name)
+                else:
+                    kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
 
             # Clean up any incomplete transform leftovers
             if not success:
@@ -573,7 +598,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
 
     if len(errored_transforms) > 0:
-        kg_obo_logger.info(f"Incompletely transformed due to errors {len(errored_transforms)}: {errored_transforms}")
+        kg_obo_logger.info(f"Successfully transformed, with errors {len(errored_transforms)}: {errored_transforms}")
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")

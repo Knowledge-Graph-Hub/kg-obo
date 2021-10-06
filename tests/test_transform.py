@@ -167,6 +167,11 @@ class TestRunTransform(TestCase):
             run_transform(log_dir=td,s3_test=False)
             self.assertFalse(mock_kgx_transform.called)
 
+        # Test for refreshing the index 
+        with tempfile.TemporaryDirectory() as td:
+            run_transform(log_dir=td,s3_test=False, force_index_refresh=True)
+            self.assertTrue(mock_retrieve_obofoundry_yaml.called)
+
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
         ret_val = kgx_transform(**self.kgx_transform_kwargs)
@@ -216,11 +221,15 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_for_aro(self):
         iri = get_owl_iri('tests/resources/download_ontology/aro_SNIPPET.owl')
-        self.assertEqual(iri, ('', quote('05:07:2021 15:21')))
+        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', quote('05:07:2021 15:21')), iri)
+
+    def test_get_owl_iri_for_go(self):
+        iri = get_owl_iri('tests/resources/download_ontology/go_SNIPPET.owl')
+        self.assertEqual(('http://purl.obolibrary.org/obo/go/releases/2021-09-01/go-base.owl', '2021-09-01'), iri)
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
-        self.assertEqual(("release", "release"), iri)
+        self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "release"), iri)
 
     def test_imports_requested(self):
         imports = imports_requested('tests/resources/download_ontology/upheno_SNIPPET.owl')
@@ -234,7 +243,7 @@ class TestRunTransform(TestCase):
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=["bfo"])
         self.assertEqual(yaml_onto_list_filtered[0], self.parsed_obo_yaml_sample[0])
         with pytest.raises(Exception):
-            yaml_onto_list_filtered = retreive_obofoundry_yaml(yaml_url="")
+            yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="")
 
     @mock.patch('boto3.client')
     def test_track_obo_version(self, mock_boto):

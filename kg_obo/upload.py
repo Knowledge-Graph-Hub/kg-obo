@@ -254,6 +254,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
     creating index.html where it does not exist.
     (Or, if update_root is True, just the given directory and not its parent).
     If index exists, update it if needed.
+    This index reflects both newly-added AND extant files on the specified bucket.
     :param bucket: str of S3 bucket
     :param remote_path: str of path to upload to
     :param versioned_obo_path: str of directory containing the files to create index for
@@ -295,8 +296,20 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 
     for dir in check_dirs:
 
+        # Get the list of local files
         current_path = os.path.join(dir,ifilename)
         current_files = os.listdir(dir)
+
+        # Set local and remote paths
+        path_only = os.path.relpath(current_path, data_dir)
+        current_remote_path = os.path.join(remote_path, path_only)
+
+        # Append the list of remote files
+        for key in client.list_objects(Bucket=bucket)['Contents']:
+            current_files.append(key)
+
+        # Get unique filenames only
+        current_files = list(set(current_files))
 
         with open(current_path, 'w') as ifile:
             ifile.write(index_head.format(this_dir=dir))
@@ -305,8 +318,6 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
                     ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
         
-        path_only = os.path.relpath(current_path, data_dir)
-        current_remote_path = os.path.join(remote_path, path_only)
         print(f"Created index for {current_remote_path}")
 
         try:

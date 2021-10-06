@@ -36,10 +36,14 @@ import kg_obo.upload
 @click.option("--no_dl_progress",
                is_flag=True,
                help="If used, progress bar output is suppressed. Makes for nicer build output.")
-def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress):
+@click.option("--force_index_refresh",
+               is_flag=True,
+               help="If used, rebuilds root index.html before beginning any transforms.")
+def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index_refresh):
     lock_file_remote_path = "kg-obo/lock"
     try:
-        if run_transform(skip, get_only, bucket, save_local, s3_test, no_dl_progress, lock_file_remote_path):
+        if run_transform(skip, get_only, bucket, save_local, s3_test, no_dl_progress, 
+                         force_index_refresh, lock_file_remote_path):
             print("Operation completed without errors (not counting any OBO-specific errors).")
         else:
             print("Operation encountered errors. See logs for details.")

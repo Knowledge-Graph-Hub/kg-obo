@@ -4,12 +4,14 @@ import botocore.exceptions
 from kg_obo.upload import upload_dir_to_s3, mock_upload_dir_to_s3, \
                            check_tracking, mock_check_tracking, \
                            check_lock, mock_check_lock, \
-                           set_lock, mock_set_lock
+                           set_lock, mock_set_lock, \
+                           upload_index_files
 
 class TestUploadDirToS3(TestCase):
 
     def setUp(self) -> None:
         self.local_dir = "tests/resources/fake_upload_dir"
+        self.download_ontology_dir = "tests/resources/download_ontology"
         self.bucket = "my_bucket"
         self.bucket_dir = "remote_dir"
 
@@ -55,4 +57,10 @@ class TestUploadDirToS3(TestCase):
     @mock.patch('boto3.client')
     def test_mock_set_lock(self, mock_boto):
         mock_set_lock(self.bucket, self.bucket_dir, unlock=False)
+        self.assertTrue(mock_boto.called)
+
+    @mock.patch('boto3.client')
+    def test_upload_index_files(self, mock_boto):
+        upload_index_files(self.bucket, self.bucket_dir, self.download_ontology_dir,
+                           self.download_ontology_dir, update_root=False)
         self.assertTrue(mock_boto.called)
