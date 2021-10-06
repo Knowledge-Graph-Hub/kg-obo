@@ -221,11 +221,11 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_for_aro(self):
         iri = get_owl_iri('tests/resources/download_ontology/aro_SNIPPET.owl')
-        self.assertEqual(iri, ('', quote('05:07:2021 15:21')))
+        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', quote('05:07:2021 15:21')), iri)
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
-        self.assertEqual(("release", "release"), iri)
+        self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "release"), iri)
 
     def test_imports_requested(self):
         imports = imports_requested('tests/resources/download_ontology/upheno_SNIPPET.owl')
