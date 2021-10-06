@@ -171,15 +171,18 @@ def get_owl_iri(input_file_name: str) -> tuple:
     in its header metadata) then we try the value of oboInOwl:date instead.
     The date value, if present, is used as a replacement version identifier,
     not a replacement IRI.
-
+    The rdf:about value is also checked - this may not contain a version,
+    but it may contain a URL we can use as an IRI.
     :param input_file_name: name of OWL format file to extract IRI from
     :return: tuple of (str of IRI, str of version)
     """
  
     # Most IRIs take this format - there are some exceptions
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
+    iri_about_tag = b'owl:Ontology rdf:about=\"(.*)\"'
     date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
 
+    #The default IRI/version - only used if values aren't provided.
     iri = "release"
     version = "release"
 
@@ -187,6 +190,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
             iri_search = re.search(iri_tag, owl_string)  # type: ignore
+            iri_about_tag_search = re.search(iri_about_tag, owl_string)
             date_search = re.search(date_tag, owl_string)  # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
@@ -199,14 +203,16 @@ def get_owl_iri(input_file_name: str) -> tuple:
                         version = quote(raw_version)
                 except IndexError:
                     pass
+            elif iri_about_tag_search: #In this case, we likely don't have a version
+                iri = (iri_about_tag_search.group(1)).decode("utf-8")
             else:
                 print("Version IRI not found.")
-                if date_search:
+            
+            if date_search and version == "release":
                     date = (date_search.group(1)).decode("utf-8")
-                    iri = ''
                     version = quote(date)
-                else:
-                    print("Release date not found.")
+            else:
+                print("Neither versioned IRI or release date found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
 
