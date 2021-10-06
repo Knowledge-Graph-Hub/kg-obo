@@ -167,6 +167,11 @@ class TestRunTransform(TestCase):
             run_transform(log_dir=td,s3_test=False)
             self.assertFalse(mock_kgx_transform.called)
 
+        # Test for refreshing the index 
+        with tempfile.TemporaryDirectory() as td:
+            run_transform(log_dir=td,s3_test=False, force_index_refresh=True)
+            self.assertTrue(mock_retrieve_obofoundry_yaml.called)
+
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
         ret_val = kgx_transform(**self.kgx_transform_kwargs)
