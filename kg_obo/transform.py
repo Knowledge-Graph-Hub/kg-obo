@@ -235,9 +235,9 @@ def track_obo_version(name: str = "", iri: str = "",
     """
     Writes OBO version as per IRI to tracking.yaml.
     Note this tracking file is on the root of the S3 kg-obo directory.
-    :param name: name of OBO, as OBO ID
-    :param iri: full OBO VersionIRI, as URL
-    :param version: short OBO version
+    :param name: name of OBO, as OBO ID, e.g. 'bfo'
+    :param iri: full OBO VersionIRI, usually URL
+    :param version: OBO version, usually a date
     :param track_file_local_path: where to look for local tracking.yaml file
     :param track_file_remote_path: where to look for remote tracking.yaml file
     """
@@ -250,13 +250,14 @@ def track_obo_version(name: str = "", iri: str = "",
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
     #If we already have a version, move it to archive
-    if tracking["ontologies"][name]["current_version"] != "NA":
-        if "archive" not in tracking["ontologies"][name]:
+    if tracking["ontologies"][name]["current_version"] != "NA": #If it's NA then we have no previous version
+        if "archive" not in tracking["ontologies"][name]: #If there isn't an archive field we need to create it
             tracking["ontologies"][name]["archive"] = []
         tracking["ontologies"][name]["archive"].append({"iri": iri, "version": version})
-    else:
-        tracking["ontologies"][name]["current_iri"] = iri
-        tracking["ontologies"][name]["current_version"] = version
+    
+    # Now set the current IRI and version to the most recent transform
+    tracking["ontologies"][name]["current_iri"] = iri
+    tracking["ontologies"][name]["current_version"] = version
 
     with open(track_file_local_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
