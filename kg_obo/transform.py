@@ -551,7 +551,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     break
             for output_format in desired_output_formats:
                 if all_success_and_errors[output_format][1]:
-                    errors = False
+                    errors = True
                     break
 
             # Check file size and fail/warn if nodes|edge file is empty
@@ -570,6 +570,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors - see logs for details.")
                 errored_transforms.append(ontology_name)
+                all_completed_transforms.append(ontology_name)
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
@@ -597,16 +598,16 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 else:
                     kg_obo_logger.warning(f"Incomplete version of {ontology_name} may be present.")
 
-    kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
+    kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)} without errors: {successful_transforms}")
 
     if len(errored_transforms) > 0:
-        kg_obo_logger.info(f"Successfully transformed, with errors {len(errored_transforms)}: {errored_transforms}")
+        kg_obo_logger.info(f"Successfully transformed {len(errored_transforms)} with errors: {errored_transforms}")
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
     if len(all_completed_transforms) > 0:
-        kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}: "
+        kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}): "
                             f"{all_completed_transforms}")
 
     if not s3_test:
