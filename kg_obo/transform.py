@@ -578,6 +578,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if success:
                 versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if not s3_test:
+                    kg_obo_logger.info(f"Adding {ontology_name} version {owl_version} to tracking file.")
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
                     if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False):
