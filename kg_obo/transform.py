@@ -253,7 +253,9 @@ def track_obo_version(name: str = "", iri: str = "",
     if tracking["ontologies"][name]["current_version"] != "NA": #If it's NA then we have no previous version
         if "archive" not in tracking["ontologies"][name]: #If there isn't an archive field we need to create it
             tracking["ontologies"][name]["archive"] = []
-        tracking["ontologies"][name]["archive"].append({"iri": iri, "version": version})
+        prev_iri = tracking["ontologies"][name]["current_iri"] 
+        prev_version = tracking["ontologies"][name]["current_version"] 
+        tracking["ontologies"][name]["archive"].append({"iri": prev_iri, "version": prev_version})
     
     # Now set the current IRI and version to the most recent transform
     tracking["ontologies"][name]["current_iri"] = iri
