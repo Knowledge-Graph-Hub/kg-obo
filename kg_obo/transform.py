@@ -437,7 +437,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     # If requested, refresh the root index.html
     if force_index_refresh and not s3_test:
         print(f"Refreshing root index on {bucket}")
-        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
+        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, 
+                                             update_root=True, refresh=True):
             kg_obo_logger.info(f"Refreshed root index at {remote_path}")
         else:
             kg_obo_logger.info(f"Failed to refresh root index at {remote_path}")
