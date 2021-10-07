@@ -248,7 +248,7 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
 
-def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False) -> bool:
+def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False, refresh=False) -> bool:
     """
     Checks the obo directory and version directory,
     creating index.html where it does not exist.
@@ -260,6 +260,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
     :param versioned_obo_path: str of directory containing the files to create index for
     :param data_dir: str of the data directory, so we can get the relative path
     :param update_root: bool, True to update root index (in this case, versioned_obo_path will be the data_dir)
+    :param refresh: bool, True to run without checking local files (i.e., create an empty local data dir)
     :return: bool returns True if all index files created successfully
     """
 
@@ -293,9 +294,12 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
     else:
         # Update root index
         check_dirs = [local_path]
+    
+    if refresh:
+        os.mkdir(data_dir)
 
     for dir in check_dirs:
-
+        
         # Get the list of local files
         current_path = os.path.join(dir,ifilename)
         current_files = os.listdir(dir)
