@@ -259,9 +259,12 @@ def track_obo_version(name: str = "", iri: str = "",
     tracking["ontologies"][name]["current_iri"] = iri
     tracking["ontologies"][name]["current_version"] = version
 
+    all_versions = tracking["ontologies"][name]
+    print(f"Current versions for {name}: {all_versions}")
+
     with open(track_file_local_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
-
+    
     client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path,
                         ExtraArgs={'ACL':'public-read'})
 
@@ -582,7 +585,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     kg_obo_logger.info(f"Adding {ontology_name} version {owl_version} to tracking file.")
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
-                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False):
+                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, 
+                                                        update_root=False, refresh=False):
                         kg_obo_logger.info(f"Created index for {ontology_name}")
                     else:
                         kg_obo_logger.info(f"Failed to create index for {ontology_name}")
