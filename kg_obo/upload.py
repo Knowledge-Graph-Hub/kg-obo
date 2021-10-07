@@ -310,7 +310,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 
         # Append the list of remote files
         for key in client.list_objects(Bucket=bucket)['Contents']:
-            current_files.append(key)
+            current_files.append(key['Key'])
 
         # Get unique filenames only
         current_files = list(set(current_files))
@@ -321,8 +321,6 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
                 if filename != ifilename:
                     ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
-        
-        print(f"Created index for {current_remote_path}")
 
         try:
             client.upload_file(current_path, Bucket=bucket, Key=current_remote_path,
