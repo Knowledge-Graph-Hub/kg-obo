@@ -235,9 +235,9 @@ def track_obo_version(name: str = "", iri: str = "",
     """
     Writes OBO version as per IRI to tracking.yaml.
     Note this tracking file is on the root of the S3 kg-obo directory.
-    :param name: name of OBO, as OBO ID
-    :param iri: full OBO VersionIRI, as URL
-    :param version: short OBO version
+    :param name: name of OBO, as OBO ID, e.g. 'bfo'
+    :param iri: full OBO VersionIRI, usually URL
+    :param version: OBO version, usually a date
     :param track_file_local_path: where to look for local tracking.yaml file
     :param track_file_remote_path: where to look for remote tracking.yaml file
     """
@@ -250,17 +250,23 @@ def track_obo_version(name: str = "", iri: str = "",
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
     #If we already have a version, move it to archive
-    if tracking["ontologies"][name]["current_version"] != "NA":
-        if "archive" not in tracking["ontologies"][name]:
+    if tracking["ontologies"][name]["current_version"] != "NA": #If it's NA then we have no previous version
+        if "archive" not in tracking["ontologies"][name]: #If there isn't an archive field we need to create it
             tracking["ontologies"][name]["archive"] = []
-        tracking["ontologies"][name]["archive"].append({"iri": iri, "version": version})
-    else:
-        tracking["ontologies"][name]["current_iri"] = iri
-        tracking["ontologies"][name]["current_version"] = version
+        prev_iri = tracking["ontologies"][name]["current_iri"] 
+        prev_version = tracking["ontologies"][name]["current_version"] 
+        tracking["ontologies"][name]["archive"].append({"iri": prev_iri, "version": prev_version})
+    
+    # Now set the current IRI and version to the most recent transform
+    tracking["ontologies"][name]["current_iri"] = iri
+    tracking["ontologies"][name]["current_version"] = version
+
+    all_versions = tracking["ontologies"][name]
+    print(f"Current versions for {name}: {all_versions}")
 
     with open(track_file_local_path, 'w') as track_file:
         track_file.write(yaml.dump(tracking))
-
+    
     client.upload_file(Filename=track_file_local_path, Bucket=bucket, Key=track_file_remote_path,
                         ExtraArgs={'ACL':'public-read'})
 
@@ -437,7 +443,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     # If requested, refresh the root index.html
     if force_index_refresh and not s3_test:
         print(f"Refreshing root index on {bucket}")
-        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
+        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, 
+                                             update_root=True, refresh=True):
             kg_obo_logger.info(f"Refreshed root index at {remote_path}")
         else:
             kg_obo_logger.info(f"Failed to refresh root index at {remote_path}")
@@ -550,7 +557,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     break
             for output_format in desired_output_formats:
                 if all_success_and_errors[output_format][1]:
-                    errors = False
+                    errors = True
                     break
 
             # Check file size and fail/warn if nodes|edge file is empty
@@ -569,6 +576,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             elif success and errors:
                 kg_obo_logger.info(f"Completed transform of {ontology_name} with errors - see logs for details.")
                 errored_transforms.append(ontology_name)
+                all_completed_transforms.append(ontology_name)
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
@@ -576,9 +584,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if success:
                 versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if not s3_test:
+                    kg_obo_logger.info(f"Adding {ontology_name} version {owl_version} to tracking file.")
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
-                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, update_root=False):
+                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, 
+                                                        update_root=False, refresh=False):
                         kg_obo_logger.info(f"Created index for {ontology_name}")
                     else:
                         kg_obo_logger.info(f"Failed to create index for {ontology_name}")
@@ -596,16 +606,16 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 else:
                     kg_obo_logger.warning(f"Incomplete version of {ontology_name} may be present.")
 
-    kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)}: {successful_transforms}")
+    kg_obo_logger.info(f"Successfully transformed {len(successful_transforms)} without errors: {successful_transforms}")
 
     if len(errored_transforms) > 0:
-        kg_obo_logger.info(f"Successfully transformed, with errors {len(errored_transforms)}: {errored_transforms}")
+        kg_obo_logger.info(f"Successfully transformed {len(errored_transforms)} with errors: {errored_transforms}")
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
 
     if len(all_completed_transforms) > 0:
-        kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}: "
+        kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}): "
                             f"{all_completed_transforms}")
 
     if not s3_test:

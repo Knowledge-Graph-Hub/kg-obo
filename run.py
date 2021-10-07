@@ -48,7 +48,7 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index
         else:
             print("Operation encountered errors. See logs for details.")
     except Exception as e:
-        print(e)
+        print(f"Encountered unresolvable error: {type(e)} - {e} ({e.args})")
         print("Removing lock due to error...")
         if s3_test:
             if not kg_obo.upload.mock_set_lock(bucket,lock_file_remote_path,unlock=True):
