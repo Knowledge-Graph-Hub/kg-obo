@@ -309,7 +309,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         current_remote_path = os.path.join(remote_path, path_only)
 
         # Append the list of remote files
-        for key in client.list_objects(Bucket=bucket)['Contents']:
+        for key in client.list_objects(Bucket=bucket, Prefix=current_remote_path)['Contents']:
             current_files.append(key['Key'])
 
         # Get unique filenames only

@@ -439,6 +439,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         if not kg_obo.upload.check_tracking(bucket, tracking_file_remote_path):
             print("Cannot locate tracking file on remote storage. Exiting...")
             return False
+    
+    if s3_test:
+        upload_action = "simulate uploading"
+    else:
+        upload_action = "upload"
+    print(f"Will {upload_action} using the following paths:")
+    for item in [("bucket", bucket), ("remote path", remote_path), ("local path", data_dir)]:
+        print(f"* {item[0]}: {item[1]}")
 
     # If requested, refresh the root index.html
     if force_index_refresh and not s3_test:
