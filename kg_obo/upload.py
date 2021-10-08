@@ -317,7 +317,11 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         current_remote_path = os.path.join(remote_path, path_only)
 
         # Append the list of remote files
-        remote_files = client.list_objects(Bucket=bucket, Prefix=current_remote_path+"/")['Contents']
+        remote_files = []
+        try:
+            remote_files = client.list_objects(Bucket=bucket, Prefix=current_remote_path)['Contents']
+        except KeyError:
+            print(f"Found no existing files at {current_remote_path}")
         for key in remote_files:
             current_files.append(key['Key'])
 
