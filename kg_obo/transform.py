@@ -514,7 +514,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 # If requested, refresh the index.html even if we don't have a new version
                 # The refresh option in upload_index_files will also search subdirectories
                 if force_index_refresh and not s3_test:
-                    print(f"Refreshing index on {bucket} for {ontology_name}")
+                    print(f"Refreshing index on {bucket} for {base_obo_path}")
                     if kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir,
                                                        refresh=True):
                         kg_obo_logger.info(f"Refreshed index at {remote_path}")

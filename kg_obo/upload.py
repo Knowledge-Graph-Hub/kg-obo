@@ -320,6 +320,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         remote_files = []
         try:
             remote_files = client.list_objects(Bucket=bucket, Prefix=current_remote_path)['Contents']
+            print(f"Found existing files at {current_remote_path}: {remote_files}")
         except KeyError:
             print(f"Found no existing files at {current_remote_path}")
         for key in remote_files:
@@ -338,9 +339,11 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
                                     os.path.join(remote_path,"tracking.yaml")]: 
                     if update_root:
                         sub_index = filename+"/"+ifilename
+                        print(f"Looking for {sub_index}")
                         try:
                             client.head_object(Bucket=bucket, Key=sub_index)
                             ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+                            print(f"Found index for {filename}")
                         except botocore.exceptions.ClientError:
                             print(f"Could not find index for {sub_index} - will not write link")
                     else:
