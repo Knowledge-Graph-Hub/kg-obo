@@ -333,7 +333,9 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         with open(current_path, 'w') as ifile:
             ifile.write(index_head.format(this_dir=dir))
             for filename in current_files:
-                if filename != ifilename: #Don't include the index file itself
+                #Don't include the index file itself or the tracking file
+                if filename not in [os.path.join(remote_path,ifilename),
+                                    os.path.join(remote_path,"tracking.yaml")]: 
                     if update_root:
                         sub_index = filename+"/"+ifilename
                         try:
