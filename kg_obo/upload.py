@@ -257,10 +257,10 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
     This index reflects both newly-added AND extant files on the specified bucket.
     :param bucket: str of S3 bucket
     :param remote_path: str of path to upload to
-    :param versioned_obo_path: str of directory containing the files to create index for
+    :param local_path: str of directory containing the files to create index for
     :param data_dir: str of the data directory, so we can get the relative path
-    :param update_root: bool, True to update root index (in this case, versioned_obo_path will be the data_dir)
-    :param refresh: bool, True to run without checking local files (i.e., create an empty local data dir)
+    :param update_root: bool, True to update root index (in this case, local_path will be the data_dir)
+    :param refresh: bool, True to rebuild index based on remote contents
     :return: bool returns True if all index files created successfully
     """
 
@@ -288,18 +288,26 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 </html>
 """
 
-    if not update_root:
-        # Create/update index for current OBO version and all versions of this OBO
-        check_dirs = [local_path, os.path.dirname(local_path)]
-    else:
+    if update_root:
         # Update root index
         check_dirs = [local_path]
-    
-    if refresh:
-        os.mkdir(data_dir)
+    elif not update_root and not refresh:
+        # Create/update index for currently transformed OBO version and all versions of this OBO
+        check_dirs = [local_path, os.path.dirname(local_path)]
+    elif not update_root and refresh:
+        # We don't have a new transform, so we need to check the remote to get previous versions
+        check_dirs = [local_path]
+        path_only = os.path.relpath(local_path, data_dir)
+        remote_path = os.path.join(remote_path, path_only)
+        remote_dirs = client.list_objects(Bucket=bucket, Prefix=remote_path+"/", Delimiter='/')
+        for key in remote_dirs.get('CommonPrefixes'):
+            check_dirs.append(key.get('Prefix'))
 
     for dir in check_dirs:
         
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
         # Get the list of local files
         current_path = os.path.join(dir,ifilename)
         current_files = os.listdir(dir)
@@ -309,17 +317,28 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         current_remote_path = os.path.join(remote_path, path_only)
 
         # Append the list of remote files
-        for key in client.list_objects(Bucket=bucket, Prefix=current_remote_path)['Contents']:
+        remote_files = client.list_objects(Bucket=bucket, Prefix=current_remote_path+"/")['Contents']
+        for key in remote_files:
             current_files.append(key['Key'])
 
         # Get unique filenames only
         current_files = list(set(current_files))
 
+        # Now write the index
+        # If root, check for dead links too
         with open(current_path, 'w') as ifile:
             ifile.write(index_head.format(this_dir=dir))
             for filename in current_files:
-                if filename != ifilename:
-                    ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+                if filename != ifilename: #Don't include the index file itself
+                    if update_root:
+                        sub_index = filename+"/"+ifilename
+                        try:
+                            client.head_object(Bucket=bucket, Key=sub_index)
+                            ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+                        except botocore.exceptions.ClientError:
+                            print(f"Could not find index for {sub_index} - will not write link")
+                    else:
+                        ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
 
         try:
