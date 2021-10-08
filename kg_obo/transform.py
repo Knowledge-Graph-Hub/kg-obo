@@ -476,6 +476,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         ontology_name = ontology['id']
         print(f"{ontology_name}")
         kg_obo_logger.info("Loading " + ontology_name)
+        base_obo_path = os.path.join(data_dir, ontology_name)
 
         # take base ontology if it exists, otherwise just use non-base
         url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
@@ -484,9 +485,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         # Set up local directories
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
-        base_obo_path = os.path.join(data_dir, ontology_name)
-        if not os.path.exists(base_obo_path):
-            os.mkdir(base_obo_path)
 
         # Downloaded OBOs are still tempfiles as we don't intend to keep them
         with tempfile.NamedTemporaryFile(prefix=ontology_name) as tfile:
@@ -537,6 +535,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 continue
 
             # If this version is new, download the whole OBO
+            if not os.path.exists(base_obo_path):
+                os.mkdir(base_obo_path)
+            
             if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, 
                                      no_dl_progress=no_dl_progress, header_only=False):
                 success = False
