@@ -62,8 +62,8 @@ class TestUploadDirToS3(TestCase):
     @mock.patch('boto3.client')
     def test_upload_index_files(self, mock_boto):
         upload_index_files(self.bucket, self.bucket_dir, self.download_ontology_dir,
-                           self.download_ontology_dir, update_root=False, refresh=False)
+                           self.download_ontology_dir, update_root=False)
         self.assertTrue(mock_boto.called)
         upload_index_files(self.bucket, self.bucket_dir, self.download_ontology_dir,
-                           self.download_ontology_dir, update_root=True, refresh=False)
+                           self.download_ontology_dir, update_root=True)
         self.assertTrue(mock_boto.called)
