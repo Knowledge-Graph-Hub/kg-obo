@@ -645,10 +645,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
             kg_obo_logger.info(f"Updated root index at {remote_path}")
             print(f"Updated root index at {remote_path}")
-
         else:
-            kg_obo_logger.info(f"Updated root index at {remote_path}")
-            print(f"Updated root index at {remote_path}")
+            kg_obo_logger.info(f"Failed to update root index at {remote_path}")
+            print(f"Failed to update root index at {remote_path}")
 
     # Remove all local data files
     if not save_local:
