@@ -452,7 +452,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     if force_index_refresh and not s3_test:
         print(f"Refreshing root index on {bucket}")
         if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, 
-                                             update_root=True, refresh=True):
+                                             update_root=True):
             kg_obo_logger.info(f"Refreshed root index at {remote_path}")
         else:
             kg_obo_logger.info(f"Failed to refresh root index at {remote_path}")
@@ -515,11 +515,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 # The refresh option in upload_index_files will also search subdirectories
                 if force_index_refresh and not s3_test:
                     print(f"Refreshing index on {bucket} for {base_obo_path}")
-                    if kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir,
-                                                       refresh=True):
+                    if kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir):
                         kg_obo_logger.info(f"Refreshed index at {remote_path}")
+                        print(f"Refreshed index at {remote_path}")
                     else:
                         kg_obo_logger.info(f"Failed to refresh index at {remote_path}")
+                        print(f"Failed to refresh index at {remote_path}")
                 continue
 
             # Check for imports and skip this OBO if they're present
@@ -607,7 +608,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
                     if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, 
-                                                        update_root=False, refresh=False):
+                                                        update_root=False):
                         kg_obo_logger.info(f"Created index for {ontology_name}")
                     else:
                         kg_obo_logger.info(f"Failed to create index for {ontology_name}")
