@@ -248,7 +248,7 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
 
-def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False, refresh=False) -> bool:
+def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False) -> bool:
     """
     Checks the obo directory and version directory,
     creating index.html where it does not exist.
@@ -287,21 +287,11 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 </body>
 </html>
 """
-
-    if update_root:
-        # Update root index
-        check_dirs = [local_path]
-    elif not update_root and not refresh:
-        # Create/update index for currently transformed OBO version and all versions of this OBO
-        check_dirs = [local_path, os.path.dirname(local_path)]
-    elif not update_root and refresh:
-        # We don't have a new transform, so we need to check the remote to get previous versions
-        check_dirs = [local_path]
-        path_only = os.path.relpath(local_path, data_dir)
-        remote_path = os.path.join(remote_path, path_only)
-        remote_dirs = client.list_objects(Bucket=bucket, Prefix=remote_path+"/", Delimiter='/')
-        for key in remote_dirs.get('CommonPrefixes'):
-            check_dirs.append(key.get('Prefix'))
+    
+    check_dirs = [local_path]
+    if not update_root:
+        # Create/update index for OBO directory and new version directory
+        check_dirs.append(os.path.dirname(local_path))
 
     for dir in check_dirs:
         
@@ -320,8 +310,9 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         remote_files = []
         try:
             remote_files = client.list_objects(Bucket=bucket, Prefix=current_remote_path)['Contents']
+            print(f"Found existing contents at {current_remote_path}: {remote_files}")
         except KeyError:
-            print(f"Found no existing files at {current_remote_path}")
+            print(f"Found no existing contents at {current_remote_path}")
         for key in remote_files:
             current_files.append(key['Key'])
 
@@ -333,12 +324,16 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         with open(current_path, 'w') as ifile:
             ifile.write(index_head.format(this_dir=dir))
             for filename in current_files:
-                if filename != ifilename: #Don't include the index file itself
+                #Don't include the index file itself or the tracking file
+                if filename not in [os.path.join(remote_path,ifilename),
+                                    os.path.join(remote_path,"tracking.yaml")]: 
                     if update_root:
                         sub_index = filename+"/"+ifilename
+                        print(f"Looking for {sub_index}")
                         try:
                             client.head_object(Bucket=bucket, Key=sub_index)
                             ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+                            print(f"Found index for {filename}")
                         except botocore.exceptions.ClientError:
                             print(f"Could not find index for {sub_index} - will not write link")
                     else:
