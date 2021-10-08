@@ -512,10 +512,20 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
                 print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
                 all_completed_transforms.append(ontology_name)
+                
+                # If requested, refresh the index.html even if we don't have a new version
+                # The refresh option in upload_index_files will also search subdirectories
+                if force_index_refresh and not s3_test:
+                    print(f"Refreshing index on {bucket} for {ontology_name}")
+                    if kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir,
+                                                       refresh=True):
+                        kg_obo_logger.info(f"Refreshed index at {remote_path}")
+                    else:
+                        kg_obo_logger.info(f"Failed to refresh index at {remote_path}")
                 continue
 
             # Check for imports and skip this OBO if they're present
-            # TODO: actually retrieve imports
+            # TODO: actually retrieve imports - this is a job for ROBOT
             imports = imports_requested(tfile.name)
             if len(imports) > 0:
                 fimports = ", ".join(imports)

@@ -288,19 +288,26 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 </html>
 """
 
-    if not update_root:
-        # Create/update index for current OBO version and all versions of this OBO
-        check_dirs = [local_path, os.path.dirname(local_path)]
-    else:
+    if update_root:
         # Update root index
         check_dirs = [local_path]
-    
-    # To refresh, set up an empty local directory first
-    if refresh:
-        os.mkdir(local_path)
+    elif not update_root and not refresh:
+        # Create/update index for currently transformed OBO version and all versions of this OBO
+        check_dirs = [local_path, os.path.dirname(local_path)]
+    elif not update_root and refresh:
+        # We don't have a new transform, so we need to check the remote to get previous versions
+        check_dirs = [local_path]
+        path_only = os.path.relpath(local_path, data_dir)
+        remote_path = os.path.join(remote_path, path_only)
+        remote_dirs = client.list_objects(Bucket=bucket, Prefix=remote_path+"/", Delimiter='/')
+        for key in remote_dirs.get('CommonPrefixes'):
+            check_dirs.append(key.get('Prefix'))
 
     for dir in check_dirs:
         
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+
         # Get the list of local files
         current_path = os.path.join(dir,ifilename)
         current_files = os.listdir(dir)
