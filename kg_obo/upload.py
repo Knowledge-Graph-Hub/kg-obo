@@ -288,64 +288,63 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 </html>
 """
     
-    check_dirs = [local_path]
-    if not update_root:
-        # Create/update index for OBO directory and new version directory
-        check_dirs.append(os.path.dirname(local_path))
+    if not os.path.exists(local_path):
+        os.mkdir(local_path)
 
-    for dir in check_dirs:
-        
-        if not os.path.exists(dir):
-            os.mkdir(dir)
+    # Get the list of local files
+    local_index_path = os.path.join(local_path,ifilename)
+    local_files = os.listdir(local_path)
 
-        # Get the list of local files
-        current_path = os.path.join(dir,ifilename)
-        current_files = os.listdir(dir)
+    # Set local and remote paths
+    # Change local file paths to remote file paths
+    relative_index_path = os.path.relpath(local_index_path, data_dir)
+    remote_index_path = os.path.join(remote_path, relative_index_path)
+    relative_files = []
+    for filepath in local_files:
+        relative_filepath = os.path.relpath(filepath, data_dir)
+        relative_files.append(os.path.join(remote_path, relative_filepath))
+    relative_remote_path = os.path.relpath(local_path, data_dir)
 
-        # Set local and remote paths
-        path_only = os.path.relpath(current_path, data_dir)
-        current_remote_path = os.path.join(remote_path, path_only)
+    # Get list of remote files
+    remote_files = []
+    try:
+        remote_contents = client.list_objects(Bucket=bucket, Prefix=relative_remote_path)['Contents']
+        for key in remote_contents:
+            remote_files.append(key['Key'])
+        print(f"Found existing contents at {relative_remote_path}: {remote_files}")
+    except KeyError:
+        print(f"Found no existing contents at {relative_remote_path}")
 
-        # Append the list of remote files
-        remote_files = []
-        try:
-            remote_files = client.list_objects(Bucket=bucket, Prefix=current_remote_path)['Contents']
-            print(f"Found existing contents at {current_remote_path}: {remote_files}")
-        except KeyError:
-            print(f"Found no existing contents at {current_remote_path}")
-        for key in remote_files:
-            current_files.append(key['Key'])
+    # Append the list of remote files
+    all_files = local_files + remote_files
 
-        # Get unique filenames only
-        current_files = list(set(current_files))
-
-        # Now write the index
-        # If root, check for dead links too
-        with open(current_path, 'w') as ifile:
-            ifile.write(index_head.format(this_dir=dir))
-            for filename in current_files:
-                #Don't include the index file itself or the tracking file
-                if filename not in [os.path.join(remote_path,ifilename),
-                                    os.path.join(remote_path,"tracking.yaml")]: 
-                    if update_root:
-                        sub_index = filename+"/"+ifilename
-                        print(f"Looking for {sub_index}")
-                        try:
-                            client.head_object(Bucket=bucket, Key=sub_index)
-                            ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
-                            print(f"Found index for {filename}")
-                        except botocore.exceptions.ClientError:
-                            print(f"Could not find index for {sub_index} - will not write link")
-                    else:
+    # Now write the index
+    # If root, check for dead links too
+    with open(local_index_path, 'w') as ifile:
+        ifile.write(index_head.format(this_dir=relative_remote_path))
+        for filename in all_files:
+            #Don't include the index file itself or the tracking file
+            if filename not in [os.path.join(relative_remote_path,ifilename),
+                                os.path.join(relative_remote_path,"tracking.yaml")]: 
+                if update_root:
+                    sub_index = os.path.join(relative_remote_path,filename,ifilename)
+                    print(f"Looking for {sub_index}")
+                    try:
+                        client.head_object(Bucket=bucket, Key=sub_index)
                         ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
-            ifile.write(index_tail)
+                        print(f"Found {sub_index}")
+                    except botocore.exceptions.ClientError:
+                        print(f"Could not find {sub_index} - will not write link")
+                else:
+                    ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+        ifile.write(index_tail)
 
-        try:
-            client.upload_file(current_path, Bucket=bucket, Key=current_remote_path,
-                          ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
-        except botocore.exceptions.ClientError as e:
-            print(f"Encountered error in writing index to S3: {e}")
-            errors = errors+1
+    try:
+        client.upload_file(local_index_path, Bucket=bucket, Key=remote_index_path,
+                        ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
+    except botocore.exceptions.ClientError as e:
+        print(f"Encountered error in writing index to S3: {e}")
+        errors = errors+1
 
     if errors >0:
         success = False

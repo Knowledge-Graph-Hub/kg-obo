@@ -450,12 +450,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     # If requested, refresh the root index.html
     if force_index_refresh and not s3_test:
-        print(f"Refreshing root index on {bucket}")
+        print(f"Refreshing root index on {bucket}, {remote_path}")
         if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, 
                                              update_root=True):
             kg_obo_logger.info(f"Refreshed root index at {remote_path}")
+            print(f"Refreshed root index at {remote_path}")
         else:
             kg_obo_logger.info(f"Failed to refresh root index at {remote_path}")
+            print(f"Failed to refresh root index at {remote_path}")
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
@@ -512,15 +514,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 all_completed_transforms.append(ontology_name)
                 
                 # If requested, refresh the index.html even if we don't have a new version
-                # The refresh option in upload_index_files will also search subdirectories
+                # This won't touch the individual version directories
                 if force_index_refresh and not s3_test:
                     print(f"Refreshing index on {bucket} for {base_obo_path}")
                     if kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir):
-                        kg_obo_logger.info(f"Refreshed index at {remote_path}")
-                        print(f"Refreshed index at {remote_path}")
+                        kg_obo_logger.info(f"Refreshed index for {ontology_name}")
+                        print(f"Refreshed index for {ontology_name}")
                     else:
-                        kg_obo_logger.info(f"Failed to refresh index at {remote_path}")
-                        print(f"Failed to refresh index at {remote_path}")
+                        kg_obo_logger.info(f"Failed to refresh index for {ontology_name}")
+                        print(f"Failed to refresh index for {ontology_name}")
                 continue
 
             # Check for imports and skip this OBO if they're present
@@ -607,11 +609,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     kg_obo_logger.info(f"Adding {ontology_name} version {owl_version} to tracking file.")
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
                     # Update indexes for this version and OBO only
-                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir, 
-                                                        update_root=False):
-                        kg_obo_logger.info(f"Created index for {ontology_name}")
+                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir) and \
+                        kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir):
+                        kg_obo_logger.info(f"Created index for {ontology_name} and {owl_version}")
                     else:
-                        kg_obo_logger.info(f"Failed to create index for {ontology_name}")
+                        kg_obo_logger.info(f"Failed to create index for {ontology_name} and {owl_version}")
                     
                     # Upload the most recently transformed version only
                     kg_obo_logger.info("Uploading...")
@@ -641,12 +643,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     if not s3_test:
         # Update the root index
         if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
-            kg_obo_logger.info(f"Created root index at {remote_path}")
+            kg_obo_logger.info(f"Updated root index at {remote_path}")
+            print(f"Updated root index at {remote_path}")
+
         else:
-            kg_obo_logger.info(f"Failed to create root index at {remote_path}")
+            kg_obo_logger.info(f"Updated root index at {remote_path}")
+            print(f"Updated root index at {remote_path}")
 
     # Remove all local data files
-    # TODO: check to ensure no empty folders remain, whether we're using save_local or not
     if not save_local:
         if delete_path(data_dir, omit = [track_file_local_path]):
             kg_obo_logger.info(f"Removed local data from {data_dir}.")
