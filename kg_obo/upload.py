@@ -303,7 +303,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
     for filepath in local_files:
         relative_filepath = os.path.relpath(filepath, data_dir)
         relative_files.append(os.path.join(remote_path, relative_filepath))
-    relative_remote_path = os.path.relpath(local_path, data_dir)
+    relative_remote_path = os.path.join(remote_path,(os.path.relpath(local_path, data_dir)))
 
     # Get list of remote files
     remote_files = []
