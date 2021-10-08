@@ -295,6 +295,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         # Update root index
         check_dirs = [local_path]
     
+    # To refresh, set up an empty local directory first
     if refresh:
         os.mkdir(local_path)
 
@@ -328,7 +329,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
                             client.head_object(Bucket=bucket, Key=sub_index)
                             ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
                         except botocore.exceptions.ClientError:
-                            print(f"Could not find index for {sub_index}")
+                            print(f"Could not find index for {sub_index} - will not write link")
                     else:
                         ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
             ifile.write(index_tail)
@@ -339,7 +340,6 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         except botocore.exceptions.ClientError as e:
             print(f"Encountered error in writing index to S3: {e}")
             errors = errors+1
-
 
     if errors >0:
         success = False
