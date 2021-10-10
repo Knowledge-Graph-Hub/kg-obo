@@ -248,7 +248,7 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
         print(bucket_object.key)
 
 
-def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
+def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False, existing_client=None) -> bool:
     """
     Checks a specified remote path on the S3 bucket, 
     creating index.html where it does not exist.
@@ -260,12 +260,16 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     :param remote_path: str of path to upload to
     :param data_dir: str of the data directory, where the index will temporarily be saved
     :param update_root: bool, True to update root index, which performs extra dead link checks
+    :param existing_client: an object of class 'botocore.client.s3', for mocking persistence
     :return: bool returns True if all index files created successfully
     """
 
     errors = 0
 
-    client = boto3.client('s3')
+    if existing_client:
+        client = existing_client
+    else:
+        client = boto3.client('s3')
 
     ifilename = "index.html"
     ifile_local_path = os.path.join(data_dir,ifilename)
@@ -377,6 +381,10 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
         extant_files = [os.path.join(remote_path,ifilename),
                         os.path.join(remote_path,"a_directory/")]
 
-    success = update_index_files(bucket, remote_path, data_dir, update_root)
+    # Set up the mock root index first
+    for filename in extant_files:
+        client.put_object(Bucket=bucket, Key=filename)
+
+    success = update_index_files(bucket, remote_path, data_dir, update_root, existing_client=client)
 
     return success
