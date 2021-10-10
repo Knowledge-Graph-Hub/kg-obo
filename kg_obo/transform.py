@@ -530,6 +530,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     else:
                         kg_obo_logger.info(f"Failed to refresh index for {ontology_name}")
                         print(f"Failed to refresh index for {ontology_name}")
+                
                 continue
 
             # Check for imports and skip this OBO if they're present
@@ -653,7 +654,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if not s3_test:
         # Update the root index
-        if kg_obo.upload.update_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
+        if kg_obo.upload.update_index_files(bucket, remote_path, data_dir, update_root=True):
             kg_obo_logger.info(f"Updated root index at {remote_path}")
             print(f"Updated root index at {remote_path}")
         else:
