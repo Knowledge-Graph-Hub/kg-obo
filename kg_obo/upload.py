@@ -226,7 +226,6 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
 
     return lock_created
 
-
 @mock_s3
 def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                      make_public=False) -> None:
@@ -247,6 +246,7 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
 
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
+
 
 def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
     """
@@ -291,6 +291,117 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
+
+    # Get list of remote files
+    remote_files = []
+    try:
+        remote_contents = client.list_objects(Bucket=bucket, Prefix=remote_path+"/")['Contents']
+        for key in remote_contents:
+            remote_files.append(key['Key'])
+        print(f"Found existing contents at {remote_path}: {remote_files}")
+    except KeyError:
+        print(f"Found no existing contents at {remote_path}")
+
+    # Now write the index
+    # If root, check for dead links too
+    with open(ifile_local_path, 'w') as ifile:
+        ifile.write(index_head.format(this_dir=remote_path))
+        for filename in remote_files:
+            #Don't include the index file itself or the tracking file
+            if filename not in [os.path.join(remote_path,ifilename),
+                                os.path.join(remote_path,"tracking.yaml")]: 
+                if update_root:
+                    sub_index = os.path.join(remote_path,filename,ifilename)
+                    print(f"Looking for {sub_index}")
+                    try:
+                        client.head_object(Bucket=bucket, Key=sub_index)
+                        ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+                        print(f"Found {sub_index}")
+                    except botocore.exceptions.ClientError:
+                        print(f"Could not find {sub_index} - will not write link")
+                else:
+                    ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+        ifile.write(index_tail)
+
+    try:
+        client.upload_file(ifile_local_path, Bucket=bucket, Key=ifile_remote_path,
+                        ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
+    except botocore.exceptions.ClientError as e:
+        print(f"Encountered error in writing index to S3: {e}")
+        errors = errors+1
+
+    if errors >0:
+        success = False
+    else:
+        success = True
+
+    return success
+
+@mock_s3
+def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
+    """
+    Mocks checking a specified remote path on the S3 bucket, 
+    creating index.html where it does not exist.
+    Because this is a mock, we populate the root with a few entries first.
+    This index reflects both newly-added AND extant files on the specified bucket,
+    as it should be called after uploading new files
+    (but may also be called on its own to rebuild index.html).
+    :param bucket: str of S3 bucket
+    :param remote_path: str of path to upload to
+    :param data_dir: str of the data directory, where the index will temporarily be saved
+    :param update_root: bool, True to update root index, which performs extra dead link checks
+    :return: bool returns True if all index files created successfully
+    """
+    
+    os.environ['AWS_ACCESS_KEY_ID'] = 'test'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
+    os.environ['AWS_SECURITY_TOKEN'] = 'test'
+    os.environ['AWS_SESSION_TOKEN'] = 'test'
+
+    errors = 0
+
+    ifilename = "index.html"
+    ifile_local_path = os.path.join(data_dir,ifilename)
+    ifile_remote_path = os.path.join(remote_path,ifilename)
+
+    client = boto3.client('s3')
+    client.create_bucket(Bucket=bucket)
+    if update_root:
+        extant_files = [os.path.join(remote_path,ifilename),
+                        os.path.join(remote_path,"tracking.yaml"),
+                        os.path.join(remote_path,"test_obo/"),
+                        os.path.join(remote_path,"test_obo_2/")]
+    else:
+        extant_files = [os.path.join(remote_path,ifilename),
+                        os.path.join(remote_path,"a_directory/")]
+
+    index_head = """<!DOCTYPE html>
+<html>
+<head><title>Index of {this_dir}</title></head>
+<body>
+    <h2>Index of {this_dir}</h2>
+    <hr>
+    <ul>
+        <li>
+            <a href='../'>../</a>
+        </li>
+"""
+
+    index_tail = """
+    </ul>
+</body>
+</html>
+"""
+    
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+
+    # Set up the mock root index first
+    with open(ifile_local_path, 'w') as ifile:
+        ifile.write(index_head.format(this_dir=remote_path))
+        for filename in extant_files: 
+            client.put_object(Bucket=bucket, Key=filename)
+        ifile.write(index_tail)
 
     # Get list of remote files
     remote_files = []

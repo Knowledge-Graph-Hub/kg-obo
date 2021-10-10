@@ -457,6 +457,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         else:
             kg_obo_logger.info(f"Failed to refresh root index at {remote_path}")
             print(f"Failed to refresh root index at {remote_path}")
+    elif force_index_refresh and s3_test:
+        print(f"Mock refreshing root index on {bucket}, {remote_path}")
+        if kg_obo.upload.mock_update_index_files(bucket, remote_path, data_dir, update_root=True):
+            kg_obo_logger.info(f"Mock refreshed root index at {remote_path}")
+            print(f"Mock refreshed root index at {remote_path}")
+        else:
+            kg_obo_logger.info(f"Failed to mock refresh root index at {remote_path}")
+            print(f"Failed to mock refresh root index at {remote_path}")
 
     # Get the OBO Foundry list YAML and process each
     yaml_onto_list_filtered = retrieve_obofoundry_yaml(skip=skip, get_only=get_only)
