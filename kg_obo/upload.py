@@ -248,19 +248,18 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
 
-def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir: str, update_root=False) -> bool:
+def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
     """
-    Checks the obo directory and version directory,
+    Checks a specified remote path on the S3 bucket, 
     creating index.html where it does not exist.
-    (Or, if update_root is True, just the given directory and not its parent).
     If index exists, update it if needed.
-    This index reflects both newly-added AND extant files on the specified bucket.
+    This index reflects both newly-added AND extant files on the specified bucket,
+    as it should be called after uploading new files
+    (but may also be called on its own to rebuild index.html).
     :param bucket: str of S3 bucket
     :param remote_path: str of path to upload to
-    :param local_path: str of directory containing the files to create index for
-    :param data_dir: str of the data directory, so we can get the relative path
-    :param update_root: bool, True to update root index (in this case, local_path will be the data_dir)
-    :param refresh: bool, True to rebuild index based on remote contents
+    :param data_dir: str of the data directory, where the index will temporarily be saved
+    :param update_root: bool, True to update root index, which performs extra dead link checks
     :return: bool returns True if all index files created successfully
     """
 
@@ -269,6 +268,8 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
     client = boto3.client('s3')
 
     ifilename = "index.html"
+    ifile_local_path = os.path.join(data_dir,ifilename)
+    ifile_remote_path = os.path.join(remote_path,ifilename)
 
     index_head = """<!DOCTYPE html>
 <html>
@@ -288,46 +289,29 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
 </html>
 """
     
-    if not os.path.exists(local_path):
-        os.mkdir(local_path)
-
-    # Get the list of local files
-    local_index_path = os.path.join(local_path,ifilename)
-    local_files = os.listdir(local_path)
-
-    # Set local and remote paths
-    # Change local file paths to remote file paths
-    relative_index_path = os.path.relpath(local_index_path, data_dir)
-    remote_index_path = os.path.join(remote_path, relative_index_path)
-    relative_files = []
-    for filepath in local_files:
-        relative_filepath = os.path.relpath(filepath, data_dir)
-        relative_files.append(os.path.join(remote_path, relative_filepath))
-    relative_remote_path = os.path.join(remote_path,(os.path.relpath(local_path, data_dir)))
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
 
     # Get list of remote files
     remote_files = []
     try:
-        remote_contents = client.list_objects(Bucket=bucket, Prefix=relative_remote_path)['Contents']
+        remote_contents = client.list_objects(Bucket=bucket, Prefix=remote_path+"/")['Contents']
         for key in remote_contents:
             remote_files.append(key['Key'])
-        print(f"Found existing contents at {relative_remote_path}: {remote_files}")
+        print(f"Found existing contents at {remote_path}: {remote_files}")
     except KeyError:
-        print(f"Found no existing contents at {relative_remote_path}")
-
-    # Append the list of remote files
-    all_files = local_files + remote_files
+        print(f"Found no existing contents at {remote_path}")
 
     # Now write the index
     # If root, check for dead links too
-    with open(local_index_path, 'w') as ifile:
-        ifile.write(index_head.format(this_dir=relative_remote_path))
-        for filename in all_files:
+    with open(ifile_local_path, 'w') as ifile:
+        ifile.write(index_head.format(this_dir=remote_path))
+        for filename in remote_files:
             #Don't include the index file itself or the tracking file
-            if filename not in [os.path.join(relative_remote_path,ifilename),
-                                os.path.join(relative_remote_path,"tracking.yaml")]: 
+            if filename not in [os.path.join(remote_path,ifilename),
+                                os.path.join(remote_path,"tracking.yaml")]: 
                 if update_root:
-                    sub_index = os.path.join(relative_remote_path,filename,ifilename)
+                    sub_index = os.path.join(remote_path,filename,ifilename)
                     print(f"Looking for {sub_index}")
                     try:
                         client.head_object(Bucket=bucket, Key=sub_index)
@@ -340,7 +324,7 @@ def upload_index_files(bucket: str, remote_path: str, local_path: str, data_dir:
         ifile.write(index_tail)
 
     try:
-        client.upload_file(local_index_path, Bucket=bucket, Key=remote_index_path,
+        client.upload_file(ifile_local_path, Bucket=bucket, Key=ifile_remote_path,
                         ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
     except botocore.exceptions.ClientError as e:
         print(f"Encountered error in writing index to S3: {e}")

@@ -451,8 +451,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     # If requested, refresh the root index.html
     if force_index_refresh and not s3_test:
         print(f"Refreshing root index on {bucket}, {remote_path}")
-        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, 
-                                             update_root=True):
+        if kg_obo.upload.update_index_files(bucket, remote_path, data_dir, update_root=True):
             kg_obo_logger.info(f"Refreshed root index at {remote_path}")
             print(f"Refreshed root index at {remote_path}")
         else:
@@ -517,7 +516,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 # This won't touch the individual version directories
                 if force_index_refresh and not s3_test:
                     print(f"Refreshing index on {bucket} for {base_obo_path}")
-                    if kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir):
+                    if kg_obo.upload.update_index_files(bucket, remote_path, base_obo_path, data_dir):
                         kg_obo_logger.info(f"Refreshed index for {ontology_name}")
                         print(f"Refreshed index for {ontology_name}")
                     else:
@@ -606,19 +605,23 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if success:
                 versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if not s3_test:
+                    # Write to remote tracking file
                     kg_obo_logger.info(f"Adding {ontology_name} version {owl_version} to tracking file.")
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
+
+                    # Upload the most recently transformed version to bucket
+                    kg_obo_logger.info(f"Uploading {versioned_obo_path} to {versioned_remote_path}...")
+                    kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
+
                     # Update indexes for this version and OBO only
-                    if kg_obo.upload.upload_index_files(bucket, remote_path, versioned_obo_path, data_dir) and \
-                        kg_obo.upload.upload_index_files(bucket, remote_path, base_obo_path, data_dir):
+                    if kg_obo.upload.update_index_files(bucket, remote_path, versioned_obo_path, data_dir) and \
+                        kg_obo.upload.update_index_files(bucket, remote_path, base_obo_path, data_dir):
                         kg_obo_logger.info(f"Created index for {ontology_name} and {owl_version}")
                     else:
                         kg_obo_logger.info(f"Failed to create index for {ontology_name} and {owl_version}")
                     
-                    # Upload the most recently transformed version only
-                    kg_obo_logger.info("Uploading...")
-                    kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
                 else:
+                    kg_obo_logger.info(f"Mock uploading {versioned_obo_path} to {versioned_remote_path}...")
                     kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
 
             # Clean up any incomplete transform leftovers
@@ -642,7 +645,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if not s3_test:
         # Update the root index
-        if kg_obo.upload.upload_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
+        if kg_obo.upload.update_index_files(bucket, remote_path, data_dir, data_dir, update_root=True):
             kg_obo_logger.info(f"Updated root index at {remote_path}")
             print(f"Updated root index at {remote_path}")
         else:
