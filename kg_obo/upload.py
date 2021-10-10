@@ -338,7 +338,8 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     return success
 
 @mock_s3
-def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
+def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False, 
+                            existing_client=None) -> bool:
     """
     Mocks checking a specified remote path on the S3 bucket, 
     creating index.html where it does not exist.
@@ -350,6 +351,7 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
     :param remote_path: str of path to upload to
     :param data_dir: str of the data directory, where the index will temporarily be saved
     :param update_root: bool, True to update root index, which performs extra dead link checks
+    :param existing_client: an existing mock S3 client object, for mock persistence 
     :return: bool returns True if all index files created successfully
     """
     
@@ -363,9 +365,14 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
     ifilename = "index.html"
     ifile_local_path = os.path.join(data_dir,ifilename)
     ifile_remote_path = os.path.join(remote_path,ifilename)
+    
+    # Mock client persistence
+    if not existing_client:
+        client = boto3.client('s3')
+        client.create_bucket(Bucket=bucket)
+    else:
+        client = existing_client
 
-    client = boto3.client('s3')
-    client.create_bucket(Bucket=bucket)
     if update_root:
         extant_files = [os.path.join(remote_path,ifilename),
                         os.path.join(remote_path,"tracking.yaml"),

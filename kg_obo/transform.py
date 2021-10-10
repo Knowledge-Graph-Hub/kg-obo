@@ -486,6 +486,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         print(f"{ontology_name}")
         kg_obo_logger.info("Loading " + ontology_name)
         base_obo_path = os.path.join(data_dir, ontology_name)
+        obo_remote_path = os.path.join(remote_path,ontology_name)
 
         # take base ontology if it exists, otherwise just use non-base
         url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
@@ -522,15 +523,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 
                 # If requested, refresh the index.html even if we don't have a new version
                 # This won't touch the individual version directories
+                # Mock version isn't included here as we won't find existing versions under testing
                 if force_index_refresh and not s3_test:
-                    print(f"Refreshing index on {bucket} for {base_obo_path}")
-                    if kg_obo.upload.update_index_files(bucket, remote_path, base_obo_path, data_dir):
+                    print(f"Refreshing index on {bucket} for {obo_remote_path}")
+                    if kg_obo.upload.update_index_files(bucket, obo_remote_path, data_dir):
                         kg_obo_logger.info(f"Refreshed index for {ontology_name}")
                         print(f"Refreshed index for {ontology_name}")
                     else:
                         kg_obo_logger.info(f"Failed to refresh index for {ontology_name}")
                         print(f"Failed to refresh index for {ontology_name}")
-                
                 continue
 
             # Check for imports and skip this OBO if they're present
@@ -623,8 +624,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
 
                     # Update indexes for this version and OBO only
-                    if kg_obo.upload.update_index_files(bucket, remote_path, versioned_obo_path, data_dir) and \
-                        kg_obo.upload.update_index_files(bucket, remote_path, base_obo_path, data_dir):
+                    if kg_obo.upload.update_index_files(bucket, versioned_remote_path, data_dir) and \
+                        kg_obo.upload.update_index_files(bucket, obo_remote_path, data_dir):
                         kg_obo_logger.info(f"Created index for {ontology_name} and {owl_version}")
                     else:
                         kg_obo_logger.info(f"Failed to create index for {ontology_name} and {owl_version}")
@@ -632,6 +633,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 else:
                     kg_obo_logger.info(f"Mock uploading {versioned_obo_path} to {versioned_remote_path}...")
                     kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
+                    if kg_obo.upload.mock_update_index_files(bucket, versioned_remote_path, data_dir) and \
+                        kg_obo.upload.mock_update_index_files(bucket, obo_remote_path, data_dir):
+                        kg_obo_logger.info(f"Mock created index for {ontology_name} and {owl_version}")
+                    else:
+                        kg_obo_logger.info(f"Failed to mock create index for {ontology_name} and {owl_version}")
 
             # Clean up any incomplete transform leftovers
             if not success:
@@ -660,6 +666,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         else:
             kg_obo_logger.info(f"Failed to update root index at {remote_path}")
             print(f"Failed to update root index at {remote_path}")
+    else:
+        if kg_obo.upload.mock_update_index_files(bucket, remote_path, data_dir, update_root=True):
+            kg_obo_logger.info(f"Mock updated root index at {remote_path}")
+            print(f"Mock updated root index at {remote_path}")
+        else:
+            kg_obo_logger.info(f"Failed to mock update root index at {remote_path}")
+            print(f"Failed to mock update root index at {remote_path}")        
 
     # Remove all local data files
     if not save_local:
