@@ -317,7 +317,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
         ifile.write(index_head.format(this_dir=remote_path))
         for filename in remote_files:
             if update_root: # Check deadlinks
-                sub_index = os.path.join(remote_path,filename,IFILENAME)
+                sub_index = os.path.join(filename,IFILENAME) #Filename includes remote_path
                 print(f"Looking for {sub_index}")
                 try:
                     client.head_object(Bucket=bucket, Key=sub_index)
@@ -326,7 +326,8 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
                 except botocore.exceptions.ClientError:
                     print(f"Could not find {sub_index} - will not write link")
             else:
-                ifile.write(index_link.format(link=filename))
+                relative_filename = os.path.relpath(filename, remote_path)
+                ifile.write(index_link.format(link=relative_filename))
         ifile.write(index_tail)
 
     try:
