@@ -300,12 +300,11 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
         os.mkdir(data_dir)
 
     # Get list of remote files
-    remote_files = []
+    remote_files = [] # All file keys
     try:
         remote_contents = client.list_objects(Bucket=bucket, Prefix=remote_path+"/")['Contents']
         for key in remote_contents:
-            if key['Key'] not in [os.path.join(remote_path,IFILENAME),
-                                os.path.join(remote_path,"tracking.yaml")]: 
+            if os.path.basename(key['Key']) not in [IFILENAME,"tracking.yaml"]:
                 remote_files.append(key['Key'])
         print(f"Found existing contents at {remote_path}: {remote_files}")
     except KeyError:
@@ -315,9 +314,13 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     # If root, check for dead links too
     with open(ifile_local_path, 'w') as ifile:
         ifile.write(index_head.format(this_dir=remote_path))
-        for filename in remote_files:
-            if update_root: # Check deadlinks
-                sub_index = os.path.join(filename,IFILENAME) #Filename includes remote_path
+        if update_root: #Root will contain only subdirectories, but check for deadlinks
+            remote_directories = []
+            for filename in remote_files:
+                remote_directories.append(os.path.split(filename)[1])
+            remote_directories = list(set(remote_directories))
+            for directory in remote_directories:    
+                sub_index = os.path.join(directory,IFILENAME)
                 print(f"Looking for {sub_index}")
                 try:
                     client.head_object(Bucket=bucket, Key=sub_index)
@@ -325,7 +328,8 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
                     print(f"Found {sub_index}")
                 except botocore.exceptions.ClientError:
                     print(f"Could not find {sub_index} - will not write link")
-            else:
+        else:
+            for filename in remote_files:
                 relative_filename = os.path.relpath(filename, remote_path)
                 ifile.write(index_link.format(link=relative_filename))
         ifile.write(index_tail)
