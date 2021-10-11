@@ -266,8 +266,6 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     :return: bool returns True if all index files created successfully
     """
 
-    errors = 0
-
     if existing_client:
         client = existing_client
     else:
@@ -293,6 +291,8 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
 </body>
 </html>
 """
+
+    index_link = "\t\t<li>\n\t\t\t<a href={link}>{link}</a>\n\t\t</li>\n"
     
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
@@ -302,7 +302,9 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     try:
         remote_contents = client.list_objects(Bucket=bucket, Prefix=remote_path+"/")['Contents']
         for key in remote_contents:
-            remote_files.append(key['Key'])
+            if key['Key'] not in [os.path.join(remote_path,IFILENAME),
+                                os.path.join(remote_path,"tracking.yaml")]: 
+                remote_files.append(key['Key'])
         print(f"Found existing contents at {remote_path}: {remote_files}")
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
@@ -312,20 +314,17 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     with open(ifile_local_path, 'w') as ifile:
         ifile.write(index_head.format(this_dir=remote_path))
         for filename in remote_files:
-            #Don't include the index file itself or the tracking file
-            if filename not in [os.path.join(remote_path,IFILENAME),
-                                os.path.join(remote_path,"tracking.yaml")]: 
-                if update_root:
-                    sub_index = os.path.join(remote_path,filename,IFILENAME)
-                    print(f"Looking for {sub_index}")
-                    try:
-                        client.head_object(Bucket=bucket, Key=sub_index)
-                        ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
-                        print(f"Found {sub_index}")
-                    except botocore.exceptions.ClientError:
-                        print(f"Could not find {sub_index} - will not write link")
-                else:
-                    ifile.write(f"\t\t<li>\n\t\t\t<a href={filename}>{filename}</a>\n\t\t</li>\n")
+            if update_root: # Check deadlinks
+                sub_index = os.path.join(remote_path,filename,IFILENAME)
+                print(f"Looking for {sub_index}")
+                try:
+                    client.head_object(Bucket=bucket, Key=sub_index)
+                    ifile.write(index_link.format(link=filename))
+                    print(f"Found {sub_index}")
+                except botocore.exceptions.ClientError:
+                    print(f"Could not find {sub_index} - will not write link")
+            else:
+                ifile.write(index_link.format(link=filename))
         ifile.write(index_tail)
 
     try:
@@ -333,12 +332,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
                         ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
     except botocore.exceptions.ClientError as e:
         print(f"Encountered error in writing index to S3: {e}")
-        errors = errors+1
-
-    if errors >0:
         success = False
-    else:
-        success = True
 
     return success
 
