@@ -363,9 +363,6 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
     os.environ['AWS_SECRET_ACCESS_KEY'] = 'test'
     os.environ['AWS_SECURITY_TOKEN'] = 'test'
     os.environ['AWS_SESSION_TOKEN'] = 'test'
-
-    ifile_local_path = os.path.join(data_dir,IFILENAME)
-    ifile_remote_path = os.path.join(remote_path,IFILENAME)
     
     client = boto3.client('s3')
     client.create_bucket(Bucket=bucket)
