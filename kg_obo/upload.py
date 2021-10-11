@@ -317,7 +317,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
         if update_root: #Root will contain only subdirectories, but check for deadlinks
             remote_directories = []
             for filename in remote_files:
-                remote_directories.append(filename.split('/',2)[0])
+                remote_directories.append("/".join(filename.split("/", 2)[:2]))
             remote_directories = list(set(remote_directories))
             for directory in remote_directories:    
                 sub_index = os.path.join(directory,IFILENAME)
@@ -373,7 +373,8 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
         extant_files = [os.path.join(remote_path,IFILENAME),
                         os.path.join(remote_path,"tracking.yaml"),
                         os.path.join(remote_path,"test_obo/"),
-                        os.path.join(remote_path,"test_obo_2/")]
+                        os.path.join(remote_path,"test_obo_2/"),
+                        os.path.join(remote_path,"test_obo_2/",IFILENAME)]
     else:
         extant_files = [os.path.join(remote_path,IFILENAME),
                         os.path.join(remote_path,"a_directory/")]
