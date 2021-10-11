@@ -5,6 +5,8 @@ import os
 import logging
 from time import time
 
+IFILENAME = "index.html"
+
 def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     """
     Checks on existence of the tracking.yaml file on S3.
@@ -271,9 +273,8 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     else:
         client = boto3.client('s3')
 
-    ifilename = "index.html"
-    ifile_local_path = os.path.join(data_dir,ifilename)
-    ifile_remote_path = os.path.join(remote_path,ifilename)
+    ifile_local_path = os.path.join(data_dir,IFILENAME)
+    ifile_remote_path = os.path.join(remote_path,IFILENAME)
 
     index_head = """<!DOCTYPE html>
 <html>
@@ -312,10 +313,10 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
         ifile.write(index_head.format(this_dir=remote_path))
         for filename in remote_files:
             #Don't include the index file itself or the tracking file
-            if filename not in [os.path.join(remote_path,ifilename),
+            if filename not in [os.path.join(remote_path,IFILENAME),
                                 os.path.join(remote_path,"tracking.yaml")]: 
                 if update_root:
-                    sub_index = os.path.join(remote_path,filename,ifilename)
+                    sub_index = os.path.join(remote_path,filename,IFILENAME)
                     print(f"Looking for {sub_index}")
                     try:
                         client.head_object(Bucket=bucket, Key=sub_index)
@@ -365,20 +366,19 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
 
     errors = 0
 
-    ifilename = "index.html"
-    ifile_local_path = os.path.join(data_dir,ifilename)
-    ifile_remote_path = os.path.join(remote_path,ifilename)
+    ifile_local_path = os.path.join(data_dir,IFILENAME)
+    ifile_remote_path = os.path.join(remote_path,IFILENAME)
     
     client = boto3.client('s3')
     client.create_bucket(Bucket=bucket)
 
     if update_root:
-        extant_files = [os.path.join(remote_path,ifilename),
+        extant_files = [os.path.join(remote_path,IFILENAME),
                         os.path.join(remote_path,"tracking.yaml"),
                         os.path.join(remote_path,"test_obo/"),
                         os.path.join(remote_path,"test_obo_2/")]
     else:
-        extant_files = [os.path.join(remote_path,ifilename),
+        extant_files = [os.path.join(remote_path,IFILENAME),
                         os.path.join(remote_path,"a_directory/")]
 
     # Set up the mock root index first
