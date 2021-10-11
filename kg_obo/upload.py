@@ -317,7 +317,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
         if update_root: #Root will contain only subdirectories, but check for deadlinks
             remote_directories = []
             for filename in remote_files:
-                remote_directories.append(filename.split("/"))[1]
+                remote_directories.append(os.path.split(filename)[1])
             remote_directories = list(set(remote_directories))
             for directory in remote_directories:    
                 sub_index = os.path.join(directory,IFILENAME)
