@@ -364,8 +364,6 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
     os.environ['AWS_SECURITY_TOKEN'] = 'test'
     os.environ['AWS_SESSION_TOKEN'] = 'test'
 
-    errors = 0
-
     ifile_local_path = os.path.join(data_dir,IFILENAME)
     ifile_remote_path = os.path.join(remote_path,IFILENAME)
     
@@ -384,7 +382,7 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
     # Set up the mock root index first
     for filename in extant_files:
         client.put_object(Bucket=bucket, Key=filename)
-
+    
     success = update_index_files(bucket, remote_path, data_dir, update_root, existing_client=client)
 
     return success
