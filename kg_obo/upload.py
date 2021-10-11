@@ -266,6 +266,8 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     :return: bool returns True if all index files created successfully
     """
 
+    success = False
+
     if existing_client:
         client = existing_client
     else:
@@ -330,6 +332,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     try:
         client.upload_file(ifile_local_path, Bucket=bucket, Key=ifile_remote_path,
                         ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
+        success = True
     except botocore.exceptions.ClientError as e:
         print(f"Encountered error in writing index to S3: {e}")
         success = False
