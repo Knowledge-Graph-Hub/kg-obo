@@ -128,8 +128,19 @@ class TestRunTransform(TestCase):
     def test_run_transform(self, mock_kgx_transform, mock_get_owl_iri, mock_base_url,
                            mock_retrieve_obofoundry_yaml, mock_get):
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
+        
+        # Test with s3_test option on
         with tempfile.TemporaryDirectory() as td:
             run_transform(log_dir=td,s3_test=True)
+            self.assertTrue(mock_get.called)
+            self.assertTrue(mock_base_url.called)
+            self.assertTrue(mock_get_owl_iri.called)
+            self.assertTrue(mock_retrieve_obofoundry_yaml.called)
+            self.assertTrue(mock_kgx_transform.called)
+
+        # Test with s3_test option off
+        with tempfile.TemporaryDirectory() as td:
+            run_transform(log_dir=td,s3_test=False)
             self.assertTrue(mock_get.called)
             self.assertTrue(mock_base_url.called)
             self.assertTrue(mock_get_owl_iri.called)
