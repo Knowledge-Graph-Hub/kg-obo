@@ -304,8 +304,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     try:
         remote_contents = client.list_objects(Bucket=bucket, Prefix=remote_path+"/")['Contents']
         for key in remote_contents:
-            if key['Key'] not in [os.path.join(remote_path,IFILENAME),
-                                os.path.join(remote_path,"tracking.yaml")]: 
+            if os.path.basename(key['Key']) not in [IFILENAME,"tracking.yaml"]:
                 remote_files.append(key['Key'])
         print(f"Found existing contents at {remote_path}: {remote_files}")
     except KeyError:
