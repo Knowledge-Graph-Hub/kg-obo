@@ -5,7 +5,7 @@ from kg_obo.upload import upload_dir_to_s3, mock_upload_dir_to_s3, \
                            check_tracking, mock_check_tracking, \
                            check_lock, mock_check_lock, \
                            set_lock, mock_set_lock, \
-                           upload_index_files
+                           update_index_files, mock_update_index_files
 
 class TestUploadDirToS3(TestCase):
 
@@ -14,6 +14,7 @@ class TestUploadDirToS3(TestCase):
         self.download_ontology_dir = "tests/resources/download_ontology"
         self.bucket = "my_bucket"
         self.bucket_dir = "remote_dir"
+        self.data_dir = "data"
 
     @mock.patch('boto3.client')
     def test_upload_dir_to_s3(self, mock_boto):
@@ -60,10 +61,20 @@ class TestUploadDirToS3(TestCase):
         self.assertTrue(mock_boto.called)
 
     @mock.patch('boto3.client')
-    def test_upload_index_files(self, mock_boto):
-        upload_index_files(self.bucket, self.bucket_dir, self.download_ontology_dir,
-                           self.download_ontology_dir, update_root=False)
+    def test_update_index_files(self, mock_boto):
+        update_index_files(self.bucket, self.bucket_dir, self.data_dir,
+                            update_root=False)
         self.assertTrue(mock_boto.called)
-        upload_index_files(self.bucket, self.bucket_dir, self.download_ontology_dir,
-                           self.download_ontology_dir, update_root=True)
+        update_index_files(self.bucket, self.bucket_dir, self.data_dir,
+                            update_root=True)
+        self.assertTrue(mock_boto.called)
+
+    #Test-of-test
+    @mock.patch('boto3.client')
+    def test_mock_update_index_files(self, mock_boto):
+        mock_update_index_files(self.bucket, self.bucket_dir, self.data_dir,
+                            update_root=False)
+        self.assertTrue(mock_boto.called)
+        mock_update_index_files(self.bucket, self.bucket_dir, self.data_dir,
+                            update_root=True)
         self.assertTrue(mock_boto.called)
