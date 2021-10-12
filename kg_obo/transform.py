@@ -15,6 +15,8 @@ import mmap
 import re
 import sys
 
+import difflib
+
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
@@ -368,6 +370,30 @@ def imports_requested(input_file_name: str) -> list:
 
     return imports
 
+def get_file_diff(before_filename, after_filename) -> str:
+    """
+    Get list of differences between two files, returned as a string.
+    :param before_filename: str, name or path of first file
+    :param after_filename: str, name or path of second file
+    :return: str containing all lines different between the files
+    """
+    diff_string = ""
+    with open(before_filename, 'r') as before_file:
+        with open(after_filename, 'r') as after_file:
+            diff = difflib.unified_diff(
+                before_file.readlines(),
+                after_file.readlines(),
+                fromfile=before_filename,
+                tofile=after_filename
+                )
+        for line in diff:
+            diff_string = diff_string + line
+
+    if diff_string == "":
+        diff_string = "No difference"
+
+    return diff_string
+
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 save_local=False, s3_test=False,
                 no_dl_progress=False,
@@ -408,6 +434,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         print(f"Set up Java gateway for ROBOT at {java_port}")
         gateway = JavaGateway()
         io_helper = gateway.jvm.org.obolibrary.robot.IOHelper()
+        relax_operation = gateway.jvm.org.obolibrary.robot.RelaxOperation()
+        robot_run = True
     except Py4JError as e:
         print(f'''*** ROBOT not found! Please see http://robot.obolibrary.org/ \n
             \t{e}\n\tROBOT preprocessing will NOT be performed.\n''')
@@ -581,6 +609,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if not os.path.exists(versioned_obo_path):
                 os.mkdir(versioned_obo_path)
 
+            # TODO: run ROBOT preprocessing here
+            if robot_run:   # i.e., if ROBOT set up went correctly
+                
+                ont = io_helper.loadOntology(tfile.name)
+                print(ont.getOntologyID().getVersionIRI())
+                output_filename = tfile.name
+                print("Difference after processing:")
+                print(get_file_diff(tfile.name,output_filename))
+            
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
             success = True # for all transforms 
