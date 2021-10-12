@@ -629,7 +629,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if robot_run:   # i.e., if ROBOT set up went correctly
                 
                 ont = io_helper.loadOntology(tfile.name)
-                #print(ont.getOntologyID().getVersionIRI())
 
                 tfile_relaxed = tempfile.NamedTemporaryFile(delete=False)
                 relax_options = MapConverter().convert({"output": tfile_relaxed.name}, 
@@ -642,6 +641,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 diff_count = len(get_file_diff(tfile.name,tfile_relaxed.name).splitlines())
                 print(f"""Difference after processing:\n{diff_count} lines changed
                          ({before_count} lines before, {after_count} after).""")
+
+                if after_count == 0:
+                    kg_obo_logger.error(f"ROBOT processing of {ontology_name} yielded an empty result!")
+                    print(f"ROBOT processing of {ontology_name} yielded an empty result!")
             
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
