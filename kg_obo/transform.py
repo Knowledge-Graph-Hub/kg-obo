@@ -425,6 +425,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     """
 
     # Set up Java VM for ROBOT
+    robot_run = False
     try:
         java_port = 25333
         launch_gateway(jarpath=robot_path,
