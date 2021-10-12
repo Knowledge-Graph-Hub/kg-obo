@@ -19,6 +19,7 @@ from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
 from py4j.java_gateway import launch_gateway, JavaGateway
+from py4j.protocol import Py4JError
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
@@ -398,13 +399,18 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     """
 
     # Set up Java VM for ROBOT
-    java_port = 25333
-    launch_gateway(jarpath=robot_path,
-               classpath='org.obolibrary.robot.PythonOperation',
-               port=java_port,
-               die_on_exit=True)
-    print(f"Set up Java gateway for ROBOT at {java_port}")
-    gateway = JavaGateway()
+    try:
+        java_port = 25333
+        launch_gateway(jarpath=robot_path,
+                classpath='org.obolibrary.robot.PythonOperation',
+                port=java_port,
+                die_on_exit=True)
+        print(f"Set up Java gateway for ROBOT at {java_port}")
+        gateway = JavaGateway()
+        io_helper = gateway.jvm.org.obolibrary.robot.IOHelper()
+    except Py4JError as e:
+        print(f'''*** ROBOT not found! Please see http://robot.obolibrary.org/ \n
+            \t{e}\n\tROBOT preprocessing will NOT be performed.\n''')
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
