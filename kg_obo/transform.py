@@ -18,6 +18,8 @@ import sys
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
+from py4j.java_gateway import launch_gateway, JavaGateway
+
 import kg_obo.obolibrary_utils
 import kg_obo.upload
 from urllib.parse import quote
@@ -366,15 +368,16 @@ def imports_requested(input_file_name: str) -> list:
     return imports
 
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
-                  save_local=False, s3_test=False,
-                  no_dl_progress=False,
-                  force_index_refresh=False,
-                  lock_file_remote_path: str = "kg-obo/lock",
-                  log_dir="logs", data_dir="data",
-                  remote_path="kg-obo",
-                  track_file_local_path: str = "data/tracking.yaml",
-                  tracking_file_remote_path: str = "kg-obo/tracking.yaml"
-                  ) -> bool:
+                save_local=False, s3_test=False,
+                no_dl_progress=False,
+                force_index_refresh=False,
+                robot_path: str = "bin/robot.jar",
+                lock_file_remote_path: str = "kg-obo/lock",
+                log_dir="logs", data_dir="data",
+                remote_path="kg-obo",
+                track_file_local_path: str = "data/tracking.yaml",
+                tracking_file_remote_path: str = "kg-obo/tracking.yaml"
+                ) -> bool:
     """
     Perform setup, then kgx-mediated transforms for all specified OBOs.
     :param skip: list of OBOs to skip, by ID
@@ -383,6 +386,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :param save_local: bool for whether to retain transform results on local disk
     :param s3_test: bool for whether to perform mock S3 upload only
     :param no_dl_progress: bool for whether to hide download progress bars
+    :param force_index_refresh: bool for whether to rebuild all index.html on remote
+    :param robot_path: str of path to robot.jar, if different from default
     :param lock_file_remote_path: str of path for lock file on S3
     :param log_dir: str of local dir where any logs should be saved
     :param data_dir: str of local dir where data should be saved
@@ -391,6 +396,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :param tracking_file_remote_path: str of path of tracking file on S3
     :return: boolean indicating success or existing run encountered (False for unresolved error)
     """
+
+    # Set up Java VM for ROBOT
+    java_port = 25333
+    launch_gateway(jarpath=robot_path,
+               classpath='org.obolibrary.robot.PythonOperation',
+               port=java_port,
+               die_on_exit=True)
+    print(f"Set up Java gateway for ROBOT at {java_port}")
+    gateway = JavaGateway()
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
