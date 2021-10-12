@@ -18,8 +18,8 @@ import sys
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
-from py4j.java_gateway import launch_gateway, JavaGateway
-from py4j.protocol import Py4JError
+from py4j.java_gateway import launch_gateway, JavaGateway # type: ignore
+from py4j.protocol import Py4JError # type: ignore
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
