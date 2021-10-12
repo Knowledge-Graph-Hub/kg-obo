@@ -22,6 +22,7 @@ from rdflib.exceptions import ParserError # type: ignore
 
 from py4j.java_gateway import launch_gateway, JavaGateway # type: ignore
 from py4j.protocol import Py4JError # type: ignore
+from py4j.java_collections import MapConverter # type: ignore
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
@@ -394,6 +395,20 @@ def get_file_diff(before_filename, after_filename) -> str:
 
     return diff_string
 
+def get_file_length(filename) -> int:
+    """
+    Simple function to get number of lines in a file, as a string.
+    Includes empty lines, too.
+    :param filename: str, name or path of file
+    :return: int containing count of lines in file
+    """
+    out_value = 0
+    with open(filename, "r") as infile:
+        for line in infile:
+            out_value = out_value + 1
+
+    return out_value
+
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 save_local=False, s3_test=False,
                 no_dl_progress=False,
@@ -610,14 +625,23 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if not os.path.exists(versioned_obo_path):
                 os.mkdir(versioned_obo_path)
 
-            # TODO: run ROBOT preprocessing here
+            # Run ROBOT preprocessing
             if robot_run:   # i.e., if ROBOT set up went correctly
                 
                 ont = io_helper.loadOntology(tfile.name)
-                print(ont.getOntologyID().getVersionIRI())
-                output_filename = tfile.name
-                print("Difference after processing:")
-                print(get_file_diff(tfile.name,output_filename))
+                #print(ont.getOntologyID().getVersionIRI())
+
+                tfile_relaxed = tempfile.NamedTemporaryFile(delete=False)
+                relax_options = MapConverter().convert({"output": tfile_relaxed.name}, 
+                                                        gateway._gateway_client)
+                relax_operation.relax(ont, relax_options)
+                tfile_relaxed.close()
+
+                before_count = get_file_length(tfile.name)
+                after_count = get_file_length(tfile_relaxed.name)
+                diff_count = len(get_file_diff(tfile.name,tfile_relaxed.name).splitlines())
+                print(f"""Difference after processing:\n{diff_count} lines changed
+                         ({before_count} lines before, {after_count} after).""")
             
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
