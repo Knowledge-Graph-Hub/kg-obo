@@ -22,7 +22,7 @@ from rdflib.exceptions import ParserError # type: ignore
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
-from kg_obo.robot_utils import initialize_robot, relax_owl
+from kg_obo.robot_utils import initialize_robot, relax_owl, merge_and_convert_owl
 from urllib.parse import quote
 
 
@@ -590,15 +590,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 continue
 
             # Check for imports, but don't retreive yet
+            need_imports = False
             imports = imports_requested(tfile.name)
             if len(imports) > 0:
                 fimports = ", ".join(imports)
                 kg_obo_logger.info(f"Header for {ontology_name} requests these imports: {fimports}")
-                kg_obo_logger.warning(f"Imports not currently supported. Skipping {ontology_name}.")
                 print(f"Header for {ontology_name} requests these imports: {fimports}")
-                print(f"Imports not currently supported. Skipping {ontology_name}.")
-                failed_transforms.append(ontology_name)
-                continue
+                need_imports = True
 
             # If this version is new, download the whole OBO
             if not os.path.exists(base_obo_path):
@@ -634,22 +632,49 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     print(f"{diff} after relaxing.")
 
                 if after_count == 0:
-                    kg_obo_logger.error(f"ROBOT processing of {ontology_name} yielded an empty result!")
-                    print(f"ROBOT processing of {ontology_name} yielded an empty result!")
-            
+                    kg_obo_logger.error(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
+                    print(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
+
+                # If we have imports, merge to resolve 
+                # Don't do this every time as it is not necessary
+                if need_imports:
+                    
+                    print(f"ROBOT preprocessing: merge and convert {ontology_name}")
+                    tfile_merged = tempfile.NamedTemporaryFile(delete=False,suffix="_merged.owl")
+                    merge_and_convert_owl(robot,tfile_relaxed.name,tfile_merged.name)
+                    tfile_merged.close()
+
+                    before_count = get_file_length(tfile_relaxed.name)
+                    after_count = get_file_length(tfile_merged.name)
+                    diff = get_file_diff(tfile_relaxed.name,tfile_merged.name)
+                    diff_count = len(diff.splitlines())
+                    if diff_count >1:
+                        print(f"""Difference after merging:\n{diff_count} lines changed
+                            ({before_count} lines before, {after_count} after).""")
+                    else:
+                        print(f"{diff} after merging.")
+
+                    if after_count == 0:
+                        kg_obo_logger.error(f"ROBOT merging of {ontology_name} yielded an empty result!")
+                        print(f"ROBOT merging of {ontology_name} yielded an empty result!")
+
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
             success = True # for all transforms 
             errors = False # for all transforms
             all_success_and_errors = {}
             desired_output_formats = ['tsv', 'json']
+            if need_imports:
+                input_owl = tfile_merged.name
+            else:
+                input_owl = tfile_relaxed.name
             for output_format in desired_output_formats:
                 kg_obo_logger.info(f"Transforming to {output_format}...")
                 if output_format == 'tsv':
                     ontology_filename = f"{ontology_name}_kgx_tsv"
                 else:
                     ontology_filename = f"{ontology_name}_kgx"
-                this_success, this_errors, this_output_msg = kgx_transform(input_file=[tfile_relaxed.name],
+                this_success, this_errors, this_output_msg = kgx_transform(input_file=[input_owl],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_filename),
                                             output_format=output_format,

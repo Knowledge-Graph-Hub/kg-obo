@@ -61,7 +61,8 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str) -> N
     robot_file, env = initialize_robot(robot_path)
 
     call = ['bash', robot_path, 'merge',
-            '--input', input_owl, 'convert' 
+            '--input', input_owl,
+            'convert', 
             '--output', output_owl, 
             ]
 
