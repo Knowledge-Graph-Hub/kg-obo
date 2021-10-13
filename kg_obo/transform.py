@@ -22,7 +22,7 @@ from rdflib.exceptions import ParserError # type: ignore
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
-from kg_obo.robot_utils import initialize_robot
+from kg_obo.robot_utils import initialize_robot, relax_owl
 from urllib.parse import quote
 
 
@@ -439,7 +439,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     print("Setting up ROBOT...")
     try:
         robot_params = initialize_robot(robot_path)
-        print(f"ROBOT path: {robot_params[0]}")
+        robot = robot_params[0]
+        print(f"ROBOT path: {robot}")
         print(f"ROBOT Java arguments: {robot_params[1]['ROBOT_JAVA_ARGS']}")
         robot_run = True
     except ValueError as e:
@@ -588,8 +589,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         print(f"Failed to refresh index for {ontology_name}")
                 continue
 
-            # Check for imports and skip this OBO if they're present
-            # TODO: actually retrieve imports - this is a job for ROBOT
+            # Check for imports, but don't retreive yet
             imports = imports_requested(tfile.name)
             if len(imports) > 0:
                 fimports = ", ".join(imports)
@@ -615,17 +615,23 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if not os.path.exists(versioned_obo_path):
                 os.mkdir(versioned_obo_path)
 
-            # TODO: Run ROBOT preprocessing here - relax all, then do merge -> convert if needed
+            # Run ROBOT preprocessing here - relax all, then do merge -> convert if needed
             if robot_run:   # i.e., if ROBOT set up went correctly
 
-                tfile_relaxed = tempfile.NamedTemporaryFile(delete=False)
+                print(f"ROBOT preprocessing: relax {ontology_name}")
+                tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix="_relaxed.owl")
+                relax_owl(robot, tfile.name,tfile_relaxed.name)
                 tfile_relaxed.close()
 
                 before_count = get_file_length(tfile.name)
                 after_count = get_file_length(tfile_relaxed.name)
-                diff_count = len(get_file_diff(tfile.name,tfile_relaxed.name).splitlines())
-                print(f"""Difference after processing:\n{diff_count} lines changed
+                diff = get_file_diff(tfile.name,tfile_relaxed.name)
+                diff_count = len(diff.splitlines())
+                if diff_count >1:
+                    print(f"""Difference after relaxing:\n{diff_count} lines changed
                          ({before_count} lines before, {after_count} after).""")
+                else:
+                    print(f"{diff} after relaxing.")
 
                 if after_count == 0:
                     kg_obo_logger.error(f"ROBOT processing of {ontology_name} yielded an empty result!")
