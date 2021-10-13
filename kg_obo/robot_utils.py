@@ -35,7 +35,8 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
     """
     This method runs the ROBOT relax command using the subprocess library
     :param robot_path: Path to ROBOT files
-    :param ont: Ontology file to be relaxed
+    :param input_owl: Ontology file to be relaxed
+    :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
     :return: None
     """
 
@@ -49,7 +50,7 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
     subprocess.call(call, env=env)
 
 
-def merge_and_convert_owl(path: str, ont: str) -> str:
+def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
     """
     This method runs a merge and convert ROBOT command using the subprocess library
     :param path: Path to ROBOT files
@@ -57,16 +58,11 @@ def merge_and_convert_owl(path: str, ont: str) -> str:
     :return: None
     """
 
-    robot_file, env = initialize_robot(path)
-    input_owl = os.path.join(path, ont.lower() + '.owl')
-    output_json = os.path.join(path, ont.lower() + '.json')
-    # if not os.path.isfile(output_json):
-    #     # Setup the arguments for ROBOT through subprocess
-    #     call = ['bash', robot_file, 'convert', \
-    #             '--input', input_owl, \
-    #             '--output', output_json, \
-    #             '-f', 'json']
+    robot_file, env = initialize_robot(robot_path)
 
-    #     subprocess.call(call, env=env)
+    call = ['bash', robot_path, 'merge',
+            '--input', input_owl, 'convert' 
+            '--output', output_owl, 
+            ]
 
-    return output_json
+    subprocess.call(call, env=env)
