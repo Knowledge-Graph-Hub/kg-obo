@@ -20,10 +20,6 @@ import difflib
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
-from py4j.java_gateway import launch_gateway, JavaGateway # type: ignore
-from py4j.protocol import Py4JError # type: ignore
-from py4j.java_collections import MapConverter # type: ignore
-
 import kg_obo.obolibrary_utils
 import kg_obo.upload
 from urllib.parse import quote
@@ -439,22 +435,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :return: boolean indicating success or existing run encountered (False for unresolved error)
     """
 
-    # Set up Java VM for ROBOT
-    robot_run = False
-    try:
-        java_port = 25333
-        launch_gateway(jarpath=robot_path,
-                classpath='org.obolibrary.robot.PythonOperation',
-                port=java_port,
-                die_on_exit=True)
-        print(f"Set up Java gateway for ROBOT at {java_port}")
-        gateway = JavaGateway()
-        io_helper = gateway.jvm.org.obolibrary.robot.IOHelper()
-        relax_operation = gateway.jvm.org.obolibrary.robot.RelaxOperation()
-        robot_run = True
-    except Py4JError as e:
-        print(f'''*** ROBOT not found! Please see http://robot.obolibrary.org/ \n
-            \t{e}\n\tROBOT preprocessing will NOT be performed.\n''')
+    robot_run = True
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -625,15 +606,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if not os.path.exists(versioned_obo_path):
                 os.mkdir(versioned_obo_path)
 
-            # Run ROBOT preprocessing
+            # TODO: Run ROBOT preprocessing here - relax all, then do merge -> convert if needed
             if robot_run:   # i.e., if ROBOT set up went correctly
-                
-                ont = io_helper.loadOntology(tfile.name)
 
                 tfile_relaxed = tempfile.NamedTemporaryFile(delete=False)
-                relax_options = MapConverter().convert({"output": tfile_relaxed.name}, 
-                                                        gateway._gateway_client)
-                relax_operation.relax(ont, relax_options)
                 tfile_relaxed.close()
 
                 before_count = get_file_length(tfile.name)

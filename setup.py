@@ -69,8 +69,7 @@ setup(
         'click',
         'moto[s3]',
         'sphinx_rtd_theme',
-        'recommonmark',
-        'py4j'
+        'recommonmark'
     ],
     extras_require=extras,
 )
