@@ -22,6 +22,7 @@ from rdflib.exceptions import ParserError # type: ignore
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
+from kg_obo.robot_utils import initialize_robot
 from urllib.parse import quote
 
 
@@ -409,7 +410,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 save_local=False, s3_test=False,
                 no_dl_progress=False,
                 force_index_refresh=False,
-                robot_path: str = "bin/robot.jar",
+                robot_path: str = "bin/robot",
                 lock_file_remote_path: str = "kg-obo/lock",
                 log_dir="logs", data_dir="data",
                 remote_path="kg-obo",
@@ -425,7 +426,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :param s3_test: bool for whether to perform mock S3 upload only
     :param no_dl_progress: bool for whether to hide download progress bars
     :param force_index_refresh: bool for whether to rebuild all index.html on remote
-    :param robot_path: str of path to robot.jar, if different from default
+    :param robot_path: str of path to robot, if different from default (bin/robot) - don't need '.jar' extension
     :param lock_file_remote_path: str of path for lock file on S3
     :param log_dir: str of local dir where any logs should be saved
     :param data_dir: str of local dir where data should be saved
@@ -435,7 +436,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :return: boolean indicating success or existing run encountered (False for unresolved error)
     """
 
-    robot_run = True
+    print("Setting up ROBOT...")
+    try:
+        robot_params = initialize_robot(robot_path)
+        print(f"ROBOT path: {robot_params[0]}")
+        print(f"ROBOT Java arguments: {robot_params[1]['ROBOT_JAVA_ARGS']}")
+        robot_run = True
+    except ValueError as e:
+        print(f"\t*** Encountered error: {e}. WILL NOT USE ROBOT PROCESSING.")
+        robot_run = False
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")

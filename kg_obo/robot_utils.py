@@ -16,7 +16,9 @@ def initialize_robot(path: str) -> list:
     :return: A list consisting of robot shell script name and environment variables.
     """
     # Declare variables
-    robot_file = os.path.join(path, 'robot')
+    robot_file = path
+    if os.path.basename(path) != "robot":
+        raise ValueError("Path does not appear to include ROBOT.")
 
     # Declare environment variables
     env = dict(os.environ)
