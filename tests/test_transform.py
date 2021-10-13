@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
     get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
-    delete_path, imports_requested
+    delete_path, imports_requested, get_file_diff, get_file_length
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -310,3 +310,13 @@ class TestRunTransform(TestCase):
         self.assertTrue(delete_path(data_path, omit=[]))
         data_path = "tests/resources/a_dir_that_definitely_does_not_exist/"
         self.assertFalse(delete_path(data_path, omit=[]))
+
+    def test_get_file_diff(self):
+        diff = get_file_diff('tests/resources/download_ontology/go_SNIPPET.owl',
+                            'tests/resources/download_ontology/go_SNIPPET.owl')
+        self.assertEqual("No difference", diff)
+
+    def test_get_file_length(self):
+        count = get_file_length('tests/resources/download_ontology/go_SNIPPET.owl')
+        self.assertEqual(24, count)
+
