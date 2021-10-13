@@ -649,7 +649,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     ontology_filename = f"{ontology_name}_kgx_tsv"
                 else:
                     ontology_filename = f"{ontology_name}_kgx"
-                this_success, this_errors, this_output_msg = kgx_transform(input_file=[tfile.name],
+                this_success, this_errors, this_output_msg = kgx_transform(input_file=[tfile_relaxed.name],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_filename),
                                             output_format=output_format,
