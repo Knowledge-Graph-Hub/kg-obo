@@ -126,9 +126,9 @@ class TestRunTransform(TestCase):
     @mock.patch('kg_obo.transform.get_owl_iri', return_value=('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26'))
     @mock.patch('kgx.cli.transform')
     def test_run_transform(self, mock_kgx_transform, mock_get_owl_iri, mock_base_url,
-                           mock_retrieve_obofoundry_yaml, mock_get):
+                           mock_retrieve_obofoundry_yaml, mock_get): 
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
-        
+
         # Test with s3_test option on
         with tempfile.TemporaryDirectory() as td:
             run_transform(log_dir=td,s3_test=True)
@@ -190,10 +190,9 @@ class TestRunTransform(TestCase):
             run_transform(log_dir=td,s3_test=False, force_index_refresh=True)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
 
-        mock_retrieve_obofoundry_yaml.return_value = [{'id': 'apollo_sv'}]
         # Test if we need to do full ROBOT relax -> merge -> convert
         with tempfile.TemporaryDirectory() as td:
-            run_transform(log_dir=td,s3_test=True)
+            run_transform(log_dir=td,s3_test=True,get_only=['apollo_sv'])
             self.assertTrue(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
