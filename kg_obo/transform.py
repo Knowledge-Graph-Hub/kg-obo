@@ -667,7 +667,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if need_imports:
                 input_owl = tfile_merged.name
             else:
-                input_owl = tfile_relaxed.name
+                if robot_run:
+                    input_owl = tfile_relaxed.name
+                else:
+                    input_owl = tfile.name
             for output_format in desired_output_formats:
                 kg_obo_logger.info(f"Transforming to {output_format}...")
                 if output_format == 'tsv':

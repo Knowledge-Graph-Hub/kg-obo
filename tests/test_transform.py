@@ -147,6 +147,13 @@ class TestRunTransform(TestCase):
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
             self.assertTrue(mock_kgx_transform.called)
 
+        # Test if error raised when ROBOT not available
+        # though we also want to continue without it
+        with tempfile.TemporaryDirectory() as td:
+            run_transform(log_dir=td,s3_test=True,robot_path="wrong")
+            self.assertRaises(ValueError)
+            self.assertTrue(mock_kgx_transform.called)
+
         # test that we don't run transform if download of ontology fails
         with mock.patch('kg_obo.transform.download_ontology', return_value=False),\
                 tempfile.TemporaryDirectory() as td:
@@ -182,6 +189,12 @@ class TestRunTransform(TestCase):
         with tempfile.TemporaryDirectory() as td:
             run_transform(log_dir=td,s3_test=False, force_index_refresh=True)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
+
+        mock_retrieve_obofoundry_yaml.return_value = [{'id': 'apollo_sv'}]
+        # Test if we need to do full ROBOT relax -> merge -> convert
+        with tempfile.TemporaryDirectory() as td:
+            run_transform(log_dir=td,s3_test=True)
+            self.assertTrue(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
@@ -245,7 +258,7 @@ class TestRunTransform(TestCase):
     def test_imports_requested(self):
         imports = imports_requested('tests/resources/download_ontology/upheno_SNIPPET.owl')
         self.assertEqual(imports, ["&obo;upheno/metazoa.owl"])
-
+    
     def test_retrieve_obofoundry_yaml_select(self):
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=[])
         self.assertEqual(yaml_onto_list_filtered, self.parsed_obo_yaml_sample)
@@ -315,8 +328,10 @@ class TestRunTransform(TestCase):
         diff = get_file_diff('tests/resources/download_ontology/go_SNIPPET.owl',
                             'tests/resources/download_ontology/go_SNIPPET.owl')
         self.assertEqual("No difference", diff)
+        diff = get_file_diff('tests/resources/download_ontology/go_SNIPPET.owl',
+                            'tests/resources/download_ontology/aro_SNIPPET.owl')
+        self.assertNotEqual("No difference", diff)
 
     def test_get_file_length(self):
         count = get_file_length('tests/resources/download_ontology/go_SNIPPET.owl')
         self.assertEqual(24, count)
-
