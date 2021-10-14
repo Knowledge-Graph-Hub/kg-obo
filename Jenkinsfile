@@ -63,6 +63,10 @@ pipeline {
                     sh '. venv/bin/activate'
                     sh './venv/bin/pip install .'
                 }
+                dir('./') {
+                    sh 'curl -L https://github.com/ontodev/robot/releases/download/v1.8.1/robot.jar > robot.jar'
+                    sh 'curl https://raw.githubusercontent.com/ontodev/robot/master/bin/robot > robot'
+                }
             }
         }
 
