@@ -250,6 +250,10 @@ class TestRunTransform(TestCase):
         iri = get_owl_iri('tests/resources/download_ontology/go_SNIPPET.owl')
         self.assertEqual(('http://purl.obolibrary.org/obo/go/releases/2021-09-01/go-base.owl', '2021-09-01'), iri)
 
+    def test_get_owl_iri_for_micro(self):
+        iri = get_owl_iri('tests/resources/download_ontology/micro_SNIPPET.owl')
+        self.assertEqual(('&obo;MicrO.owl', '1.5.1'), iri)
+
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "release"), iri)

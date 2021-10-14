@@ -187,6 +187,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     date_dc_tag = b'dc:date xml:lang=\"en\">([^\<]+)'
     version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
     short_version_info_tag = b'<owl:versionInfo>([^\<]+)'
+    internal_version_info_tag = 'version%20([\d|\.]*)'
 
     #The default IRI/version - only used if values aren't provided.
     iri = "release"
@@ -227,6 +228,15 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 print("Neither versioned IRI or release date found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
+
+    if len(version) >255: # Some versions are just free text, so we need to cut it back
+        # First try to find pattern matching "version x" (?:version )
+        internal_version_info_search = re.search(internal_version_info_tag, version.lower())  # type: ignore
+        if internal_version_info_search:
+            version = (internal_version_info_search.group(1))
+        # Failing pattern match, just trim
+        else:
+            version = version[0:50]
 
     return (iri, version)
 
