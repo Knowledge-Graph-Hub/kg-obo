@@ -401,7 +401,7 @@ def get_file_length(filename) -> int:
     """
     out_value = 0
     with open(filename, "r") as infile:
-        for line in infile:
+        for _ in infile:
             out_value = out_value + 1
 
     return out_value
