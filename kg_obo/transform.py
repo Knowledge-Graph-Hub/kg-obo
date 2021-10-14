@@ -15,11 +15,14 @@ import mmap
 import re
 import sys
 
+import difflib
+
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
 
 import kg_obo.obolibrary_utils
 import kg_obo.upload
+from kg_obo.robot_utils import initialize_robot, relax_owl, merge_and_convert_owl
 from urllib.parse import quote
 
 
@@ -365,16 +368,55 @@ def imports_requested(input_file_name: str) -> list:
 
     return imports
 
+def get_file_diff(before_filename, after_filename) -> str:
+    """
+    Get list of differences between two files, returned as a string.
+    :param before_filename: str, name or path of first file
+    :param after_filename: str, name or path of second file
+    :return: str containing all lines different between the files
+    """
+    diff_string = ""
+    with open(before_filename, 'r') as before_file:
+        with open(after_filename, 'r') as after_file:
+            diff = difflib.unified_diff(
+                before_file.readlines(),
+                after_file.readlines(),
+                fromfile=before_filename,
+                tofile=after_filename
+                )
+        for line in diff:
+            diff_string = diff_string + line
+
+    if diff_string == "":
+        diff_string = "No difference"
+
+    return diff_string
+
+def get_file_length(filename) -> int:
+    """
+    Simple function to get number of lines in a file, as a string.
+    Includes empty lines, too.
+    :param filename: str, name or path of file
+    :return: int containing count of lines in file
+    """
+    out_value = 0
+    with open(filename, "r") as infile:
+        for _ in infile:
+            out_value = out_value + 1
+
+    return out_value
+
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
-                  save_local=False, s3_test=False,
-                  no_dl_progress=False,
-                  force_index_refresh=False,
-                  lock_file_remote_path: str = "kg-obo/lock",
-                  log_dir="logs", data_dir="data",
-                  remote_path="kg-obo",
-                  track_file_local_path: str = "data/tracking.yaml",
-                  tracking_file_remote_path: str = "kg-obo/tracking.yaml"
-                  ) -> bool:
+                save_local=False, s3_test=False,
+                no_dl_progress=False,
+                force_index_refresh=False,
+                robot_path: str = "bin/robot",
+                lock_file_remote_path: str = "kg-obo/lock",
+                log_dir="logs", data_dir="data",
+                remote_path="kg-obo",
+                track_file_local_path: str = "data/tracking.yaml",
+                tracking_file_remote_path: str = "kg-obo/tracking.yaml"
+                ) -> bool:
     """
     Perform setup, then kgx-mediated transforms for all specified OBOs.
     :param skip: list of OBOs to skip, by ID
@@ -383,6 +425,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :param save_local: bool for whether to retain transform results on local disk
     :param s3_test: bool for whether to perform mock S3 upload only
     :param no_dl_progress: bool for whether to hide download progress bars
+    :param force_index_refresh: bool for whether to rebuild all index.html on remote
+    :param robot_path: str of path to robot, if different from default (bin/robot) - don't need '.jar' extension
     :param lock_file_remote_path: str of path for lock file on S3
     :param log_dir: str of local dir where any logs should be saved
     :param data_dir: str of local dir where data should be saved
@@ -391,6 +435,17 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     :param tracking_file_remote_path: str of path of tracking file on S3
     :return: boolean indicating success or existing run encountered (False for unresolved error)
     """
+
+    print("Setting up ROBOT...")
+    try:
+        robot_params = initialize_robot(robot_path)
+        robot = robot_params[0]
+        print(f"ROBOT path: {robot}")
+        print(f"ROBOT Java arguments: {robot_params[1]['ROBOT_JAVA_ARGS']}")
+        robot_run = True
+    except ValueError as e:
+        print(f"\t*** Encountered error: {e}. WILL NOT USE ROBOT PROCESSING.")
+        robot_run = False
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -473,6 +528,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     errored_transforms = []
     failed_transforms = []
     all_completed_transforms = []
+    all_base_obo_transforms = []
 
     if len(skip) >0:
       kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
@@ -489,8 +545,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         obo_remote_path = os.path.join(remote_path,ontology_name)
 
         # take base ontology if it exists, otherwise just use non-base
+        obo_is_base = False
         url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
         print(url)
+        if url[-8:] == "base.owl":
+            obo_is_base = True
 
         # Set up local directories
         if not os.path.exists(data_dir):
@@ -534,17 +593,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         print(f"Failed to refresh index for {ontology_name}")
                 continue
 
-            # Check for imports and skip this OBO if they're present
-            # TODO: actually retrieve imports - this is a job for ROBOT
+            # Check for imports, but don't retreive yet
+            need_imports = False
             imports = imports_requested(tfile.name)
             if len(imports) > 0:
                 fimports = ", ".join(imports)
                 kg_obo_logger.info(f"Header for {ontology_name} requests these imports: {fimports}")
-                kg_obo_logger.warning(f"Imports not currently supported. Skipping {ontology_name}.")
                 print(f"Header for {ontology_name} requests these imports: {fimports}")
-                print(f"Imports not currently supported. Skipping {ontology_name}.")
-                failed_transforms.append(ontology_name)
-                continue
+                need_imports = True
 
             # If this version is new, download the whole OBO
             if not os.path.exists(base_obo_path):
@@ -561,19 +617,71 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if not os.path.exists(versioned_obo_path):
                 os.mkdir(versioned_obo_path)
 
+            # Run ROBOT preprocessing here - relax all, then do merge -> convert if needed
+            if robot_run:   # i.e., if ROBOT set up went correctly
+
+                print(f"ROBOT preprocessing: relax {ontology_name}")
+                tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix="_relaxed.owl")
+                relax_owl(robot, tfile.name,tfile_relaxed.name)
+                tfile_relaxed.close()
+
+                before_count = get_file_length(tfile.name)
+                after_count = get_file_length(tfile_relaxed.name)
+                diff = get_file_diff(tfile.name,tfile_relaxed.name)
+                diff_count = len(diff.splitlines())
+                if diff_count >1:
+                    print(f"""Difference after relaxing:\n{diff_count} lines changed
+                         ({before_count} lines before, {after_count} after).""")
+                else:
+                    print(f"{diff} after relaxing.")
+
+                if after_count == 0:
+                    kg_obo_logger.error(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
+                    print(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
+
+                # If we have imports, merge to resolve 
+                # Don't do this every time as it is not necessary
+                if need_imports:
+                    
+                    print(f"ROBOT preprocessing: merge and convert {ontology_name}")
+                    tfile_merged = tempfile.NamedTemporaryFile(delete=False,suffix="_merged.owl")
+                    merge_and_convert_owl(robot,tfile_relaxed.name,tfile_merged.name)
+                    tfile_merged.close()
+
+                    before_count = get_file_length(tfile_relaxed.name)
+                    after_count = get_file_length(tfile_merged.name)
+                    diff = get_file_diff(tfile_relaxed.name,tfile_merged.name)
+                    diff_count = len(diff.splitlines())
+                    if diff_count >1:
+                        print(f"""Difference after merging:\n{diff_count} lines changed
+                            ({before_count} lines before, {after_count} after).""")
+                    else:
+                        print(f"{diff} after merging.")
+
+                    if after_count == 0:
+                        kg_obo_logger.error(f"ROBOT merging of {ontology_name} yielded an empty result!")
+                        print(f"ROBOT merging of {ontology_name} yielded an empty result!")
+
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
             success = True # for all transforms 
             errors = False # for all transforms
             all_success_and_errors = {}
             desired_output_formats = ['tsv', 'json']
+            if need_imports:
+                input_owl = tfile_merged.name
+            else:
+                if robot_run:
+                    input_owl = tfile_relaxed.name
+                else:
+                    input_owl = tfile.name
             for output_format in desired_output_formats:
                 kg_obo_logger.info(f"Transforming to {output_format}...")
                 if output_format == 'tsv':
                     ontology_filename = f"{ontology_name}_kgx_tsv"
                 else:
                     ontology_filename = f"{ontology_name}_kgx"
-                this_success, this_errors, this_output_msg = kgx_transform(input_file=[tfile.name],
+                this_success, this_errors, this_output_msg = kgx_transform(input_file=[input_owl],
                                             input_format='owl',
                                             output_file=os.path.join(versioned_obo_path, ontology_filename),
                                             output_format=output_format,
@@ -611,6 +719,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             else:
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
+
+            if obo_is_base:
+                all_base_obo_transforms.append(ontology_name)
 
             if success:
                 versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
@@ -653,6 +764,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
+
+    if len(all_base_obo_transforms) > 0:
+        kg_obo_logger.info(f"These {len(all_base_obo_transforms)} OBOs are the base versions: {all_base_obo_transforms}")
 
     if len(all_completed_transforms) > 0:
         kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}): "

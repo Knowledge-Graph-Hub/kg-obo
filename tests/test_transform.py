@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
     get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
-    delete_path, imports_requested
+    delete_path, imports_requested, get_file_diff, get_file_length
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -126,9 +126,9 @@ class TestRunTransform(TestCase):
     @mock.patch('kg_obo.transform.get_owl_iri', return_value=('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26'))
     @mock.patch('kgx.cli.transform')
     def test_run_transform(self, mock_kgx_transform, mock_get_owl_iri, mock_base_url,
-                           mock_retrieve_obofoundry_yaml, mock_get):
+                           mock_retrieve_obofoundry_yaml, mock_get): 
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
-        
+
         # Test with s3_test option on
         with tempfile.TemporaryDirectory() as td:
             run_transform(log_dir=td,s3_test=True)
@@ -145,6 +145,13 @@ class TestRunTransform(TestCase):
             self.assertTrue(mock_base_url.called)
             self.assertTrue(mock_get_owl_iri.called)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
+            self.assertTrue(mock_kgx_transform.called)
+
+        # Test if error raised when ROBOT not available
+        # though we also want to continue without it
+        with tempfile.TemporaryDirectory() as td:
+            run_transform(log_dir=td,s3_test=True,robot_path="wrong")
+            self.assertRaises(ValueError)
             self.assertTrue(mock_kgx_transform.called)
 
         # test that we don't run transform if download of ontology fails
@@ -182,6 +189,11 @@ class TestRunTransform(TestCase):
         with tempfile.TemporaryDirectory() as td:
             run_transform(log_dir=td,s3_test=False, force_index_refresh=True)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
+
+        # Test if we need to do full ROBOT relax -> merge -> convert
+        with tempfile.TemporaryDirectory() as td:
+            run_transform(log_dir=td,s3_test=True,get_only=['apollo_sv'])
+            self.assertTrue(mock_kgx_transform.called)
 
     @mock.patch('kgx.cli.transform')
     def test_kgx_transform(self, mock_kgx_transform) -> None:
@@ -245,7 +257,7 @@ class TestRunTransform(TestCase):
     def test_imports_requested(self):
         imports = imports_requested('tests/resources/download_ontology/upheno_SNIPPET.owl')
         self.assertEqual(imports, ["&obo;upheno/metazoa.owl"])
-
+    
     def test_retrieve_obofoundry_yaml_select(self):
         yaml_onto_list_filtered = retrieve_obofoundry_yaml(yaml_url="https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-obo/main/tests/resources/ontologies.yml", skip=[],get_only=[])
         self.assertEqual(yaml_onto_list_filtered, self.parsed_obo_yaml_sample)
@@ -310,3 +322,15 @@ class TestRunTransform(TestCase):
         self.assertTrue(delete_path(data_path, omit=[]))
         data_path = "tests/resources/a_dir_that_definitely_does_not_exist/"
         self.assertFalse(delete_path(data_path, omit=[]))
+
+    def test_get_file_diff(self):
+        diff = get_file_diff('tests/resources/download_ontology/go_SNIPPET.owl',
+                            'tests/resources/download_ontology/go_SNIPPET.owl')
+        self.assertEqual("No difference", diff)
+        diff = get_file_diff('tests/resources/download_ontology/go_SNIPPET.owl',
+                            'tests/resources/download_ontology/aro_SNIPPET.owl')
+        self.assertNotEqual("No difference", diff)
+
+    def test_get_file_length(self):
+        count = get_file_length('tests/resources/download_ontology/go_SNIPPET.owl')
+        self.assertEqual(24, count)
