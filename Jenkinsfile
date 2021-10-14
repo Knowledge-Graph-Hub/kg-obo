@@ -64,8 +64,8 @@ pipeline {
                     sh './venv/bin/pip install .'
                 }
                 dir('./') {
-                    sh 'curl -L https://github.com/ontodev/robot/releases/download/v1.8.1/robot.jar > robot.jar'
-                    sh 'curl https://raw.githubusercontent.com/ontodev/robot/master/bin/robot > robot'
+                    sh 'curl -L https://github.com/ontodev/robot/releases/download/v1.8.1/robot.jar > /usr/local/bin/robot.jar'
+                    sh 'curl https://raw.githubusercontent.com/ontodev/robot/master/bin/robot > /usr/local/bin/robot'
                 }
             }
         }
@@ -81,9 +81,9 @@ pipeline {
                             script {
                                 if (env.BRANCH_NAME != 'main') {
                                     echo "Transforming with --s3_test since we aren't on main/master branch"
-                                    sh '. venv/bin/activate && env && python3.8 run.py --s3_test --bucket fake_bucket --no_dl_progress --force_index_refresh --robot_path ./robot'
+                                    sh '. venv/bin/activate && env && python3.8 run.py --s3_test --bucket fake_bucket --no_dl_progress --force_index_refresh --robot_path /usr/local/bin/robot'
                                 } else {
-                                    sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data --no_dl_progress --force_index_refresh --robot_path ./robot'
+                                    sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data --no_dl_progress --force_index_refresh --robot_path /usr/local/bin/robot'
                                 }
                             }
                     }
