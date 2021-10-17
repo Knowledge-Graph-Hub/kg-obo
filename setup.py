@@ -69,7 +69,8 @@ setup(
         'click',
         'moto[s3]',
         'sphinx_rtd_theme',
-        'recommonmark'
+        'recommonmark',
+        'sh'
     ],
     extras_require=extras,
 )

@@ -2,12 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import os
-import \
-    subprocess  # Source: https://docs.python.org/2/library/subprocess.html#popen-constructor
+from sh import robot
 
-# H/T Harshad Hegde - this code is lifted from kg-microbe:
-# https://github.com/Knowledge-Graph-Hub/kg-microbe
-
+# Note that sh module can take environment variables, see
+# https://amoffat.github.io/sh/sections/special_arguments.html#env
 
 def initialize_robot(path: str) -> list:
     """
@@ -33,7 +31,8 @@ def initialize_robot(path: str) -> list:
 
 def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
     """
-    This method runs the ROBOT relax command using the subprocess library
+    This method runs the ROBOT relax command on a single OBO.
+    Has a three-hour timeout limit - process is killed if it takes this long.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be relaxed
     :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
@@ -42,28 +41,27 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
 
     robot_file, env = initialize_robot(robot_path)
 
-    call = ['bash', robot_path, 'relax',
+    robot('relax',
             '--input', input_owl, 
-            '--output', output_owl, 
-            ]
-
-    subprocess.call(call, env=env)
-
+            '--output', output_owl,
+            _timeout=10800 
+    )
 
 def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
     """
-    This method runs a merge and convert ROBOT command using the subprocess library
-    :param path: Path to ROBOT files
-    :param ont: Ontology
+    This method runs a merge and convert ROBOT command on a single OBO.
+    Has a three-hour timeout limit - process is killed if it takes this long.
+    :param robot_path: Path to ROBOT files
+    :param input_owl: Ontology file to be relaxed
+    :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
     :return: None
     """
 
     robot_file, env = initialize_robot(robot_path)
 
-    call = ['bash', robot_path, 'merge',
+    robot('merge',
             '--input', input_owl,
             'convert', 
-            '--output', output_owl, 
-            ]
-
-    subprocess.call(call, env=env)
+            '--output', output_owl,
+            _timeout=10800 
+    )
