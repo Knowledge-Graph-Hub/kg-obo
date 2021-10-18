@@ -1,6 +1,5 @@
 import os
 import re
-from sh import curl
 from codecs import open as copen  # to use a consistent encoding
 from setuptools import find_packages, setup
 
@@ -27,6 +26,9 @@ def _setup_robot():
     """
     Downloads ROBOT jar and run script.
     """
+
+    from sh import curl
+
     robotjar_paths = {"local":"robot.jar",
                     "remote":"https://github.com/ontodev/robot/releases/download/v1.8.1/robot.jar"}
     robot_paths = {"local":"robot",
