@@ -2,8 +2,7 @@ import os
 import re
 from codecs import open as copen  # to use a consistent encoding
 from setuptools import find_packages, setup
-
-import setup_robot
+from post_setup import main as _post_setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -76,4 +75,4 @@ setup(
     extras_require=extras,
 )
 
-setup_robot.setup_robot()
+_post_setup()
