@@ -3,6 +3,8 @@ import re
 from codecs import open as copen  # to use a consistent encoding
 from setuptools import find_packages, setup
 
+import setup_robot
+
 here = os.path.abspath(os.path.dirname(__file__))
 
 # get the long description from the relevant file
@@ -21,27 +23,6 @@ def find_version(*file_paths):
     if version_match:
         return version_match.group(1)
     raise RuntimeError('Unable to find version string.')
-
-def _setup_robot():
-    """
-    Downloads ROBOT jar and run script.
-    """
-
-    from sh import curl
-
-    robotjar_paths = {"local":"robot.jar",
-                    "remote":"https://github.com/ontodev/robot/releases/download/v1.8.1/robot.jar"}
-    robot_paths = {"local":"robot",
-                    "remote":"https://raw.githubusercontent.com/ontodev/robot/master/bin/robot"}
-    # Check if they already exist
-    for filepath in [robotjar_paths, robot_paths]:
-        localfile = filepath["local"]
-        remotefile = filepath["remote"]
-        if os.path.isfile(localfile):
-            print(f"Found file: {localfile}")
-        else:
-            print(f"Did not find {localfile}. Downloading from {remotefile}...")
-            curl(remotefile, _out=localfile)
 
 __version__ = find_version('kg_obo', '__version__.py')
 
@@ -95,4 +76,4 @@ setup(
     extras_require=extras,
 )
 
-_setup_robot()
+setup_robot.setup_robot()
