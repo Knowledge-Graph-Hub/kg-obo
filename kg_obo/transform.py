@@ -14,6 +14,7 @@ import logging
 import mmap
 import re
 import sys
+import hashlib
 
 import difflib
 
@@ -186,11 +187,20 @@ def get_owl_iri(input_file_name: str) -> tuple:
     date_dc_tag = b'dc:date xml:lang=\"en\">([^\<]+)'
     version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
     short_version_info_tag = b'<owl:versionInfo>([^\<]+)'
-    internal_version_info_tag = 'version%20([\d|\.]*)'
 
     #The default IRI/version - only used if values aren't provided.
-    iri = "release"
-    version = "release"
+    iri = "no_iri"
+    version = "no_version"
+
+    # TODO: make replace its own function
+    # TODO: fix parsing of pr version (it's not matching the iri_search pattern)
+    # TODO: update and write new tests for edge cases
+    # TODO: change default name
+
+    # Illegal characters should not be in links or filenames
+    illegal_characters = ["&", "$", "@", "=", ";", ":", "+", ",", "?",
+                            "{", "}", "%", "`", "[", "]", "~", "<", ">",
+                            "#", "|", "(", ")"]
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
@@ -205,11 +215,14 @@ def get_owl_iri(input_file_name: str) -> tuple:
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
                 try:
-                    raw_version = (iri.split("/"))[-2]
-                    if raw_version == "fao":
-                        version = quote((iri.split("/"))[-3])
+                    version = (iri.split("/"))[-2]
+                    if version == "fao":
+                        version = (iri.split("/"))[-3]
+                    if version == "swo.owl":
+                        version = (iri.split("/"))[-1]
                     else:
-                        version = quote(raw_version)
+                        for character in illegal_characters:
+                            version = version.replace(character, "_")
                 except IndexError:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
@@ -220,22 +233,20 @@ def get_owl_iri(input_file_name: str) -> tuple:
             # If we didn't get a version out of the IRI, look elsewhere
             for search_type in [date_search, date_dc_search, 
                                 version_info_search, short_version_info_search]:
-                if search_type and version == "release":
-                    version_info = (search_type.group(1)).decode("utf-8")
-                    version = quote(version_info)
-            if version == "release":
+                if search_type and version == "no_version":
+                    version = (search_type.group(1)).decode("utf-8")
+                    for character in illegal_characters:
+                        version = version.replace(character, "_")
+            if version == "no_version":
                 print("Neither versioned IRI or release date found.")
+
+            if len(version) >100: # Some versions are just free text, so instead of parsing we convert to md5
+                version = (hashlib.md5(version.encode())).hexdigest()
+
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
 
-    if len(version) >255: # Some versions are just free text, so we need to cut it back
-        # First try to find pattern matching "version x" (?:version )
-        internal_version_info_search = re.search(internal_version_info_tag, version.lower())  # type: ignore
-        if internal_version_info_search:
-            version = (internal_version_info_search.group(1))
-        # Failing pattern match, just trim
-        else:
-            version = version[0:50]
+
 
     return (iri, version)
 
