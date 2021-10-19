@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.w3.org/2002/07/owl#"
+     xml:base="http://www.w3.org/2002/07/owl"
+     xmlns:obo="http://data.bioontology.org/metadata/obo/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:obo1="http://purl.obolibrary.org/obo/"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+     xmlns:metadata="http://data.bioontology.org/metadata/"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+    <Ontology rdf:about="http://purl.obolibrary.org/obo/tads.owl">
+        <versionIRI rdf:resource="http://purl.obolibrary.org/obo/tads/2015-08-20/tads.owl"/>
+        <oboInOwl:auto-generated-by rdf:datatype="http://www.w3.org/2001/XMLSchema#string">OBO-Edit 2.1</oboInOwl:auto-generated-by>
+        <oboInOwl:date rdf:datatype="http://www.w3.org/2001/XMLSchema#string">13:03:2012 15:35</oboInOwl:date>
+        <oboInOwl:default-namespace rdf:datatype="http://www.w3.org/2001/XMLSchema#string">default_namespace</oboInOwl:default-namespace>
+        <oboInOwl:hasOBOFormatVersion rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.2</oboInOwl:hasOBOFormatVersion>
+        <oboInOwl:saved-by rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Topito</oboInOwl:saved-by>
+    </Ontology>

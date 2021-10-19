@@ -63,10 +63,6 @@ pipeline {
                     sh '. venv/bin/activate'
                     sh './venv/bin/pip install .'
                 }
-                dir('./') {
-                    sh 'curl -L https://github.com/ontodev/robot/releases/download/v1.8.1/robot.jar > /var/lib/jenkins/workspace/knowledge-graph-hub_kg-obo_main/gitrepo/venv/bin/robot.jar'
-                    sh 'curl https://raw.githubusercontent.com/ontodev/robot/master/bin/robot > /var/lib/jenkins/workspace/knowledge-graph-hub_kg-obo_main/gitrepo/venv/bin/robot'
-                }
             }
         }
 
@@ -81,9 +77,9 @@ pipeline {
                             script {
                                 if (env.BRANCH_NAME != 'main') {
                                     echo "Transforming with --s3_test since we aren't on main/master branch"
-                                    sh '. venv/bin/activate && env && python3.8 run.py --s3_test --bucket fake_bucket --no_dl_progress --force_index_refresh --robot_path /var/lib/jenkins/workspace/knowledge-graph-hub_kg-obo_main/gitrepo/venv/bin/robot'
+                                    sh '. venv/bin/activate && env && python3.8 run.py --s3_test --bucket fake_bucket --no_dl_progress --force_index_refresh --robot_path robot'
                                 } else {
-                                    sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data --no_dl_progress --force_index_refresh --robot_path /var/lib/jenkins/workspace/knowledge-graph-hub_kg-obo_main/gitrepo/venv/bin/robot'
+                                    sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data --no_dl_progress --force_index_refresh --robot_path robot'
                                 }
                             }
                     }

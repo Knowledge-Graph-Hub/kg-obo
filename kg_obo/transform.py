@@ -14,6 +14,7 @@ import logging
 import mmap
 import re
 import sys
+import hashlib
 
 import difflib
 
@@ -24,7 +25,6 @@ import kg_obo.obolibrary_utils
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, relax_owl, merge_and_convert_owl
 from urllib.parse import quote
-
 
 def delete_path(root_dir: str, omit: list = []) -> bool:
     """ Deletes a path recursively, i.e., everything in
@@ -162,6 +162,24 @@ def kgx_transform(input_file: list, input_format: str,
 
     return (success, errors, output_msg)
 
+def replace_illegal_chars(input_string: str, replace_char: str) -> str:
+    """
+    Given a string, replaces characters likely to cause problems in S3
+    bucket key names with a replacement character.
+    :param input_string: string to perform replacement on
+    :param replace_char: string to replace characters with
+    :return: string with replaced characters
+    """
+    # Illegal characters should not be in links or filenames
+    illegal_characters = ["&", "$", "@", "=", ";", ":", "+", ",", "?",
+                            "{", "}", "%", "`", "[", "]", "~", "<", ">",
+                            "#", "|", "(", ")", " "]
+
+    for character in illegal_characters:
+        input_string = input_string.replace(character, replace_char)
+
+    return input_string
+    
 def get_owl_iri(input_file_name: str) -> tuple:
     """
     Extracts version IRI from OWL definitions.
@@ -183,60 +201,73 @@ def get_owl_iri(input_file_name: str) -> tuple:
     # Most IRIs take this format - there are some exceptions
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     iri_about_tag = b'owl:Ontology rdf:about=\"(.*)\"'
-    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
-    date_dc_tag = b'dc:date xml:lang=\"en\">([^\<]+)'
-    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
-    short_version_info_tag = b'<owl:versionInfo>([^\<]+)'
-    internal_version_info_tag = 'version%20([\d|\.]*)'
-
+    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^<]+)'
+    date_dc_tag = b'dc:date xml:lang=\"en\">([^<]+)'
+    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^<]+)'
+    short_version_info_tag = b'owl:versionInfo>([^<]+)'
+    version_iri_only_tag = b'versionIRI rdf:resource=\"(.*)\"'
     #The default IRI/version - only used if values aren't provided.
-    iri = "release"
-    version = "release"
+    iri = "no_iri"
+    version = "no_version"
+
+    # TODO: update and write new tests for edge cases
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
             iri_search = re.search(iri_tag, owl_string)  # type: ignore
             iri_about_tag_search = re.search(iri_about_tag, owl_string) # type: ignore
-            date_search = re.search(date_tag, owl_string)  # type: ignore
-            date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
-            version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
-            short_version_info_search = re.search(short_version_info_tag, owl_string)  # type: ignore
+            version_iri_only_search = re.search(version_iri_only_tag, owl_string) # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
-                try:
-                    raw_version = (iri.split("/"))[-2]
-                    if raw_version == "fao":
-                        version = quote((iri.split("/"))[-3])
-                    else:
-                        version = quote(raw_version)
+                try: #We handle some edge cases here
+                    version = (iri.split("/"))[-2]
+                    if version == "fao":
+                        version = (iri.split("/"))[-3]
+                    if version == "swo.owl":
+                        version = (iri.split("/"))[-1]
                 except IndexError:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
                 iri = (iri_about_tag_search.group(1)).decode("utf-8")
+                if (iri.split("/"))[-1] in ["oae.owl", "opmi.owl"]: # More edge cases
+                        version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
+                        version_search = re.search(version_tag, owl_string)  # type: ignore
+                        version = (version_search.group(1)).decode("utf-8")
+                elif (iri.split("/"))[-1] in ["cheminf.owl"]:
+                        version_tag = b'owl:versionInfo rdf:datatype=\"&xsd;string\">([^<]+)'
+                        version_search = re.search(version_tag, owl_string)  # type: ignore
+                        version = (version_search.group(1)).decode("utf-8")
+            elif version_iri_only_search:
+                iri = (version_iri_only_search.group(1)).decode("utf-8")
+                try: #We handle some edge cases here
+                    version = (iri.split("/"))[-2]
+                except IndexError:
+                    pass
             else:
                 print("Version IRI not found.")
             
             # If we didn't get a version out of the IRI, look elsewhere
-            for search_type in [date_search, date_dc_search, 
-                                version_info_search, short_version_info_search]:
-                if search_type and version == "release":
-                    version_info = (search_type.group(1)).decode("utf-8")
-                    version = quote(version_info)
-            if version == "release":
-                print("Neither versioned IRI or release date found.")
+            if version == "no_version":
+                date_search = re.search(date_tag, owl_string)  # type: ignore
+                date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
+                version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
+                short_version_info_search = re.search(short_version_info_tag, owl_string)  # type: ignore
+                for search_type in [date_search, date_dc_search, 
+                                    version_info_search, short_version_info_search]:
+                    if search_type and version == "no_version":
+                        version = (search_type.group(1)).decode("utf-8")
+                if version == "no_version":
+                    print("Neither versioned IRI or release date found.")
+
+                if len(version) >100: # Some versions are just free text, so instead of parsing we hash
+                    version = (hashlib.sha256(version.encode())).hexdigest()
+
+            version = replace_illegal_chars(version, "_")
+
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
-
-    if len(version) >255: # Some versions are just free text, so we need to cut it back
-        # First try to find pattern matching "version x" (?:version )
-        internal_version_info_search = re.search(internal_version_info_tag, version.lower())  # type: ignore
-        if internal_version_info_search:
-            version = (internal_version_info_search.group(1))
-        # Failing pattern match, just trim
-        else:
-            version = version[0:50]
 
     return (iri, version)
 
@@ -332,7 +363,7 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool,
     try:
         req = requests.get(url, stream=True)
         file_size = int(req.headers['Content-Length'])
-        chunk_size = 2048
+        chunk_size = 4096
         with open(file, 'wb') as outfile:
             if not no_dl_progress:
                 if not header_only:
@@ -420,7 +451,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 save_local=False, s3_test=False,
                 no_dl_progress=False,
                 force_index_refresh=False,
-                robot_path: str = "bin/robot",
+                robot_path: str = "robot",
                 lock_file_remote_path: str = "kg-obo/lock",
                 log_dir="logs", data_dir="data",
                 remote_path="kg-obo",
@@ -447,14 +478,14 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     """
 
     print("Setting up ROBOT...")
-    try:
-        robot_params = initialize_robot(robot_path)
-        robot = robot_params[0]
-        print(f"ROBOT path: {robot}")
-        print(f"ROBOT Java arguments: {robot_params[1]['ROBOT_JAVA_ARGS']}")
-        robot_run = True
-    except ValueError as e:
-        print(f"\t*** Encountered error: {e}. WILL NOT USE ROBOT PROCESSING.")
+    if not robot_path:
+        robot_path = os.path.join(os.getcwd(),"robot")
+    robot_params = initialize_robot(robot_path)
+    print(f"ROBOT path: {robot_path}")
+    robot_run = True
+    
+    if not robot_params[0]: #i.e., if we couldn't find ROBOT 
+        print(f"\t*** Could not locate ROBOT - ensure it is available and executable. WILL NOT USE ROBOT PROCESSING.")
         robot_run = False
 
     # Set up logging
@@ -632,7 +663,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
                 print(f"ROBOT preprocessing: relax {ontology_name}")
                 tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix="_relaxed.owl")
-                relax_owl(robot, tfile.name,tfile_relaxed.name)
+                relax_owl(robot_path, tfile.name,tfile_relaxed.name)
                 tfile_relaxed.close()
 
                 before_count = get_file_length(tfile.name)
@@ -648,6 +679,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 if after_count == 0:
                     kg_obo_logger.error(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
                     print(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
+                    continue #Need to skip this one or we will upload empty results
 
                 # If we have imports, merge to resolve 
                 # Don't do this every time as it is not necessary
@@ -655,7 +687,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     
                     print(f"ROBOT preprocessing: merge and convert {ontology_name}")
                     tfile_merged = tempfile.NamedTemporaryFile(delete=False,suffix="_merged.owl")
-                    merge_and_convert_owl(robot,tfile_relaxed.name,tfile_merged.name)
+                    merge_and_convert_owl(robot_path,tfile_relaxed.name,tfile_merged.name)
                     tfile_merged.close()
 
                     before_count = get_file_length(tfile_relaxed.name)
@@ -671,6 +703,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     if after_count == 0:
                         kg_obo_logger.error(f"ROBOT merging of {ontology_name} yielded an empty result!")
                         print(f"ROBOT merging of {ontology_name} yielded an empty result!")
+                        continue #Need to skip this one or we will upload empty results
 
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats

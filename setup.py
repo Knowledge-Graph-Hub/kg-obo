@@ -3,6 +3,8 @@ import re
 from codecs import open as copen  # to use a consistent encoding
 from setuptools import find_packages, setup
 
+from post_setup.post_setup import robot_setup
+
 here = os.path.abspath(os.path.dirname(__file__))
 
 # get the long description from the relevant file
@@ -21,7 +23,6 @@ def find_version(*file_paths):
     if version_match:
         return version_match.group(1)
     raise RuntimeError('Unable to find version string.')
-
 
 __version__ = find_version('kg_obo', '__version__.py')
 
@@ -69,7 +70,10 @@ setup(
         'click',
         'moto[s3]',
         'sphinx_rtd_theme',
-        'recommonmark'
+        'recommonmark',
+        'sh'
     ],
     extras_require=extras,
 )
+
+robot_setup()

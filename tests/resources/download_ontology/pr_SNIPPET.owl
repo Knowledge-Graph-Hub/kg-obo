@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://purl.obolibrary.org/obo/pr.owl#"
+     xml:base="http://purl.obolibrary.org/obo/pr.owl"
+     xmlns:pr="http://purl.obolibrary.org/obo/pr#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:terms="http://purl.org/dc/terms/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:obo="http://purl.obolibrary.org/obo/">
+    <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/pr.owl">
+        <oboInOwl:hasOBOFormatVersion rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.2</oboInOwl:hasOBOFormatVersion>
+        <oboInOwl:date rdf:datatype="http://www.w3.org/2001/XMLSchema#string">10:05:2021 12:03</oboInOwl:date>
+        <oboInOwl:auto-generated-by rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PRO dB</oboInOwl:auto-generated-by>
+        <terms:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PRotein Ontology</terms:title>
+        <terms:description rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The PRotein Ontology (PRO) formally defines taxon-specific and taxon-neutral protein-related entities in three major areas: proteins related by evolution; proteins produced from a given gene; and protein-containing complexes.</terms:description>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The PRotein Ontology is licensed under CC BY 4.0. Please see http://obofoundry.org/ontology/pr for details.</rdfs:comment>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Use reasoner in Protege to see the correct hierarchy.</rdfs:comment>
+        <oboInOwl:saved-by rdf:datatype="http://www.w3.org/2001/XMLSchema#string">jcowart</oboInOwl:saved-by>
+        <oboInOwl:default-namespace rdf:datatype="http://www.w3.org/2001/XMLSchema#string">protein</oboInOwl:default-namespace>
+        <terms:license rdf:resource="http://creativecommons.org/licenses/by/4.0/"/>
+        <obo:IAO_0000700 rdf:resource="http://purl.obolibrary.org/obo/PR_000000001"/>
+        <obo:IAO_0000700 rdf:resource="http://purl.obolibrary.org/obo/PR_000050098"/>
+        <owl:versionIRI rdf:resource="http://purl.obolibrary.org/obo/pr/63.0/pr.owl"/>
+    </owl:Ontology>

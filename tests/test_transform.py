@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
     get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
-    delete_path, imports_requested, get_file_diff, get_file_length
+    delete_path, imports_requested, get_file_diff, get_file_length, replace_illegal_chars
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -244,7 +244,7 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_for_aro(self):
         iri = get_owl_iri('tests/resources/download_ontology/aro_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', quote('05:07:2021 15:21')), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', ('05_07_2021_15_21')), iri)
 
     def test_get_owl_iri_for_go(self):
         iri = get_owl_iri('tests/resources/download_ontology/go_SNIPPET.owl')
@@ -252,11 +252,35 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_for_micro(self):
         iri = get_owl_iri('tests/resources/download_ontology/micro_SNIPPET.owl')
-        self.assertEqual(('&obo;MicrO.owl', '1.5.1'), iri)
+        self.assertEqual(('&obo;MicrO.owl', '20ca3a0f90793de0c0f9b2ecbd186456e1393cdd0547b46f8eb2d466c6fa080a'), iri)
+
+    def test_get_owl_iri_for_swo(self):
+        iri = get_owl_iri('tests/resources/download_ontology/swo_SNIPPET.owl')
+        self.assertEqual(('http://www.ebi.ac.uk/swo/swo.owl/1.7', '1.7'), iri)
+    
+    def test_get_owl_iri_for_pr(self):
+        iri = get_owl_iri('tests/resources/download_ontology/pr_SNIPPET.owl')
+        self.assertEqual(('http://purl.obolibrary.org/obo/pr/63.0/pr.owl', '63.0'), iri)
+
+    def test_get_owl_iri_for_oae(self):
+        iri = get_owl_iri('tests/resources/download_ontology/oae_SNIPPET.owl')
+        self.assertEqual(('http://purl.obolibrary.org/obo/oae.owl', '1.2.44'), iri)
+
+    def test_get_owl_iri_for_opmi(self):
+        iri = get_owl_iri('tests/resources/download_ontology/opmi_SNIPPET.owl')
+        self.assertEqual(('http://purl.obolibrary.org/obo/opmi.owl', 'Vision_Release__1.0.130'), iri)
+
+    def test_get_owl_iri_for_cheminf(self):
+        iri = get_owl_iri('tests/resources/download_ontology/cheminf_SNIPPET.owl')
+        self.assertEqual(('http://semanticchemistry.github.io/semanticchemistry/ontology/cheminf.owl', '2.0'), iri)
+
+    def test_get_owl_iri_for_tads(self):
+        iri = get_owl_iri('tests/resources/download_ontology/tads_SNIPPET.owl')
+        self.assertEqual(('http://purl.obolibrary.org/obo/tads/2015-08-20/tads.owl', '2015-08-20'), iri)
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
-        self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "release"), iri)
+        self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "no_version"), iri)
 
     def test_imports_requested(self):
         imports = imports_requested('tests/resources/download_ontology/upheno_SNIPPET.owl')
@@ -338,3 +362,8 @@ class TestRunTransform(TestCase):
     def test_get_file_length(self):
         count = get_file_length('tests/resources/download_ontology/go_SNIPPET.owl')
         self.assertEqual(24, count)
+
+    def test_replace_illegal_chars(self):
+        input = "A%(B)??C#D"
+        output = replace_illegal_chars(input,"")
+        self.assertEqual(output, "ABCD")

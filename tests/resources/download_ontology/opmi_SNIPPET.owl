@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://purl.obolibrary.org/obo/opmi.owl#"
+     xml:base="http://purl.obolibrary.org/obo/opmi.owl"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:obo="http://purl.obolibrary.org/obo/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:core="http://purl.obolibrary.org/obo/core#"
+     xmlns:foaf="http://xmlns.com/foaf/0.1/"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+     xmlns:chebi="http://purl.obolibrary.org/obo/chebi/"
+     xmlns:rdfs1="rdfs:"
+     xmlns:terms="http://purl.org/dc/terms/"
+     xmlns:uberon="http://purl.obolibrary.org/obo/uberon#"
+     xmlns:protege="http://protege.stanford.edu/plugins/owl/protege#"
+     xmlns:taxslim="http://purl.obolibrary.org/obo/ncbitaxon/subsets/taxslim#"
+     xmlns:oboInOWL="http://www.geneontology.org/formats/oboInOWL#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#"
+     xmlns:ncbitaxon="http://purl.obolibrary.org/obo/ncbitaxon#">
+    <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/opmi.owl">
+        <dc:contributor xml:lang="en">Becky Steck</dc:contributor>
+        <dc:contributor xml:lang="en">Christopher Park</dc:contributor>
+        <dc:contributor xml:lang="en">John F. O’Toole</dc:contributor>
+        <dc:contributor>Matthias Kretzler</dc:contributor>
+        <dc:contributor xml:lang="en">Sean Mooney</dc:contributor>
+        <dc:creator xml:lang="en">Anthony Huffman</dc:creator>
+        <dc:creator>Asiyah Yu Lin</dc:creator>
+        <dc:creator xml:lang="en">Fred Dowd</dc:creator>
+        <dc:creator xml:lang="en">Hong Yu</dc:creator>
+        <dc:creator xml:lang="en">Jennifer Schaub</dc:creator>
+        <dc:creator xml:lang="en">Jie Zheng</dc:creator>
+        <dc:creator>Qingliang Leon Li</dc:creator>
+        <dc:creator xml:lang="en">Yongqun &quot;Oliver&quot; He (YH)</dc:creator>
+        <dc:date>5-29-2021</dc:date>
+        <dc:description xml:lang="en">OPMI is a biomedical ontology in the area of precision medicine and its related investigations. It is community-driven and developed by following the OBO Foundry ontology development principles.</dc:description>
+        <dc:format xml:lang="en">OWL-DL</dc:format>
+        <dc:subject xml:lang="en">OPMI subject: Precision medicine and related investigations</dc:subject>
+        <dc:title xml:lang="en">OPMI: Ontology of Precision Medicine and Investigation</dc:title>
+        <terms:license xml:lang="en">http://creativecommons.org/licenses/by/4.0/</terms:license>
+        <owl:versionInfo xml:lang="en">Vision Release: 1.0.130</owl:versionInfo>
+    </owl:Ontology>
