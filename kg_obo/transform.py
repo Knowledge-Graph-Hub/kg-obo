@@ -261,8 +261,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 if version == "no_version":
                     print("Neither versioned IRI or release date found.")
 
-                if len(version) >100: # Some versions are just free text, so instead of parsing we convert to md5
-                    version = (hashlib.md5(version.encode())).hexdigest()
+                if len(version) >100: # Some versions are just free text, so instead of parsing we hash
+                    version = (hashlib.sha256(version.encode())).hexdigest()
 
             version = replace_illegal_chars(version, "_")
 

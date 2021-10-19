@@ -252,7 +252,7 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_for_micro(self):
         iri = get_owl_iri('tests/resources/download_ontology/micro_SNIPPET.owl')
-        self.assertEqual(('&obo;MicrO.owl', 'ab87caa7f322cdca5a6d43ae80caf2a7'), iri)
+        self.assertEqual(('&obo;MicrO.owl', '20ca3a0f90793de0c0f9b2ecbd186456e1393cdd0547b46f8eb2d466c6fa080a'), iri)
 
     def test_get_owl_iri_for_swo(self):
         iri = get_owl_iri('tests/resources/download_ontology/swo_SNIPPET.owl')
