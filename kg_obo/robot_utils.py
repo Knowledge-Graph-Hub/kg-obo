@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sh
-from sh import chmod
+import sh # type: ignore
+from sh import chmod # type: ignore
 
 # Note that sh module can take environment variables, see
 # https://amoffat.github.io/sh/sections/special_arguments.html#env
