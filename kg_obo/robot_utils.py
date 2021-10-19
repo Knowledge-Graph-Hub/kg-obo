@@ -2,21 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import os
-from sh import robot
+import sh
+from sh import chmod
 
 # Note that sh module can take environment variables, see
 # https://amoffat.github.io/sh/sections/special_arguments.html#env
 
-def initialize_robot(path: str) -> list:
+def initialize_robot(robot_path: str) -> list:
     """
     This initializes ROBOT with necessary configuration.
+    During install, ROBOT is downloaded to the same directory as kg-obo,
+    and the path variable used here is only necessary if it varies from
+    the kg-obo location.
     :param path: Path to ROBOT files.
-    :return: A list consisting of robot shell script name and environment variables.
+    :return: A list consisting an instance of Command and dict of all environment variables.
     """
-    # Declare variables
-    robot_file = path
-    if os.path.basename(path) != "robot":
-        raise ValueError("Path does not appear to include ROBOT.")
+
+    # Make sure it's executable
+    chmod("+x","robot")
 
     # Declare environment variables
     env = dict(os.environ)
@@ -24,9 +27,11 @@ def initialize_robot(path: str) -> list:
     # env['ROBOT_JAVA_ARGS'] = '-Xmx8g -XX:+UseConcMarkSweepGC' # for JDK 9 and older
     env['ROBOT_JAVA_ARGS'] = '-Xmx12g -XX:+UseG1GC'  # For JDK 10 and over
     env['PATH'] = os.environ['PATH']
-    env['PATH'] += os.pathsep + path
+    env['PATH'] += os.pathsep + robot_path
 
-    return [robot_file, env]
+    robot_command = sh.Command(robot_path)
+
+    return [robot_command, env]
 
 
 def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
@@ -39,9 +44,9 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
     :return: None
     """
 
-    robot_file, env = initialize_robot(robot_path)
+    robot_command = sh.Command(robot_path)
 
-    robot('relax',
+    robot_command('relax',
             '--input', input_owl, 
             '--output', output_owl,
             _timeout=10800 
@@ -57,9 +62,9 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str) -> N
     :return: None
     """
 
-    robot_file, env = initialize_robot(robot_path)
+    robot_command = sh.Command(robot_path)
 
-    robot('merge',
+    robot_command('merge',
             '--input', input_owl,
             'convert', 
             '--output', output_owl,

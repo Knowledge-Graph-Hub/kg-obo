@@ -7,9 +7,7 @@ to KGX TSV, with intermediate JSON.
 """
 
 import click  #type: ignore
-import os
 import sys
-from pathlib import Path
 from kg_obo.transform import run_transform
 import kg_obo.upload
 
@@ -40,10 +38,8 @@ import kg_obo.upload
                is_flag=True,
                help="If used, rebuilds root index.html before beginning any transforms.")
 @click.option("--robot_path",
-               required=True,
                nargs=1,
-               help="""The path to robot.jar.
-                     Defaults to /bin/robot.jar, but will depend upon your installation.""")
+               help="""The path to robot.jar. Use only if other than kg-obo directory.""")
 def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index_refresh, robot_path):
     lock_file_remote_path = "kg-obo/lock"
     try:

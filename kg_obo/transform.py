@@ -25,7 +25,6 @@ import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, relax_owl, merge_and_convert_owl
 from urllib.parse import quote
 
-
 def delete_path(root_dir: str, omit: list = []) -> bool:
     """ Deletes a path recursively, i.e., everything in
     the provided directory and all its subdirectories.
@@ -420,7 +419,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 save_local=False, s3_test=False,
                 no_dl_progress=False,
                 force_index_refresh=False,
-                robot_path: str = "bin/robot",
+                robot_path: str = "robot",
                 lock_file_remote_path: str = "kg-obo/lock",
                 log_dir="logs", data_dir="data",
                 remote_path="kg-obo",
@@ -447,11 +446,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     """
 
     print("Setting up ROBOT...")
+    if not robot_path:
+        robot_path = os.path.join(os.getcwd(),"robot")
     try:
         robot_params = initialize_robot(robot_path)
-        robot = robot_params[0]
-        print(f"ROBOT path: {robot}")
-        print(f"ROBOT Java arguments: {robot_params[1]['ROBOT_JAVA_ARGS']}")
+        print(f"ROBOT path: {robot_path}")
         robot_run = True
     except ValueError as e:
         print(f"\t*** Encountered error: {e}. WILL NOT USE ROBOT PROCESSING.")
@@ -632,7 +631,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
                 print(f"ROBOT preprocessing: relax {ontology_name}")
                 tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix="_relaxed.owl")
-                relax_owl(robot, tfile.name,tfile_relaxed.name)
+                relax_owl(robot_path, tfile.name,tfile_relaxed.name)
                 tfile_relaxed.close()
 
                 before_count = get_file_length(tfile.name)
@@ -655,7 +654,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     
                     print(f"ROBOT preprocessing: merge and convert {ontology_name}")
                     tfile_merged = tempfile.NamedTemporaryFile(delete=False,suffix="_merged.owl")
-                    merge_and_convert_owl(robot,tfile_relaxed.name,tfile_merged.name)
+                    merge_and_convert_owl(robot_path,tfile_relaxed.name,tfile_merged.name)
                     tfile_merged.close()
 
                     before_count = get_file_length(tfile_relaxed.name)
