@@ -162,6 +162,24 @@ def kgx_transform(input_file: list, input_format: str,
 
     return (success, errors, output_msg)
 
+def replace_illegal_chars(input_string: str, replace_char: str) -> str:
+    """
+    Given a string, replaces characters likely to cause problems in S3
+    bucket key names with a replacement character.
+    :param input_string: string to perform replacement on
+    :param replace_char: string to replace characters with
+    :return: string with replaced characters
+    """
+    # Illegal characters should not be in links or filenames
+    illegal_characters = ["&", "$", "@", "=", ";", ":", "+", ",", "?",
+                            "{", "}", "%", "`", "[", "]", "~", "<", ">",
+                            "#", "|", "(", ")"]
+
+    for character in illegal_characters:
+        input_string = input_string.replace(character, replace_char)
+
+    return input_string
+    
 def get_owl_iri(input_file_name: str) -> tuple:
     """
     Extracts version IRI from OWL definitions.
@@ -192,15 +210,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
     iri = "no_iri"
     version = "no_version"
 
-    # TODO: make replace its own function
     # TODO: fix parsing of pr version (it's not matching the iri_search pattern)
     # TODO: update and write new tests for edge cases
-    # TODO: change default name
-
-    # Illegal characters should not be in links or filenames
-    illegal_characters = ["&", "$", "@", "=", ";", ":", "+", ",", "?",
-                            "{", "}", "%", "`", "[", "]", "~", "<", ">",
-                            "#", "|", "(", ")"]
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
@@ -221,8 +232,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                     if version == "swo.owl":
                         version = (iri.split("/"))[-1]
                     else:
-                        for character in illegal_characters:
-                            version = version.replace(character, "_")
+                        version = replace_illegal_chars(version, "_")
                 except IndexError:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
@@ -235,8 +245,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                                 version_info_search, short_version_info_search]:
                 if search_type and version == "no_version":
                     version = (search_type.group(1)).decode("utf-8")
-                    for character in illegal_characters:
-                        version = version.replace(character, "_")
+                    version = replace_illegal_chars(version, "_")
             if version == "no_version":
                 print("Neither versioned IRI or release date found.")
 
@@ -245,8 +254,6 @@ def get_owl_iri(input_file_name: str) -> tuple:
 
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
-
-
 
     return (iri, version)
 

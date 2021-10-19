@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
     get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
-    delete_path, imports_requested, get_file_diff, get_file_length
+    delete_path, imports_requested, get_file_diff, get_file_length, replace_illegal_chars
 from urllib.parse import quote
 
 class TestRunTransform(TestCase):
@@ -254,6 +254,10 @@ class TestRunTransform(TestCase):
         iri = get_owl_iri('tests/resources/download_ontology/micro_SNIPPET.owl')
         self.assertEqual(('&obo;MicrO.owl', '72c3cb2dfd015a0817680fe07261322c'), iri)
 
+    def test_get_owl_iri_for_swo(self):
+        iri = get_owl_iri('tests/resources/download_ontology/swo_SNIPPET.owl')
+        self.assertEqual(('http://www.ebi.ac.uk/swo/swo.owl/1.7', '1.7'), iri)
+
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "no_version"), iri)
@@ -338,3 +342,8 @@ class TestRunTransform(TestCase):
     def test_get_file_length(self):
         count = get_file_length('tests/resources/download_ontology/go_SNIPPET.owl')
         self.assertEqual(24, count)
+
+    def test_replace_illegal_chars(self):
+        input = "A%(B)??C#D"
+        output = replace_illegal_chars(input,"")
+        self.assertEqual(output, "ABCD")
