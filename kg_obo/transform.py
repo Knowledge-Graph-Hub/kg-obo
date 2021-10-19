@@ -679,6 +679,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 if after_count == 0:
                     kg_obo_logger.error(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
                     print(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
+                    continue #Need to skip this one or we will upload empty results
 
                 # If we have imports, merge to resolve 
                 # Don't do this every time as it is not necessary
@@ -702,6 +703,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     if after_count == 0:
                         kg_obo_logger.error(f"ROBOT merging of {ontology_name} yielded an empty result!")
                         print(f"ROBOT merging of {ontology_name} yielded an empty result!")
+                        continue #Need to skip this one or we will upload empty results
 
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
