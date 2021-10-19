@@ -5,6 +5,8 @@ import os
 import sh # type: ignore
 from sh import chmod # type: ignore
 
+from post_setup.post_setup import robot_setup
+
 # Note that sh module can take environment variables, see
 # https://amoffat.github.io/sh/sections/special_arguments.html#env
 
@@ -18,6 +20,10 @@ def initialize_robot(robot_path: str) -> list:
     :return: A list consisting an instance of Command and dict of all environment variables.
     """
 
+    # We may have made it this far without installing ROBOT, so do that now if needed
+    if not os.path.exists(robot_path):
+        robot_setup()
+    
     # Make sure it's executable
     chmod("+x","robot")
 
