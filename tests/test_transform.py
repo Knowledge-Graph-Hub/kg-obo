@@ -257,6 +257,10 @@ class TestRunTransform(TestCase):
     def test_get_owl_iri_for_swo(self):
         iri = get_owl_iri('tests/resources/download_ontology/swo_SNIPPET.owl')
         self.assertEqual(('http://www.ebi.ac.uk/swo/swo.owl/1.7', '1.7'), iri)
+    
+    def test_get_owl_iri_for_pr(self):
+        iri = get_owl_iri('tests/resources/download_ontology/pr_SNIPPET.owl')
+        self.assertEqual(('http://purl.obolibrary.org/obo/pr/63.0/pr.owl', '63.0'), iri)
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')

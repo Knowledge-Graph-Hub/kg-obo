@@ -201,10 +201,10 @@ def get_owl_iri(input_file_name: str) -> tuple:
     # Most IRIs take this format - there are some exceptions
     iri_tag = b'owl:versionIRI rdf:resource=\"(.*)\"'
     iri_about_tag = b'owl:Ontology rdf:about=\"(.*)\"'
-    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
-    date_dc_tag = b'dc:date xml:lang=\"en\">([^\<]+)'
-    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^\<]+)'
-    short_version_info_tag = b'<owl:versionInfo>([^\<]+)'
+    date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^<]+)'
+    date_dc_tag = b'dc:date xml:lang=\"en\">([^<]+)'
+    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^<]+)'
+    short_version_info_tag = b'<owl:versionInfo>([^<]+)'
 
     #The default IRI/version - only used if values aren't provided.
     iri = "no_iri"
@@ -349,7 +349,7 @@ def download_ontology(url: str, file: str, logger: object, no_dl_progress: bool,
     try:
         req = requests.get(url, stream=True)
         file_size = int(req.headers['Content-Length'])
-        chunk_size = 2048
+        chunk_size = 4096
         with open(file, 'wb') as outfile:
             if not no_dl_progress:
                 if not header_only:
