@@ -173,7 +173,7 @@ def replace_illegal_chars(input_string: str, replace_char: str) -> str:
     # Illegal characters should not be in links or filenames
     illegal_characters = ["&", "$", "@", "=", ";", ":", "+", ",", "?",
                             "{", "}", "%", "`", "[", "]", "~", "<", ">",
-                            "#", "|", "(", ")"]
+                            "#", "|", "(", ")", " "]
 
     for character in illegal_characters:
         input_string = input_string.replace(character, replace_char)
@@ -204,13 +204,12 @@ def get_owl_iri(input_file_name: str) -> tuple:
     date_tag = b'oboInOwl:date rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^<]+)'
     date_dc_tag = b'dc:date xml:lang=\"en\">([^<]+)'
     version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#string\">([^<]+)'
-    short_version_info_tag = b'<owl:versionInfo>([^<]+)'
+    short_version_info_tag = b'owl:versionInfo>([^<]+)'
 
     #The default IRI/version - only used if values aren't provided.
     iri = "no_iri"
     version = "no_version"
 
-    # TODO: fix parsing of pr version (it's not matching the iri_search pattern)
     # TODO: update and write new tests for edge cases
 
     try:
@@ -218,39 +217,44 @@ def get_owl_iri(input_file_name: str) -> tuple:
             mmap.mmap(owl_file.fileno(), 0, access=mmap.ACCESS_READ) as owl_string:
             iri_search = re.search(iri_tag, owl_string)  # type: ignore
             iri_about_tag_search = re.search(iri_about_tag, owl_string) # type: ignore
-            date_search = re.search(date_tag, owl_string)  # type: ignore
-            date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
-            version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
-            short_version_info_search = re.search(short_version_info_tag, owl_string)  # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
                 iri = (iri_search.group(1)).decode("utf-8")
-                try:
+                try: #We handle some edge cases here
                     version = (iri.split("/"))[-2]
                     if version == "fao":
                         version = (iri.split("/"))[-3]
                     if version == "swo.owl":
                         version = (iri.split("/"))[-1]
-                    else:
-                        version = replace_illegal_chars(version, "_")
                 except IndexError:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
                 iri = (iri_about_tag_search.group(1)).decode("utf-8")
+                if (iri.split("/"))[-1] == "oae.owl": # Another edge case
+                        print("OAE")
+                        version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
+                        version_search = re.search(version_tag, owl_string)  # type: ignore
+                        version = (version_search.group(1)).decode("utf-8")
             else:
                 print("Version IRI not found.")
             
             # If we didn't get a version out of the IRI, look elsewhere
-            for search_type in [date_search, date_dc_search, 
-                                version_info_search, short_version_info_search]:
-                if search_type and version == "no_version":
-                    version = (search_type.group(1)).decode("utf-8")
-                    version = replace_illegal_chars(version, "_")
             if version == "no_version":
-                print("Neither versioned IRI or release date found.")
+                date_search = re.search(date_tag, owl_string)  # type: ignore
+                date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
+                version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
+                short_version_info_search = re.search(short_version_info_tag, owl_string)  # type: ignore
+                for search_type in [date_search, date_dc_search, 
+                                    version_info_search, short_version_info_search]:
+                    if search_type and version == "no_version":
+                        version = (search_type.group(1)).decode("utf-8")
+                if version == "no_version":
+                    print("Neither versioned IRI or release date found.")
 
-            if len(version) >100: # Some versions are just free text, so instead of parsing we convert to md5
-                version = (hashlib.md5(version.encode())).hexdigest()
+                if len(version) >100: # Some versions are just free text, so instead of parsing we convert to md5
+                    version = (hashlib.md5(version.encode())).hexdigest()
+
+            version = replace_illegal_chars(version, "_")
 
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
