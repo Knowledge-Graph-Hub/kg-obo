@@ -234,6 +234,10 @@ def get_owl_iri(input_file_name: str) -> tuple:
                         version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
                         version_search = re.search(version_tag, owl_string)  # type: ignore
                         version = (version_search.group(1)).decode("utf-8")
+                elif (iri.split("/"))[-1] in ["cheminf.owl"]:
+                        version_tag = b'owl:versionInfo rdf:datatype=\"&xsd;string\">([^<]+)'
+                        version_search = re.search(version_tag, owl_string)  # type: ignore
+                        version = (version_search.group(1)).decode("utf-8")                   
             else:
                 print("Version IRI not found.")
             

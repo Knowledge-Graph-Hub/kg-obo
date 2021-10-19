@@ -270,6 +270,10 @@ class TestRunTransform(TestCase):
         iri = get_owl_iri('tests/resources/download_ontology/opmi_SNIPPET.owl')
         self.assertEqual(('http://purl.obolibrary.org/obo/opmi.owl', 'Vision_Release__1.0.130'), iri)
 
+    def test_get_owl_iri_for_cheminf(self):
+        iri = get_owl_iri('tests/resources/download_ontology/cheminf_SNIPPET.owl')
+        self.assertEqual(('http://semanticchemistry.github.io/semanticchemistry/ontology/cheminf.owl', '2.0'), iri)
+
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "no_version"), iri)
