@@ -448,13 +448,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     print("Setting up ROBOT...")
     if not robot_path:
         robot_path = os.path.join(os.getcwd(),"robot")
-    try:
-        robot_params = initialize_robot(robot_path)
-        print(f"ROBOT path: {robot_path}")
-        robot_run = True
-    except ValueError as e:
-        print(f"\t*** Encountered error: {e}. WILL NOT USE ROBOT PROCESSING.")
-        robot_run = False
+    robot_params = initialize_robot(robot_path)
+    print(f"ROBOT path: {robot_path}")
+    robot_run = True
     
     if not robot_params[0]: #i.e., if we couldn't find ROBOT 
         print(f"\t*** Could not locate ROBOT - ensure it is available and executable. WILL NOT USE ROBOT PROCESSING.")
