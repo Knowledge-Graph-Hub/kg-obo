@@ -14,3 +14,4 @@ sphinx/_build/
 sphinx/_templates/
 sphinx/_static/
 *.pyc
+robot*
