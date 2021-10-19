@@ -455,6 +455,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     except ValueError as e:
         print(f"\t*** Encountered error: {e}. WILL NOT USE ROBOT PROCESSING.")
         robot_run = False
+    
+    if not robot_params[0]: #i.e., if we couldn't find ROBOT 
+        print(f"\t*** Could not locate ROBOT - ensure it is available and executable. WILL NOT USE ROBOT PROCESSING.")
+        robot_run = False
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")

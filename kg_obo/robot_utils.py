@@ -29,7 +29,10 @@ def initialize_robot(robot_path: str) -> list:
     env['PATH'] = os.environ['PATH']
     env['PATH'] += os.pathsep + robot_path
 
-    robot_command = sh.Command(robot_path)
+    try:
+        robot_command = sh.Command(robot_path)
+    except sh.CommandNotFound as e: # If for whatever reason ROBOT isn't available
+        robot_command = None
 
     return [robot_command, env]
 
