@@ -1,7 +1,8 @@
 import os
+from shutil import rmtree
 import urllib.request
 
-def main():
+def robot_setup():
     """
     Downloads ROBOT jar and run script.
     """
@@ -21,4 +22,4 @@ def main():
             urllib.request.urlretrieve(remotefile, localfile)
 
 if __name__ == '__main__':
-    main()
+    robot_setup()
