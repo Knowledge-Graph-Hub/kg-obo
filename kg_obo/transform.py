@@ -230,8 +230,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
                 iri = (iri_about_tag_search.group(1)).decode("utf-8")
-                if (iri.split("/"))[-1] == "oae.owl": # Another edge case
-                        print("OAE")
+                if (iri.split("/"))[-1] in ["oae.owl", "opmi.owl"]: # More edge cases
                         version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
                         version_search = re.search(version_tag, owl_string)  # type: ignore
                         version = (version_search.group(1)).decode("utf-8")
