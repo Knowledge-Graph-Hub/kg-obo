@@ -41,13 +41,14 @@ def initialize_robot(robot_path: str) -> list:
     return [robot_command, env]
 
 
-def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
+def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> None:
     """
     This method runs the ROBOT relax command on a single OBO.
     Has a three-hour timeout limit - process is killed if it takes this long.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be relaxed
     :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
+    :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
     :return: None
     """
 
@@ -59,16 +60,18 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
             '--input', input_owl, 
             '--output', output_owl,
             '--vvv',
+            _env=robot_env,
             _timeout=10800 
     )
 
-def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str) -> None:
+def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> None:
     """
     This method runs a merge and convert ROBOT command on a single OBO.
     Has a three-hour timeout limit - process is killed if it takes this long.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be relaxed
     :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
+    :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
     :return: None
     """
 
@@ -81,5 +84,6 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str) -> N
             'convert', 
             '--output', output_owl,
             '--vvv',
+            _env=robot_env,
             _timeout=10800 
     )
