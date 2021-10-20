@@ -147,12 +147,12 @@ class TestRunTransform(TestCase):
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
             self.assertTrue(mock_kgx_transform.called)
 
-        # Test if error raised when ROBOT not available
-        # though we also want to continue without it
-        with tempfile.TemporaryDirectory() as td:
+        # Test if we exit when ROBOT not available
+        with tempfile.TemporaryDirectory() as td,\
+                pytest.raises(SystemExit) as e:
             run_transform(log_dir=td,s3_test=True,robot_path="wrong")
-            self.assertRaises(ValueError)
-            self.assertTrue(mock_kgx_transform.called)
+            assert e.type == SystemExit
+            assert e.value.code == 1
 
         # test that we don't run transform if download of ontology fails
         with mock.patch('kg_obo.transform.download_ontology', return_value=False),\
