@@ -414,6 +414,11 @@ def get_file_diff(before_filename, after_filename) -> str:
     :param after_filename: str, name or path of second file
     :return: str containing all lines different between the files
     """
+
+    # Not currently called as it's too slow on large files
+    # and the resulting large diffs are stored in memory.
+    # TODO: replace with a call to shell diff -u
+
     diff_string = ""
     with open(before_filename, 'r') as before_file:
         with open(after_filename, 'r') as after_file:
@@ -676,13 +681,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             before_count = get_file_length(tfile.name)
             after_count = get_file_length(tfile_relaxed.name)
-            diff = get_file_diff(tfile.name,tfile_relaxed.name)
-            diff_count = len(diff.splitlines())
-            if diff_count >1:
-                print(f"""Difference after relaxing:\n{diff_count} lines changed
-                    ({before_count} lines before, {after_count} after).""")
-            else:
-                print(f"{diff} after relaxing.")
+            kg_obo_logger.info(f"Before relax: {before_count} lines. After relax: {after_count} lines.")
+            print(f"Before relax: {before_count} lines. After relax: {after_count} lines.")
 
             if after_count == 0:
                 kg_obo_logger.error(f"ROBOT relaxing of {ontology_name} yielded an empty result!")
@@ -701,13 +701,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
                 before_count = get_file_length(tfile_relaxed.name)
                 after_count = get_file_length(tfile_merged.name)
-                diff = get_file_diff(tfile_relaxed.name,tfile_merged.name)
-                diff_count = len(diff.splitlines())
-                if diff_count >1:
-                    print(f"""Difference after merging:\n{diff_count} lines changed
-                        ({before_count} lines before, {after_count} after).""")
-                else:
-                    print(f"{diff} after merging.")
+                kg_obo_logger.info(f"Before merge: {before_count} lines. After merge: {after_count} lines.")
+                print(f"Before merge: {before_count} lines. After merge: {after_count} lines.")
 
                 if after_count == 0:
                     kg_obo_logger.error(f"ROBOT merging of {ontology_name} yielded an empty result!")

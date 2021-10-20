@@ -64,6 +64,8 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict)
             _timeout=10800 
     )
 
+    print("Complete.")
+
 def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> None:
     """
     This method runs a merge and convert ROBOT command on a single OBO.
@@ -87,3 +89,5 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robo
             _env=robot_env,
             _timeout=10800 
     )
+
+    print("Complete.")
