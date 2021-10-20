@@ -658,7 +658,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             # Run ROBOT preprocessing here - relax all, then do merge -> convert if needed
             print(f"ROBOT preprocessing: relax {ontology_name}")
-            tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix="_relaxed.owl")
+            temp_suffix = f"_{ontology_name}_relaxed.owl"
+            tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix=temp_suffix)
             relax_owl(robot_path, tfile.name,tfile_relaxed.name)
             tfile_relaxed.close()
 
@@ -682,7 +683,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             if need_imports:
                 
                 print(f"ROBOT preprocessing: merge and convert {ontology_name}")
-                tfile_merged = tempfile.NamedTemporaryFile(delete=False,suffix="_merged.owl")
+                temp_suffix = f"_{ontology_name}_merged.owl"
+                tfile_merged = tempfile.NamedTemporaryFile(delete=False,suffix=temp_suffix)
                 merge_and_convert_owl(robot_path,tfile_relaxed.name,tfile_merged.name)
                 tfile_merged.close()
 
