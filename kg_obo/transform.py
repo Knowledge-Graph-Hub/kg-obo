@@ -402,8 +402,6 @@ def imports_requested(input_file_name: str) -> list:
             if len(import_search) > 0:
                 for match in import_search:
                     imports.append(match.decode("utf-8"))
-            else:
-                print("No imports found.")
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate any imports.")
 
@@ -482,9 +480,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         robot_path = os.path.join(os.getcwd(),"robot")
     robot_params = initialize_robot(robot_path)
     print(f"ROBOT path: {robot_path}")
-    
+    robot_env = robot_params[1]
+    print(f"ROBOT evironment variables: {robot_env['ROBOT_JAVA_ARGS']}")
+
     if not robot_params[0]: #i.e., if we couldn't find ROBOT 
         sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
+    
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
@@ -631,6 +632,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         kg_obo_logger.info(f"Failed to refresh index for {ontology_name}")
                         print(f"Failed to refresh index for {ontology_name}")
                 continue
+            else:
+                kg_obo_logger.info(f"Don't have this version of {ontology_name} yet - will transform.")
+                print(f"Don't have this version of {ontology_name} yet - will transform.")
 
             # Check for imports, but don't retreive yet
             need_imports = False
@@ -640,23 +644,30 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 kg_obo_logger.info(f"Header for {ontology_name} requests these imports: {fimports}")
                 print(f"Header for {ontology_name} requests these imports: {fimports}")
                 need_imports = True
+            else:
+                kg_obo_logger.info(f"No imports found for {ontology_name}.")
+                print(f"No imports found for {ontology_name}.")
 
-            # If this version is new, download the whole OBO
+            # Set up output folders for completed transform
             if not os.path.exists(base_obo_path):
                 os.mkdir(base_obo_path)
+            versioned_obo_path = os.path.join(base_obo_path, owl_version)
+            if not os.path.exists(versioned_obo_path):
+                os.mkdir(versioned_obo_path)
             
+            # If this version is new, now we download the whole OBO
             if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, 
                                      no_dl_progress=no_dl_progress, header_only=False):
                 success = False
                 kg_obo_logger.warning(f"Failed to load due to KeyError: {ontology_name}")
                 failed_transforms.append(ontology_name)
                 continue
-
-            versioned_obo_path = os.path.join(base_obo_path, owl_version)
-            if not os.path.exists(versioned_obo_path):
-                os.mkdir(versioned_obo_path)
+            else:
+                kg_obo_logger.info(f"Completed download from {url} to {tfile.name}.")
+                print(f"Completed download from {url} to {tfile.name}.")
 
             # Run ROBOT preprocessing here - relax all, then do merge -> convert if needed
+            kg_obo_logger.info(f"ROBOT preprocessing: relax {ontology_name}")
             print(f"ROBOT preprocessing: relax {ontology_name}")
             temp_suffix = f"_{ontology_name}_relaxed.owl"
             tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix=temp_suffix)
