@@ -726,10 +726,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 kg_obo_logger.info(this_output_msg)
 
             # Check results of all transforms
+            # If we didn't get JSON, that's acceptable
             for output_format in desired_output_formats:
-                if not all_success_and_errors[output_format][0]:
+                if output_format == 'tsv' and not all_success_and_errors[output_format][0]:
                     success = False
-                    break
+                if output_format == 'json' and not all_success_and_errors[output_format][0]:
+                    kg_obo_logger.warning("JSON transform failed!")
+                    errors = True
             for output_format in desired_output_formats:
                 if all_success_and_errors[output_format][1]:
                     errors = True
