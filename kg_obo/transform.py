@@ -676,7 +676,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             print(f"ROBOT preprocessing: relax {ontology_name}")
             temp_suffix = f"_{ontology_name}_relaxed.owl"
             tfile_relaxed = tempfile.NamedTemporaryFile(delete=False,suffix=temp_suffix)
-            relax_owl(robot_path, tfile.name,tfile_relaxed.name,robot_env)
+            if not relax_owl(robot_path, tfile.name,tfile_relaxed.name,robot_env):
+                kg_obo_logger.error(f"ROBOT relaxing of {ontology_name} failed - skipping.")
+                print(f"ROBOT relaxing of {ontology_name} failed - skipping.")
+                tfile_relaxed.close()
+                continue
             tfile_relaxed.close()
 
             before_count = get_file_length(tfile.name)
@@ -696,7 +700,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 print(f"ROBOT preprocessing: merge and convert {ontology_name}")
                 temp_suffix = f"_{ontology_name}_merged.owl"
                 tfile_merged = tempfile.NamedTemporaryFile(delete=False,suffix=temp_suffix)
-                merge_and_convert_owl(robot_path,tfile_relaxed.name,tfile_merged.name,robot_env)
+                if not merge_and_convert_owl(robot_path,tfile_relaxed.name,tfile_merged.name,robot_env):
+                    kg_obo_logger.error(f"ROBOT merge of {ontology_name} failed - skipping.")
+                    print(f"ROBOT merge of {ontology_name} failed - skipping.")
+                    tfile_relaxed.close()
+                    continue                   
                 tfile_merged.close()
 
                 before_count = get_file_length(tfile_relaxed.name)

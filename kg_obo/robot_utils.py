@@ -41,7 +41,7 @@ def initialize_robot(robot_path: str) -> list:
     return [robot_command, env]
 
 
-def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> None:
+def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> bool:
     """
     This method runs the ROBOT relax command on a single OBO.
     Has a three-hour timeout limit - process is killed if it takes this long.
@@ -49,24 +49,33 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict)
     :param input_owl: Ontology file to be relaxed
     :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
     :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
-    :return: None
+    :return: True if completed without errors, False if errors
     """
+
+    success = False
 
     print(f"Relaxing {input_owl} to {output_owl}...")
 
     robot_command = sh.Command(robot_path)
 
-    robot_command('relax',
+    try:
+        robot_command('relax',
             '--input', input_owl, 
             '--output', output_owl,
             '--vvv',
             _env=robot_env,
             _timeout=10800 
-    )
+        )
+        print("Complete.")
+        success = True
+    except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
+        print(f"ROBOT encountered an error: {e}")
+        success = False
 
-    print("Complete.")
+    return success
 
-def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> None:
+
+def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> bool:
     """
     This method runs a merge and convert ROBOT command on a single OBO.
     Has a three-hour timeout limit - process is killed if it takes this long.
@@ -74,20 +83,28 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robo
     :param input_owl: Ontology file to be relaxed
     :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
     :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
-    :return: None
+    :return: True if completed without errors, False if errors
     """
+
+    success = False
 
     print(f"Merging and converting {input_owl} to {output_owl}...")
 
     robot_command = sh.Command(robot_path)
 
-    robot_command('merge',
+    try:
+        robot_command('merge',
             '--input', input_owl,
             'convert', 
             '--output', output_owl,
             '--vvv',
             _env=robot_env,
             _timeout=10800 
-    )
+        )
+        print("Complete.")
+        success = True
+    except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
+        print(f"ROBOT encountered an error: {e}")
+        success = False
 
-    print("Complete.")
+    return success
