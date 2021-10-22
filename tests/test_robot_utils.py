@@ -14,10 +14,10 @@ class TestRobotUtils(TestCase):
 
     def test_relax_owl(self):
         robot_setup()
-        initialize_robot(self.robot_path)
-        relax_owl(self.robot_path, self.input_owl, self.output_owl)
+        robot_command, env = initialize_robot(self.robot_path)
+        relax_owl(self.robot_path, self.input_owl, self.output_owl, env)
 
     def test_merge_and_convert_owl(self):
         robot_setup()
-        initialize_robot(self.robot_path)
-        relax_owl(self.robot_path, self.input_owl, self.output_owl)
+        robot_command, env = initialize_robot(self.robot_path)
+        relax_owl(self.robot_path, self.input_owl, self.output_owl, env)
