@@ -231,7 +231,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
                 iri = (iri_about_tag_search.group(1)).decode("utf-8")
-                if (iri.split("/"))[-1] in ["oae.owl", "opmi.owl"]: # More edge cases
+                if ((iri.split("/"))[-1] in ["oae.owl", "opmi.owl"]) or \
+                    ((iri.split(";"))[-1] in ["ino.owl"]): # More edge cases
                         version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
                         version_search = re.search(version_tag, owl_string)  # type: ignore
                         version = (version_search.group(1)).decode("utf-8")
@@ -250,10 +251,16 @@ def get_owl_iri(input_file_name: str) -> tuple:
             
             # If we didn't get a version out of the IRI, look elsewhere
             if version == "no_version":
+
+                if (iri.split("/"))[-1] in ["ICEO","KISAO#"]:
+                    version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#decimal\">([^<]+)'
+
                 date_search = re.search(date_tag, owl_string)  # type: ignore
                 date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
                 version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
                 short_version_info_search = re.search(short_version_info_tag, owl_string)  # type: ignore
+
+
                 for search_type in [date_search, date_dc_search, 
                                     version_info_search, short_version_info_search]:
                     if search_type and version == "no_version":

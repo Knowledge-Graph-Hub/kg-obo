@@ -278,6 +278,10 @@ class TestRunTransform(TestCase):
         iri = get_owl_iri('tests/resources/download_ontology/tads_SNIPPET.owl')
         self.assertEqual(('http://purl.obolibrary.org/obo/tads/2015-08-20/tads.owl', '2015-08-20'), iri)
 
+    def test_get_owl_iri_for_iceo(self):
+        iri = get_owl_iri('tests/resources/download_ontology/iceo_SNIPPET.owl')
+        self.assertEqual(('http://purl.obolibrary.org/obo/2019/1/ICEO', '2.1'), iri)
+
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
         self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "no_version"), iri)
