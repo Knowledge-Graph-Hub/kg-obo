@@ -10,7 +10,7 @@ class TestRobotUtils(TestCase):
     def setUp(self) -> None:
         self.robot_path = os.path.join(os.getcwd(),"robot")
         self.input_owl = 'tests/resources/download_ontology/bfo.owl'
-        self.output_owl = 'tests/resources/download_ontology/bfo_processed.owl'
+        self.output_owl = './bfo_processed.owl'
 
     def test_relax_owl(self):
         robot_setup()
