@@ -239,6 +239,10 @@ def get_owl_iri(input_file_name: str) -> tuple:
                         version_tag = b'owl:versionInfo rdf:datatype=\"&xsd;string\">([^<]+)'
                         version_search = re.search(version_tag, owl_string)  # type: ignore
                         version = (version_search.group(1)).decode("utf-8")
+                elif (iri.split(";"))[-1] in ["ino.owl"]:
+                        version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
+                        version_search = re.search(version_tag, owl_string)  # type: ignore
+                        version = (version_search.group(1)).decode("utf-8")
             elif version_iri_only_search:
                 iri = (version_iri_only_search.group(1)).decode("utf-8")
                 try: #We handle some edge cases here
@@ -258,6 +262,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 date_dc_search = re.search(date_dc_tag, owl_string)  # type: ignore
                 version_info_search = re.search(version_info_tag, owl_string)  # type: ignore
                 short_version_info_search = re.search(short_version_info_tag, owl_string)  # type: ignore
+
 
                 for search_type in [date_search, date_dc_search, 
                                     version_info_search, short_version_info_search]:
