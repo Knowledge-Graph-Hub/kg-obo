@@ -250,8 +250,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
             
             # If we didn't get a version out of the IRI, look elsewhere
             if version == "no_version":
-                
-                if (iri.split("/"))[-1] == "ICEO":
+
+                if (iri.split("/"))[-1] in ["ICEO","KISAO#"]:
                     version_info_tag = b'owl:versionInfo rdf:datatype=\"http://www.w3.org/2001/XMLSchema#decimal\">([^<]+)'
 
                 date_search = re.search(date_tag, owl_string)  # type: ignore
