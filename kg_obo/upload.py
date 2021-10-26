@@ -329,9 +329,15 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
                 except botocore.exceptions.ClientError:
                     print(f"Could not find {sub_index} - will not write link")
         else:
+            remote_directories = []
             for filename in remote_files:
                 relative_filename = os.path.relpath(filename, remote_path)
-                ifile.write(index_link.format(link=relative_filename))
+                if (os.path.dirname(relative_filename)) != "": #i.e., it's a dir
+                    remote_directories.append(os.path.dirname(relative_filename))
+                else:
+                    ifile.write(index_link.format(link=relative_filename))
+            for dirname in remote_directories:
+                ifile.write(index_link.format(link=dirname))
         ifile.write(index_tail)
 
     try:
@@ -344,6 +350,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
 
     return success
 
+# TODO: update this mock to be more like the real function
 @mock_s3
 def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
     """
