@@ -350,7 +350,6 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
 
     return success
 
-# TODO: update this mock to be more like the real function
 @mock_s3
 def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
     """
@@ -381,12 +380,15 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
                         os.path.join(remote_path,"tracking.yaml"),
                         os.path.join(remote_path,"test_obo/"),
                         os.path.join(remote_path,"test_obo_2/"),
-                        os.path.join(remote_path,"test_obo_2/",IFILENAME)]
+                        os.path.join(remote_path,"test_obo_2/",IFILENAME),
+                        os.path.join(remote_path,"test_obo_2/test_obo_2_version_1/"),
+                        os.path.join(remote_path,"test_obo_2/test_obo_2_version_1/",IFILENAME)]
     else:
         extant_files = [os.path.join(remote_path,IFILENAME),
-                        os.path.join(remote_path,"a_directory/")]
+                        os.path.join(remote_path,"version/"),
+                        os.path.join(remote_path,"version/", IFILENAME)]
 
-    # Set up the mock root index first
+    # Set up the mock index first
     for filename in extant_files:
         client.put_object(Bucket=bucket, Key=filename)
     
