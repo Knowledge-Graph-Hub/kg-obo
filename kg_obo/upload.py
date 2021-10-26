@@ -336,7 +336,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
                     remote_directories.append(os.path.dirname(relative_filename))
                 else:
                     ifile.write(index_link.format(link=relative_filename))
-            for dirname in remote_directories:
+            for dirname in list(set(remote_directories)):
                 ifile.write(index_link.format(link=dirname))
         ifile.write(index_tail)
 
