@@ -244,7 +244,7 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_for_aro(self):
         iri = get_owl_iri('tests/resources/download_ontology/aro_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', ('05_07_2021_15_21')), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', ('05-07-2021-15-21')), iri)
 
     def test_get_owl_iri_for_go(self):
         iri = get_owl_iri('tests/resources/download_ontology/go_SNIPPET.owl')
@@ -268,7 +268,7 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri_for_opmi(self):
         iri = get_owl_iri('tests/resources/download_ontology/opmi_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/opmi.owl', 'Vision_Release__1.0.130'), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/opmi.owl', 'Vision-Release--1.0.130'), iri)
 
     def test_get_owl_iri_for_cheminf(self):
         iri = get_owl_iri('tests/resources/download_ontology/cheminf_SNIPPET.owl')

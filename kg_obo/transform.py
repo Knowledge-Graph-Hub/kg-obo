@@ -271,7 +271,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 if len(version) >100: # Some versions are just free text, so instead of parsing we hash
                     version = (hashlib.sha256(version.encode())).hexdigest()
 
-            version = replace_illegal_chars(version, "_")
+            version = replace_illegal_chars(version, "-")
 
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
