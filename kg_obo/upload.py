@@ -329,9 +329,15 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
                 except botocore.exceptions.ClientError:
                     print(f"Could not find {sub_index} - will not write link")
         else:
+            remote_directories = []
             for filename in remote_files:
                 relative_filename = os.path.relpath(filename, remote_path)
-                ifile.write(index_link.format(link=relative_filename))
+                if (os.path.dirname(relative_filename)) != "": #i.e., it's a dir
+                    remote_directories.append(os.path.dirname(relative_filename))
+                else:
+                    ifile.write(index_link.format(link=relative_filename))
+            for dirname in remote_directories:
+                ifile.write(index_link.format(link=dirname))
         ifile.write(index_tail)
 
     try:
@@ -374,12 +380,15 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
                         os.path.join(remote_path,"tracking.yaml"),
                         os.path.join(remote_path,"test_obo/"),
                         os.path.join(remote_path,"test_obo_2/"),
-                        os.path.join(remote_path,"test_obo_2/",IFILENAME)]
+                        os.path.join(remote_path,"test_obo_2/",IFILENAME),
+                        os.path.join(remote_path,"test_obo_2/test_obo_2_version_1/"),
+                        os.path.join(remote_path,"test_obo_2/test_obo_2_version_1/",IFILENAME)]
     else:
         extant_files = [os.path.join(remote_path,IFILENAME),
-                        os.path.join(remote_path,"a_directory/")]
+                        os.path.join(remote_path,"version/"),
+                        os.path.join(remote_path,"version/", IFILENAME)]
 
-    # Set up the mock root index first
+    # Set up the mock index first
     for filename in extant_files:
         client.put_object(Bucket=bucket, Key=filename)
     
