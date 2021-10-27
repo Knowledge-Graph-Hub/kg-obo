@@ -210,7 +210,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
     iri = "no_iri"
     version = "no_version"
 
-    # TODO: update and write new tests for edge cases
+    # Keep track of where we actually find a usable version value, if any
+    value_format = "none, because we couldn't find a version"
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
@@ -220,6 +221,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
             version_iri_only_search = re.search(version_iri_only_tag, owl_string) # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
+                value_format = "versionIRI"
                 iri = (iri_search.group(1)).decode("utf-8")
                 try: #We handle some edge cases here
                     version = (iri.split("/"))[-2]
@@ -230,6 +232,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 except IndexError:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
+                value_format = "versionInfo"
                 iri = (iri_about_tag_search.group(1)).decode("utf-8")
                 if ((iri.split("/"))[-1] in ["oae.owl", "opmi.owl"]) or \
                     ((iri.split(";"))[-1] in ["ino.owl"]): # More edge cases
@@ -241,6 +244,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                         version_search = re.search(version_tag, owl_string)  # type: ignore
                         version = (version_search.group(1)).decode("utf-8")
             elif version_iri_only_search:
+                value_format = "versionIRI (but missing the owl: prefix)"
                 iri = (version_iri_only_search.group(1)).decode("utf-8")
                 try: #We handle some edge cases here
                     version = (iri.split("/"))[-2]
@@ -263,6 +267,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 for search_type in [date_search, date_dc_search, 
                                     version_info_search, short_version_info_search]:
                     if search_type and version == "no_version":
+                        value_format = "a date or version info field"
                         version = (search_type.group(1)).decode("utf-8")
                 if version == "no_version":
                     print("Neither versioned IRI or release date found.")
@@ -274,6 +279,8 @@ def get_owl_iri(input_file_name: str) -> tuple:
 
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
+
+    print(f"In {input_file_name}, used this value for version: {value_format}")
 
     return (iri, version)
 
