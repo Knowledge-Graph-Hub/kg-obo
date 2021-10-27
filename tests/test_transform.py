@@ -123,10 +123,10 @@ class TestRunTransform(TestCase):
     @mock.patch('requests.get')
     @mock.patch('kg_obo.transform.retrieve_obofoundry_yaml')
     @mock.patch('kg_obo.obolibrary_utils.base_url_if_exists')
-    @mock.patch('kg_obo.transform.get_owl_iri', return_value=('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26'))
+    @mock.patch('kg_obo.transform.get_owl_iri', return_value=('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26', 'versionIRI'))
     @mock.patch('kgx.cli.transform')
     def test_run_transform(self, mock_kgx_transform, mock_get_owl_iri, mock_base_url,
-                           mock_retrieve_obofoundry_yaml, mock_get): 
+                           mock_retrieve_obofoundry_yaml, mock_get):
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
 
         # Test with s3_test option on
@@ -238,53 +238,66 @@ class TestRunTransform(TestCase):
 
     def test_get_owl_iri(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo.owl')
-        self.assertEqual(iri, ('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26'))
+        self.assertEqual(('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26',
+                            'versionIRI'), iri)
         with pytest.raises(Exception):
             iri = get_owl_iri('')
 
     def test_get_owl_iri_for_aro(self):
         iri = get_owl_iri('tests/resources/download_ontology/aro_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', ('05-07-2021-15-21')), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/antibiotic_resistance.owl', '05-07-2021-15-21',
+                            'a date or version info field'), iri)
 
     def test_get_owl_iri_for_go(self):
         iri = get_owl_iri('tests/resources/download_ontology/go_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/go/releases/2021-09-01/go-base.owl', '2021-09-01'), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/go/releases/2021-09-01/go-base.owl', '2021-09-01',
+                            'versionIRI'), iri)
 
+    # This one also tests if hashing is consistent for the same file
     def test_get_owl_iri_for_micro(self):
         iri = get_owl_iri('tests/resources/download_ontology/micro_SNIPPET.owl')
-        self.assertEqual(('&obo;MicrO.owl', '20ca3a0f90793de0c0f9b2ecbd186456e1393cdd0547b46f8eb2d466c6fa080a'), iri)
+        self.assertEqual(('&obo;MicrO.owl', '20ca3a0f90793de0c0f9b2ecbd186456e1393cdd0547b46f8eb2d466c6fa080a',
+                            'a date or version info field'), iri)
 
     def test_get_owl_iri_for_swo(self):
         iri = get_owl_iri('tests/resources/download_ontology/swo_SNIPPET.owl')
-        self.assertEqual(('http://www.ebi.ac.uk/swo/swo.owl/1.7', '1.7'), iri)
+        self.assertEqual(('http://www.ebi.ac.uk/swo/swo.owl/1.7', '1.7',
+                            'versionIRI'), iri)
     
     def test_get_owl_iri_for_pr(self):
         iri = get_owl_iri('tests/resources/download_ontology/pr_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/pr/63.0/pr.owl', '63.0'), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/pr/63.0/pr.owl', '63.0',
+                            'versionIRI'), iri)
 
     def test_get_owl_iri_for_oae(self):
         iri = get_owl_iri('tests/resources/download_ontology/oae_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/oae.owl', '1.2.44'), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/oae.owl', '1.2.44',
+                            'versionInfo'), iri)
 
     def test_get_owl_iri_for_opmi(self):
         iri = get_owl_iri('tests/resources/download_ontology/opmi_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/opmi.owl', 'Vision-Release--1.0.130'), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/opmi.owl', 'Vision-Release--1.0.130',
+                            'versionInfo'), iri)
 
     def test_get_owl_iri_for_cheminf(self):
         iri = get_owl_iri('tests/resources/download_ontology/cheminf_SNIPPET.owl')
-        self.assertEqual(('http://semanticchemistry.github.io/semanticchemistry/ontology/cheminf.owl', '2.0'), iri)
+        self.assertEqual(('http://semanticchemistry.github.io/semanticchemistry/ontology/cheminf.owl', '2.0',
+                            'versionInfo'), iri)
 
     def test_get_owl_iri_for_tads(self):
         iri = get_owl_iri('tests/resources/download_ontology/tads_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/tads/2015-08-20/tads.owl', '2015-08-20'), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/tads/2015-08-20/tads.owl', '2015-08-20',
+                            'versionIRI (but missing the owl: prefix)'), iri)
 
     def test_get_owl_iri_for_iceo(self):
         iri = get_owl_iri('tests/resources/download_ontology/iceo_SNIPPET.owl')
-        self.assertEqual(('http://purl.obolibrary.org/obo/2019/1/ICEO', '2.1'), iri)
+        self.assertEqual(('http://purl.obolibrary.org/obo/2019/1/ICEO', '2.1',
+                            'a date or version info field'), iri)
 
     def test_get_owl_iri_bad_input(self):
         iri = get_owl_iri('tests/resources/download_ontology/bfo_NO_VERSION_IRI.owl')
-        self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "no_version"), iri)
+        self.assertEqual(("http://purl.obolibrary.org/obo/bfo.owl", "no_version",
+                            'versionInfo'), iri)
 
     def test_imports_requested(self):
         imports = imports_requested('tests/resources/download_ontology/upheno_SNIPPET.owl')
