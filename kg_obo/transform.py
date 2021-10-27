@@ -195,7 +195,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     The rdf:about value is also checked - this may not contain a version,
     but it may contain a URL we can use as an IRI.
     :param input_file_name: name of OWL format file to extract IRI from
-    :return: tuple of (str of IRI, str of version)
+    :return: tuple of (str of IRI, str of version, str describing version format)
     """
  
     # Most IRIs take this format - there are some exceptions
@@ -211,7 +211,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     version = "no_version"
 
     # Keep track of where we actually find a usable version value, if any
-    value_format = "none, because we couldn't find a version"
+    version_format = "none, because we couldn't find a version"
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
@@ -221,7 +221,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
             version_iri_only_search = re.search(version_iri_only_tag, owl_string) # type: ignore
             # mypy doesn't like re and mmap objects
             if iri_search:
-                value_format = "versionIRI"
+                version_format = "versionIRI"
                 iri = (iri_search.group(1)).decode("utf-8")
                 try: #We handle some edge cases here
                     version = (iri.split("/"))[-2]
@@ -232,7 +232,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 except IndexError:
                     pass
             elif iri_about_tag_search: #In this case, we likely don't have a version
-                value_format = "versionInfo"
+                version_format = "versionInfo"
                 iri = (iri_about_tag_search.group(1)).decode("utf-8")
                 if ((iri.split("/"))[-1] in ["oae.owl", "opmi.owl"]) or \
                     ((iri.split(";"))[-1] in ["ino.owl"]): # More edge cases
@@ -244,7 +244,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                         version_search = re.search(version_tag, owl_string)  # type: ignore
                         version = (version_search.group(1)).decode("utf-8")
             elif version_iri_only_search:
-                value_format = "versionIRI (but missing the owl: prefix)"
+                version_format = "versionIRI (but missing the owl: prefix)"
                 iri = (version_iri_only_search.group(1)).decode("utf-8")
                 try: #We handle some edge cases here
                     version = (iri.split("/"))[-2]
@@ -267,7 +267,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
                 for search_type in [date_search, date_dc_search, 
                                     version_info_search, short_version_info_search]:
                     if search_type and version == "no_version":
-                        value_format = "a date or version info field"
+                        version_format = "a date or version info field"
                         version = (search_type.group(1)).decode("utf-8")
                 if version == "no_version":
                     print("Neither versioned IRI or release date found.")
@@ -280,9 +280,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     except ValueError: #Should not happen unless OWL definitions are missing/broken
         print("Could not parse OWL definitions enough to locate version IRI or release date.")
 
-    print(f"In {input_file_name}, used this value for version: {value_format}")
-
-    return (iri, version)
+    return (iri, version, version_format)
 
 def track_obo_version(name: str = "", iri: str = "",
                       version: str = "", bucket: str = "",
@@ -587,6 +585,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     failed_transforms = []
     all_completed_transforms = []
     all_base_obo_transforms = []
+    all_obos_with_weird_version_formats = []
 
     if len(skip) >0:
       kg_obo_logger.info(f"Ignoring these OBOs: {skip}" )
@@ -626,11 +625,17 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 failed_transforms.append(ontology_name)
                 continue
 
-            owl_iri, owl_version = get_owl_iri(tfile.name)
+            # Provide parsed IRI and version info here
+            # If it wasn't in the versionIRI, add it to a list, because this is weird
+            owl_iri, owl_version, owl_version_format = get_owl_iri(tfile.name)
             kg_obo_logger.info(f"Current VersionIRI for {ontology_name}: {owl_iri}")
             print(f"Current VersionIRI for {ontology_name}: {owl_iri}")
             kg_obo_logger.info(f"Current version for {ontology_name}: {owl_version}")
             print(f"Current version for {ontology_name}: {owl_version}")
+            kg_obo_logger.info(f"In {ontology_name}, used this value for version: {owl_version_format}")
+            print(f"In {ontology_name}, used this value for version: {owl_version_format}")
+            if owl_version_format != "versionIRI":
+                all_obos_with_weird_version_formats.append(ontology_name)
 
             # Check version here
             if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket):
@@ -839,6 +844,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     if len(all_completed_transforms) > 0:
         kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}): "
                             f"{all_completed_transforms}")
+    
+    if len(all_obos_with_weird_version_formats) > 0:
+        kg_obo_logger.info(f"These OBOs have versions stored in places other than versionIRI ({len(all_obos_with_weird_version_formats)}): "
+                            f"{all_obos_with_weird_version_formats}")
 
     if not s3_test:
         # Update the root index
