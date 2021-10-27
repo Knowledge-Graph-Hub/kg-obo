@@ -273,6 +273,8 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     else:
         client = boto3.client('s3')
 
+    pager = client.get_paginator("list_objects_v2")
+
     ifile_local_path = os.path.join(data_dir,IFILENAME)
     ifile_remote_path = os.path.join(remote_path,IFILENAME)
 
@@ -302,10 +304,11 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
     # Get list of remote files
     remote_files = [] # All file keys
     try:
-        remote_contents = client.list_objects(Bucket=bucket, Prefix=remote_path+"/")['Contents']
-        for key in remote_contents:
-            if os.path.basename(key['Key']) not in [IFILENAME,"tracking.yaml","lock"]:
-                remote_files.append(key['Key'])
+        for page in pager.paginate(Bucket=bucket, Prefix=remote_path+"/"):
+            remote_contents = page['Contents']
+            for key in remote_contents:
+                if os.path.basename(key['Key']) not in [IFILENAME,"tracking.yaml","lock"]:
+                    remote_files.append(key['Key'])
         print(f"Found existing contents at {remote_path}: {remote_files}")
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
