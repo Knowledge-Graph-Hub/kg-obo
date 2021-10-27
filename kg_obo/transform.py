@@ -211,7 +211,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
     version = "no_version"
 
     # Keep track of where we actually find a usable version value, if any
-    version_format = "none, because we couldn't find a version"
+    version_format = "none"
 
     try:
         with open(input_file_name, 'rb', 0) as owl_file, \
