@@ -11,12 +11,17 @@ import kg_obo.upload
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log"]
 
-def retrieve_tracking(bucket, track_file_remote_path, skip: list = [], 
+def retrieve_tracking(bucket, track_file_remote_path,
+                        track_file_local_path: str = "./stats/tracking.yaml",
+                        skip: list = [], 
                         get_only: list = [] ) -> list:
     """
     Downloads and parses the kg-obo tracking yaml.
     :param bucket: str of S3 bucket, to be specified as argument
     :param track_file_remote_path: path to the tracking file on the remote
+    :param track_file_local_path: path where file should be downloaded
+    :param skip: list of OBOs to skip, by ID
+    :param get_only: list of OBOs to retrieve, by ID (otherwise do all)
     :return: dict of tracking file contents (OBO names, IRIs, and all versions)
     """   
 
@@ -24,8 +29,6 @@ def retrieve_tracking(bucket, track_file_remote_path, skip: list = [],
     # Name isn't primary key as it may have multiple versions
     # So each OBO name + version is its own list entry
     versions = [] 
-
-    track_file_local_path = "stats/tracking.yaml"
 
     client = boto3.client('s3')
 
@@ -177,7 +180,9 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
 
     # Get current versions for all OBO graphs
     # Or just the specified ones
-    versions = retrieve_tracking(bucket, track_file_remote_path, skip, get_only)
+    versions = retrieve_tracking(bucket, track_file_remote_path,
+                                 "./stats/tracking.yaml",
+                                 skip, get_only)
 
     # Get metadata from remote files
     metadata = get_file_metadata(bucket, "kg-obo", versions)

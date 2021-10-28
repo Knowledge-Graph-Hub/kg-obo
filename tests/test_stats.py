@@ -18,7 +18,8 @@ class TestStats(TestCase):
 
     @mock.patch('boto3.client')
     def test_retrieve_tracking(self, mock_boto):
-        vlist = retrieve_tracking(self.bucket, self.bucket_dir)
+        vlist = retrieve_tracking(self.bucket, self.bucket_dir,
+                                    "./tests/resources/tracking.yaml")
         self.assertTrue(len(vlist)>0)
         self.assertTrue(mock_boto.called)
     
@@ -39,7 +40,8 @@ class TestStats(TestCase):
                                     self.versions)
 
     @mock.patch('boto3.client')
-    def test_get_graph_stats(self, mock_boto):
+    @mock.patch('kg_obo.stats.retrieve_tracking')
+    def test_get_graph_stats(self, mock_boto, mock_retrieve_tracking):
         get_graph_stats()
         self.assertTrue(mock_boto.called)
 
