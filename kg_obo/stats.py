@@ -4,6 +4,7 @@ import csv
 import os
 import yaml # type: ignore
 import boto3 # type: ignore
+from typing import Dict
 
 import kg_obo.upload
 
