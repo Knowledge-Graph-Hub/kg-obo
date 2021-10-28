@@ -129,7 +129,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 and metadata as key-value pairs
     """
 
-    graph_details: Dict[Dict[Dict]] = {}
+    graph_details = {} # type: ignore
 
     return graph_details
 
