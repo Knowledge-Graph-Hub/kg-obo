@@ -56,7 +56,7 @@ def write_stats(stats) -> None:
     """
 
     outpath = "stats/stats.tsv"
-    columns = ["Name","Version","LastModified"] # TODO: just get these names from the incoming stats
+    columns = (stats[0]).keys()
 
     with open(outpath, 'w') as outfile:
         writer = csv.DictWriter(outfile, delimiter='\t',
