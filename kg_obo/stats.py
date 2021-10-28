@@ -4,7 +4,6 @@ import csv
 import os
 import yaml # type: ignore
 import boto3 # type: ignore
-from typing import Dict
 
 import kg_obo.upload
 
@@ -82,7 +81,7 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
     """
 
     metadata = {}
-    clean_metadata: Dict[Dict[Dict]] = {}
+    clean_metadata = {} # type: ignore
 
     client = boto3.client('s3')
 
