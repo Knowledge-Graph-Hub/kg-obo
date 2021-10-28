@@ -116,6 +116,24 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
 
     return clean_metadata
 
+def get_graph_details(bucket, remote_path, versions) -> dict:
+    """
+    Given a list of dicts of OBO names and versions,
+    get details about their graph structure:
+    node count, edge count, component count, and
+    count of singletons.
+    This is version-dependent.
+    :param bucket: str of S3 bucket, to be specified as argument
+    :param remote_path: str of remote directory to start from
+    :param versions: list of dicts returned from retrieve_tracking
+    :return: dict of dicts, with file paths as keys, versions and 2ary keys, 
+                and metadata as key-value pairs
+    """
+
+    graph_details: Dict[Dict[Dict]] = {}
+
+    return graph_details
+
 def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
     """
     Get graph statistics for all specified OBOs.
@@ -146,16 +164,24 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
     # Or just the specified ones
     versions = retrieve_tracking(bucket, track_file_remote_path, skip, get_only)
 
+    # Get metadata from remote files
     metadata = get_file_metadata(bucket, "kg-obo", versions)
+
+    # Get graph details
+    # TODO: actually build this function
+    graph_details = get_graph_details(bucket, "kg-obo", versions)
 
     # Now merge metadata into what we have from before
     for entry in versions:
         try:
             name = entry["Name"]
             version = entry["Version"]
+            step = "metadata"
             entry.update(metadata[name][version])
+            step = "graph details"
+            entry.update(graph_details[name][version])
         except KeyError as e: #Some entries still won't have metadata
-            print(f"No metadata available for {name}, version {version}.")
+            print(f"Missing {step} for {name}, version {version}.")
             continue
 
     # Time to write
