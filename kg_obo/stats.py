@@ -2,13 +2,13 @@
 
 import csv
 import os
-import yaml
-import boto3
+import yaml # type: ignore
+import boto3 # type: ignore
 
 import kg_obo.upload
 
 def retrieve_tracking(bucket, track_file_remote_path, skip: list = [], 
-                        get_only: list = [] ) -> dict:
+                        get_only: list = [] ) -> list:
     """
     Downloads and parses the kg-obo tracking yaml.
     :param bucket: str of S3 bucket, to be specified as argument
