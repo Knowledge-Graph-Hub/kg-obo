@@ -7,12 +7,15 @@ import boto3 # type: ignore
 
 import kg_obo.upload
 
+IGNORED_FILES = ["index.html","tracking.yaml","lock",
+                "json_transform.log", "tsv_transform.log"]
+
 def retrieve_tracking(bucket, track_file_remote_path, skip: list = [], 
                         get_only: list = [] ) -> list:
     """
     Downloads and parses the kg-obo tracking yaml.
     :param bucket: str of S3 bucket, to be specified as argument
-    :param tracking_file_remote_path: path to the tracking file on the remote
+    :param track_file_remote_path: path to the tracking file on the remote
     :return: dict of tracking file contents (OBO names, IRIs, and all versions)
     """   
 
@@ -29,8 +32,6 @@ def retrieve_tracking(bucket, track_file_remote_path, skip: list = [],
 
     with open(track_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
-
-    print(tracking)
 
     # Need to flatten a bit
     for name in tracking["ontologies"]:
@@ -55,7 +56,7 @@ def write_stats(stats) -> None:
     """
 
     outpath = "stats/stats.tsv"
-    columns = ["Name","Version"]
+    columns = ["Name","Version","LastModified"] # TODO: just get these names from the incoming stats
 
     with open(outpath, 'w') as outfile:
         writer = csv.DictWriter(outfile, delimiter='\t',
@@ -63,6 +64,56 @@ def write_stats(stats) -> None:
         writer.writeheader()
         for entry in stats:
             writer.writerow(entry)
+    
+    print(f"Wrote to {outpath}")
+
+def get_file_metadata(bucket, remote_path, versions) -> dict:
+    """
+    Given a list of dicts of OBO names and versions,
+    retrieve their metadata from the remote.
+    For now this only obtains the time each file was last modified.
+    (This treats the JSON output identically to the TSV.)
+    :param bucket: str of S3 bucket, to be specified as argument
+    :param remote_path: str of remote directory to start from
+    :param versions: list of dicts returned from retrieve_tracking
+    :return: dict of dicts, with file paths as keys, versions and 2ary keys, 
+                and metadata as key-value pairs
+    """
+
+    metadata = {}
+    clean_metadata = {}
+
+    client = boto3.client('s3')
+
+    pager = client.get_paginator('list_objects_v2')
+
+    names = []
+    for entry in versions:
+        names.append(entry["Name"])
+
+    remote_files = [] # All file keys
+    try:
+        for page in pager.paginate(Bucket=bucket, Prefix=remote_path+"/"):
+            remote_contents = page['Contents']
+            for key in remote_contents:
+                if os.path.basename(key['Key']) not in IGNORED_FILES and \
+                    ((key['Key']).split("/"))[1] in names:
+                    remote_files.append(key['Key'])
+                    metadata[key['Key']] = {"LastModified": key['LastModified']}
+        print(f"Found {len(remote_files)} matching objects in {remote_path}.")
+    except KeyError:
+        print(f"Found no existing contents at {remote_path}")
+
+    # Clean up the keys so they're indexable
+    for entry in metadata:
+        name = (entry.split("/"))[1]
+        version = (entry.split("/"))[2]
+        if name in clean_metadata:
+            clean_metadata[name][version] = metadata[entry]
+        else:
+            clean_metadata[name] = {version:metadata[entry]}
+
+    return clean_metadata
 
 def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
     """
@@ -93,6 +144,19 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
     # Get current versions for all OBO graphs
     # Or just the specified ones
     versions = retrieve_tracking(bucket, track_file_remote_path, skip, get_only)
+
+    metadata = get_file_metadata(bucket, "kg-obo", versions)
+
+    # Now merge metadata into what we have from before
+    versions_and_metadata = []
+    for entry in versions:
+        try:
+            name = entry["Name"]
+            version = entry["Version"]
+            entry.update(metadata[name][version])
+        except KeyError as e: #Some entries still won't have metadata
+            print(f"No metadata available for {name}, version {version}.")
+            continue
 
     # Time to write
     write_stats(versions)
