@@ -4,6 +4,7 @@ import csv
 import os
 import yaml # type: ignore
 import boto3 # type: ignore
+from importlib import import_module
 
 import kg_obo.upload
 
@@ -122,6 +123,10 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
     node count, edge count, component count, and
     count of singletons.
     This is version-dependent.
+
+    This function relies upon grape/ensmallen,
+    as it works very nicely with kg-obo's graphs.
+
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
     :param versions: list of dicts returned from retrieve_tracking
@@ -129,7 +134,18 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 and metadata as key-value pairs
     """
 
+    # Currently blocked by broken links in ensmallen
+    # but could also do downloads here and manually load from tsv
+
     graph_details = {} # type: ignore
+
+    names = []
+    for entry in versions:
+        names.append(entry["Name"].upper())
+
+    #for name in names:
+    #    print(name)
+    #    obo_graph = import_module(name,package="ensmallen.datasets.kgobo")
 
     return graph_details
 
@@ -167,7 +183,6 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
     metadata = get_file_metadata(bucket, "kg-obo", versions)
 
     # Get graph details
-    # TODO: actually build this function
     graph_details = get_graph_details(bucket, "kg-obo", versions)
 
     # Now merge metadata into what we have from before
