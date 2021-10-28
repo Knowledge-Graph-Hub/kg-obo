@@ -71,7 +71,8 @@ setup(
         'moto[s3]',
         'sphinx_rtd_theme',
         'recommonmark',
-        'sh'
+        'sh',
+        'grape'
     ],
     extras_require=extras,
 )
