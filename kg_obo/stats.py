@@ -81,7 +81,7 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
     """
 
     metadata = {}
-    clean_metadata = {}
+    clean_metadata: Dict[Dict[Dict]] = {}
 
     client = boto3.client('s3')
 
@@ -148,7 +148,6 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
     metadata = get_file_metadata(bucket, "kg-obo", versions)
 
     # Now merge metadata into what we have from before
-    versions_and_metadata = []
     for entry in versions:
         try:
             name = entry["Name"]
