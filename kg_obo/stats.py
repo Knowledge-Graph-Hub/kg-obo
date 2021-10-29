@@ -10,6 +10,7 @@ import kg_obo.upload
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log"]
+FORMATS = ["TSV","JSON"]
 
 def retrieve_tracking(bucket, track_file_remote_path,
                         track_file_local_path: str = "./stats/tracking.yaml",
@@ -44,12 +45,14 @@ def retrieve_tracking(bucket, track_file_remote_path,
         if len(get_only) > 0 and name not in get_only:
             continue
         current_version = tracking["ontologies"][name]["current_version"]
-        versions.append({"Name": name, "Version": current_version})
+        for format in FORMATS:
+            versions.append({"Name": name, "Version": current_version, "Format": format})
         # See if there are archived versions
         if "archive" in tracking["ontologies"][name]:
             for entry in tracking["ontologies"][name]["archive"]:
                 archive_version = entry["version"]
-                versions.append({"Name": name, "Version": archive_version})
+                for format in FORMATS:
+                    versions.append({"Name": name, "Version": archive_version, "Format": format})
             
     return versions
 
@@ -80,8 +83,8 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
     :param versions: list of dicts returned from retrieve_tracking
-    :return: dict of dicts, with file paths as keys, versions and 2ary keys, 
-                and metadata as key-value pairs
+    :return: dict of dicts, with OBO names as 1ary keys, versions and formats as 
+            2ary keys, and metadata as key-value pairs
     """
 
     metadata = {}
@@ -103,19 +106,29 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
                 if os.path.basename(key['Key']) not in IGNORED_FILES and \
                     ((key['Key']).split("/"))[1] in names:
                     remote_files.append(key['Key'])
-                    metadata[key['Key']] = {"LastModified": key['LastModified']}
+                    metadata[key['Key']] = {"LastModified": key['LastModified'],
+                                            "Size": key['Size'] }
+                    if key['Key'].endswith(".tar.gz"):
+                        metadata[key['Key']]["Format"] = "TSV"
+                    elif key['Key'].endswith(".json"):
+                        metadata[key['Key']]["Format"] = "JSON"
         print(f"Found {len(remote_files)} matching objects in {remote_path}.")
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
+
+    print(metadata)
 
     # Clean up the keys so they're indexable
     for entry in metadata:
         name = (entry.split("/"))[1]
         version = (entry.split("/"))[2]
-        if name in clean_metadata:
-            clean_metadata[name][version] = metadata[entry]
+        format = metadata[entry].pop("Format")
+        if name in clean_metadata and version in clean_metadata[name]:
+            clean_metadata[name][version][format] = metadata[entry]
+        elif name in clean_metadata and version not in clean_metadata[name]:
+            clean_metadata[name][version] = {format:metadata[entry]}
         else:
-            clean_metadata[name] = {version:metadata[entry]}
+            clean_metadata[name] = {version:{format:metadata[entry]}}
 
     return clean_metadata
 
@@ -195,10 +208,11 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
         try:
             name = entry["Name"]
             version = entry["Version"]
+            format = entry["Format"] #Just a placeholder initially
             step = "metadata"
-            entry.update(metadata[name][version])
+            entry.update(metadata[name][version][format])
             step = "graph details"
-            entry.update(graph_details[name][version])
+            entry.update(graph_details[name][version][format])
         except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
             continue
