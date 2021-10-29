@@ -45,14 +45,14 @@ def retrieve_tracking(bucket, track_file_remote_path,
         if len(get_only) > 0 and name not in get_only:
             continue
         current_version = tracking["ontologies"][name]["current_version"]
-        for format in FORMATS:
-            versions.append({"Name": name, "Version": current_version, "Format": format})
+        for file_format in FORMATS:
+            versions.append({"Name": name, "Version": current_version, "Format": file_format})
         # See if there are archived versions
         if "archive" in tracking["ontologies"][name]:
             for entry in tracking["ontologies"][name]["archive"]:
                 archive_version = entry["version"]
-                for format in FORMATS:
-                    versions.append({"Name": name, "Version": archive_version, "Format": format})
+                for file_format in FORMATS:
+                    versions.append({"Name": name, "Version": archive_version, "Format": file_format})
             
     return versions
 
@@ -83,7 +83,7 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
     :param versions: list of dicts returned from retrieve_tracking
-    :return: dict of dicts, with OBO names as 1ary keys, versions and formats as 
+    :return: dict of dicts, with OBO names as 1ary keys, versions and file formats as 
             2ary keys, and metadata as key-value pairs
     """
 
@@ -122,13 +122,13 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
     for entry in metadata:
         name = (entry.split("/"))[1]
         version = (entry.split("/"))[2]
-        format = metadata[entry].pop("Format")
+        file_format = metadata[entry].pop("Format")
         if name in clean_metadata and version in clean_metadata[name]:
-            clean_metadata[name][version][format] = metadata[entry]
+            clean_metadata[name][version][file_format] = metadata[entry]
         elif name in clean_metadata and version not in clean_metadata[name]:
-            clean_metadata[name][version] = {format:metadata[entry]}
+            clean_metadata[name][version] = {file_format:metadata[entry]}
         else:
-            clean_metadata[name] = {version:{format:metadata[entry]}}
+            clean_metadata[name] = {version:{file_format:metadata[entry]}}
 
     return clean_metadata
 
@@ -208,11 +208,11 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
         try:
             name = entry["Name"]
             version = entry["Version"]
-            format = entry["Format"] #Just a placeholder initially
+            file_format = entry["Format"] #Just a placeholder initially
             step = "metadata"
-            entry.update(metadata[name][version][format])
+            entry.update(metadata[name][version][file_format])
             step = "graph details"
-            entry.update(graph_details[name][version][format])
+            entry.update(graph_details[name][version][file_format])
         except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
             continue
