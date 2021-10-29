@@ -22,7 +22,15 @@ class TestStats(TestCase):
                                     "./tests/resources/tracking.yaml")
         self.assertTrue(len(vlist)>0)
         self.assertTrue(mock_boto.called)
-    
+        vlist = retrieve_tracking(self.bucket, self.bucket_dir,
+                                    "./tests/resources/tracking.yaml",
+                                    skip=["bfo"])
+        self.assertTrue(mock_boto.called)
+        vlist = retrieve_tracking(self.bucket, self.bucket_dir,
+                                    "./tests/resources/tracking.yaml",
+                                    get_only=["bfo"])
+        self.assertTrue(mock_boto.called)
+
     def test_write_stats(self):
         write_stats(self.stats)
         with open(self.stats_path) as statsfile:
@@ -32,6 +40,7 @@ class TestStats(TestCase):
     def test_get_file_metadata(self, mock_boto):
         mlist = get_file_metadata(self.bucket, self.bucket_dir, 
                                     self.versions)
+        self.assertTrue(len(mlist)==0) #This mock bucket is empty.
         self.assertTrue(mock_boto.called)
 
     # Incomplete while the function is incomplete
