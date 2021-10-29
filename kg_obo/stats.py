@@ -94,9 +94,7 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
 
     pager = client.get_paginator('list_objects_v2')
 
-    names = []
-    for entry in versions:
-        names.append(entry["Name"])
+    names = [entry["Name"] for entry in versions]
 
     remote_files = [] # All file keys
     try:
