@@ -199,7 +199,7 @@ def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
             entry.update(metadata[name][version])
             step = "graph details"
             entry.update(graph_details[name][version])
-        except KeyError as e: #Some entries still won't have metadata
+        except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
             continue
 
