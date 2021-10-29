@@ -2,10 +2,11 @@ from unittest import TestCase, mock
 import botocore.exceptions
 
 from kg_obo.upload import upload_dir_to_s3, mock_upload_dir_to_s3, \
-                           check_tracking, mock_check_tracking, \
-                           check_lock, mock_check_lock, \
-                           set_lock, mock_set_lock, \
-                           update_index_files, mock_update_index_files
+                            check_tracking, mock_check_tracking, \
+                            check_lock, mock_check_lock, \
+                            set_lock, mock_set_lock, \
+                            update_index_files, mock_update_index_files, \
+                            verify_uploads
 
 class TestUploadDirToS3(TestCase):
 
@@ -15,17 +16,22 @@ class TestUploadDirToS3(TestCase):
         self.bucket = "my_bucket"
         self.bucket_dir = "remote_dir"
         self.data_dir = "data"
+        self.filelist = ['tsv_transform.log', 'obo_kgx.json', 
+                        'json_transform.log', 'obo_kgx_tsv.tar.gz']
+        self.name = "obo"
 
     @mock.patch('boto3.client')
     def test_upload_dir_to_s3(self, mock_boto):
-        upload_dir_to_s3(self.local_dir, self.bucket, self.bucket_dir)
+        filelist = upload_dir_to_s3(self.local_dir, self.bucket, self.bucket_dir)
         self.assertTrue(mock_boto.called)
+        self.assertEqual(filelist, []) #Will be true because the directory is empty
 
     # This is essentially testing a test
     @mock.patch('boto3.client')
     def test_mock_upload_dir_to_s3(self, mock_boto):
-        mock_upload_dir_to_s3(self.local_dir, self.bucket, self.bucket_dir)
+        filelist = mock_upload_dir_to_s3(self.local_dir, self.bucket, self.bucket_dir)
         self.assertTrue(mock_boto.called)
+        self.assertEqual(filelist, []) #Will be true because the directory is empty
 
     @mock.patch('boto3.client')
     def test_check_tracking(self, mock_boto):
@@ -78,3 +84,9 @@ class TestUploadDirToS3(TestCase):
         mock_update_index_files(self.bucket, self.bucket_dir, self.data_dir,
                             update_root=True)
         self.assertTrue(mock_boto.called)
+
+    def test_verify_uploads(self):
+        self.assertTrue(verify_uploads(self.filelist, self.name))
+        wrong_filelist = ['tsv_transform.log', 'obo_kgx.json.gz', 
+                        'json_transform.log', 'obo_tsv.tar.gz']
+        self.assertFalse(verify_uploads(wrong_filelist, self.name))

@@ -6,6 +6,8 @@ import logging
 from time import time
 
 IFILENAME = "index.html"
+EXPECTED_UPLOADS = ['tsv_transform.log', '{}_kgx.json', 
+                    'json_transform.log', '{}_kgx_tsv.tar.gz']
 
 def check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     """
@@ -90,20 +92,24 @@ def set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
 
 
 def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
-                     make_public=False) -> None:
+                     make_public=False) -> list:
     """
     Upload a local directory to a specified AWS S3 bucket.
+    Returns list of files processed, whether they're uploaded or not.
     :param local_directory: str name of directory to upload
     :param s3_bucket: str ID of the bucket to upload to
     :param s3_bucket_dir: str of name of directory to create on S3
+    :return: list of uploaded files
     """
+
+    filelist = []
 
     client = boto3.client('s3')
     for root, dirs, files in os.walk(local_directory):
 
         for filename in files:
             local_path = os.path.join(root, filename)
-
+            filelist.append(filename)
             # construct the full path
             relative_path = os.path.relpath(local_path, local_directory)
             s3_path = os.path.join(s3_bucket_dir, relative_path)
@@ -120,8 +126,11 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                     extra_args['ACL'] = 'public-read'
                 logging.info(f"Uploading {s3_path}")
                 client.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
+                
             except botocore.exceptions.ParamValidationError as e: #Raised when bucket ID is wrong
                 print(e)
+
+    return filelist
 
 @mock_s3
 def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
@@ -230,13 +239,15 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
 
 @mock_s3
 def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
-                     make_public=False) -> None:
+                     make_public=False) -> list:
     """
     Mock the upload of a local directory to a specified AWS S3 bucket.
     Though this is a test, it is here so it may be more easily called through command options.
+    Returns list of files processed, whether they're uploaded or not.
     :param local_directory: str name of directory to upload
     :param s3_bucket: str ID of the bucket to upload to
     :param s3_bucket_dir: str of name of directory to create on S3
+    :return: list of uploaded files
     """
 
     print(f"Mock uploading to {s3_bucket_dir} on {s3_bucket}")
@@ -244,10 +255,12 @@ def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: s
     conn = boto3.resource('s3', region_name='us-east-1')
     conn.create_bucket(Bucket=s3_bucket)
 
-    upload_dir_to_s3(local_directory, s3_bucket, s3_bucket_dir, make_public)
+    filelist = upload_dir_to_s3(local_directory, s3_bucket, s3_bucket_dir, make_public)
 
     for bucket_object in conn.Bucket(s3_bucket).objects.all():
         print(bucket_object.key)
+
+    return filelist
 
 
 def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False, existing_client=None) -> bool:
@@ -396,5 +409,20 @@ def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update
         client.put_object(Bucket=bucket, Key=filename)
     
     success = update_index_files(bucket, remote_path, data_dir, update_root, existing_client=client)
+
+    return success
+
+def verify_uploads(filelist: list, name: str) -> bool:
+    """
+    Checks a list of files to ensure they match expected file name patterns.
+    :param filelist: the list of files to verify
+    :param name: the short name of an ontology, to be included in some filenames
+    :return: bool returns True if all files match expected patterns 
+    """
+    success = True
+
+    for pattern in EXPECTED_UPLOADS:
+        if pattern not in filelist and pattern.format(name) not in filelist:
+            success = False
 
     return success
