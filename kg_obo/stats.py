@@ -114,8 +114,6 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
 
-    print(metadata)
-
     # Clean up the keys so they're indexable
     for entry in metadata:
         name = (entry.split("/"))[1]
@@ -163,7 +161,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     return graph_details
 
-def get_graph_stats(skip: list = [], get_only: list = [], bucket="bucket"):
+def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket"):
     """
     Get graph statistics for all specified OBOs.
     :param skip: list of OBOs to skip, by ID
