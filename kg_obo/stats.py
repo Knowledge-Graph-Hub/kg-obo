@@ -9,7 +9,7 @@ import tarfile
 
 import kg_obo.upload
 
-from ensmallen import Graph
+from ensmallen import Graph # type: ignore
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log"]
@@ -182,7 +182,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     # Get the list of file keys first so we refer back for downloads
     metadata = get_file_list(bucket, remote_path, versions)
-    clean_metadata = {}
+    clean_metadata = {} # type: ignore
 
     # Clean up the metadata dict so we can index it
     for entry in metadata:
