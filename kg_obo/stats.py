@@ -5,8 +5,11 @@ import os
 import yaml # type: ignore
 import boto3 # type: ignore
 from importlib import import_module
+import tarfile
 
 import kg_obo.upload
+
+from ensmallen import Graph
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log"]
@@ -74,29 +77,24 @@ def write_stats(stats) -> None:
     
     print(f"Wrote to {outpath}")
 
-def get_file_metadata(bucket, remote_path, versions) -> dict:
+def get_file_list(bucket, remote_path, versions) -> dict:
     """
     Given a list of dicts of OBO names and versions,
-    retrieve their metadata from the remote.
-    For now this only obtains the time each file was last modified.
-    (This treats the JSON output identically to the TSV.)
+    retrieve the list of all matching keys from the remote.
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
     :param versions: list of dicts returned from retrieve_tracking
-    :return: dict of dicts, with OBO names as 1ary keys, versions and file formats as 
-            2ary keys, and metadata as key-value pairs
+    :return: dict of OBO keys and formats
     """
 
     metadata = {}
-    clean_metadata = {} # type: ignore
+    remote_files = [] # All file keys
 
     client = boto3.client('s3')
-
     pager = client.get_paginator('list_objects_v2')
 
     names = [entry["Name"] for entry in versions]
 
-    remote_files = [] # All file keys
     try:
         for page in pager.paginate(Bucket=bucket, Prefix=remote_path+"/"):
             remote_contents = page['Contents']
@@ -110,9 +108,28 @@ def get_file_metadata(bucket, remote_path, versions) -> dict:
                         metadata[key['Key']]["Format"] = "TSV"
                     elif key['Key'].endswith(".json"):
                         metadata[key['Key']]["Format"] = "JSON"
-        print(f"Found {len(remote_files)} matching objects in {remote_path}.")
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
+
+    return metadata
+
+def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
+    """
+    Given a list of dicts of OBO names and versions,
+    retrieve their metadata from the remote.
+    For now this obtains the time each file was last modified.
+    Retrieving the remote file list is done by a get_file_list.
+    :param bucket: str of S3 bucket, to be specified as argument
+    :param remote_path: str of remote directory to start from
+    :param versions: list of dicts returned from retrieve_tracking
+    :return: dict of dicts, with OBO names as 1ary keys, versions and file formats as 
+            2ary keys, and metadata as key-value pairs
+    """
+
+    metadata = {}
+    clean_metadata = {} # type: ignore
+
+    metadata = get_file_list(bucket, remote_path, versions)
 
     # Clean up the keys so they're indexable
     for entry in metadata:
@@ -134,10 +151,19 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
     get details about their graph structure:
     node count, edge count, component count, and
     count of singletons.
-    This is version-dependent.
+    This is version-dependent; each version has its own
+    details.
 
     This function relies upon grape/ensmallen,
     as it works very nicely with kg-obo's graphs.
+
+    Graph stats are:
+      Nodes: node count
+      Edges: edge count
+      ConnectedComponents: triple of (number of components, 
+        number of nodes of the smallest component, and
+        number of nodes of the biggest component)
+      Singletons: count of singleton nodes
 
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
@@ -146,18 +172,78 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 and metadata as key-value pairs
     """
 
-    # Currently blocked by broken links in ensmallen
-    # but could also do downloads here and manually load from tsv
+    #TODO: use the ensmallen automatic loading, for Maximum Speed
+
+    client = boto3.client('s3')
+
+    data_dir = "./data/"
 
     graph_details = {} # type: ignore
 
-    names = []
-    for entry in versions:
-        names.append(entry["Name"].upper())
+    # Get the list of file keys first so we refer back for downloads
+    metadata = get_file_list(bucket, remote_path, versions)
+    clean_metadata = {}
 
-    #for name in names:
-    #    print(name)
-    #    obo_graph = import_module(name,package="ensmallen.datasets.kgobo")
+    # Clean up the metadata dict so we can index it
+    for entry in metadata:
+        name = (entry.split("/"))[1]
+        version = (entry.split("/"))[2]
+        if name in clean_metadata and version in clean_metadata[name]:
+            clean_metadata[name][version]["path"] = entry
+        elif name in clean_metadata and version not in clean_metadata[name]:
+            clean_metadata[name][version] = {"path":""}
+        else:
+            clean_metadata[name] = {version:{"path":""}}
+
+    # TODO: simplify
+
+    for entry in clean_metadata:
+        for version in clean_metadata[entry]:
+            print(f"Downloading {entry}, version {version} from KG-OBO.")
+            outdir = os.path.join(data_dir,entry,version)
+            outpath = os.path.join(outdir,"graph.tar.gz")
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+
+            client.download_file(bucket, 
+                                clean_metadata[entry][version]['path'],
+                                outpath)
+
+            graph_file = tarfile.open(outpath, "r:gz")
+            graph_file.extractall(outdir)
+            graph_file.close()
+
+            edges_path = os.path.join(outdir,f"{entry}_kgx_tsv_edges.tsv")
+            nodes_path = os.path.join(outdir,f"{entry}_kgx_tsv_nodes.tsv")
+            
+            g = Graph.from_csv(name=f"{entry}_version_{version}",
+                                edge_path=edges_path,
+                                sources_column="subject",
+                                destinations_column="object",
+                                edge_list_header = True,
+                                edge_list_separator="\t",
+                                node_path = nodes_path,
+                                nodes_column = "id",
+                                node_list_header = True,
+                                node_list_separator="\t",
+                                directed =False,
+                                verbose=True
+                                )
+            
+            node_count = g.get_nodes_number()
+            edge_count = g.get_edges_number()
+            connected_components = g.get_connected_components_number()
+            singleton_count = g.get_singleton_nodes_number()
+
+            graph_stats = {"Nodes":node_count,
+                            "Edges":edge_count,
+                            "ConnectedComponents":connected_components,
+                            "Singletons":singleton_count}
+        
+            if entry in graph_details: # i.e., we have >1 version
+                graph_details[entry][version] = graph_stats
+            else:
+                graph_details[entry] = {version:graph_stats}
 
     return graph_details
 
@@ -194,7 +280,8 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket"):
                                  skip, get_only)
 
     # Get metadata from remote files
-    metadata = get_file_metadata(bucket, "kg-obo", versions)
+    print("Retrieving file metadata.")
+    clean_metadata = get_clean_file_metadata(bucket, "kg-obo", versions)
 
     # Get graph details
     graph_details = get_graph_details(bucket, "kg-obo", versions)
@@ -206,9 +293,9 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket"):
             version = entry["Version"]
             file_format = entry["Format"] #Just a placeholder initially
             step = "metadata"
-            entry.update(metadata[name][version][file_format])
+            entry.update(clean_metadata[name][version][file_format])
             step = "graph details"
-            entry.update(graph_details[name][version][file_format])
+            entry.update(graph_details[name][version])
         except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
             continue
