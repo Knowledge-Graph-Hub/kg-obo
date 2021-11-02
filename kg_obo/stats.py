@@ -2,6 +2,7 @@
 
 import csv
 import os
+import sys
 import yaml # type: ignore
 import boto3 # type: ignore
 from importlib import import_module
@@ -209,10 +210,15 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                                 clean_metadata[entry][version]['path'],
                                 outpath)
 
+            # Decompress, verifying that we just have two files
             graph_file = tarfile.open(outpath, "r:gz")
+            i = 0
             for tarmember in graph_file.getmembers():
                 if "_kgx_tsv_" in tarmember.name:
                     graph_file.extract(tarmember, outdir)
+                    i = i+1
+                if i > 2:
+                    sys.exit(f"Compressed graph file for {entry} {version} contains unexpected members!")
             graph_file.close()
 
             edges_path = os.path.join(outdir,f"{entry}_kgx_tsv_edges.tsv")
