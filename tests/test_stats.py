@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 from unittest.mock import Mock
 
 from kg_obo.stats import retrieve_tracking, write_stats, get_clean_file_metadata, \
-                            get_graph_details, get_all_stats
+                            get_graph_details, get_file_list, get_all_stats
                             
 class TestStats(TestCase):
 
@@ -47,12 +47,22 @@ class TestStats(TestCase):
     def test_get_graph_details(self, mock_boto):
         glist = get_graph_details(self.bucket, self.bucket_dir, 
                                     self.versions)
-        #self.assertTrue(len(glist)==0) #This mock bucket is empty.
+        self.assertTrue(mock_boto.called)
+
+    @mock.patch('boto3.client')   
+    def test_get_file_list(self, mock_boto):
+        flist = get_file_list(self.bucket, self.bucket_dir, 
+                                    self.versions)
+        self.assertTrue(len(flist)==0) #This mock bucket is empty.
         self.assertTrue(mock_boto.called)
 
     @mock.patch('boto3.client')
     @mock.patch('kg_obo.stats.retrieve_tracking')
     def test_get_all_stats(self, mock_boto, mock_retrieve_tracking):
-        get_all_stats()
+        get_all_stats(save_local=True)
+        self.assertTrue(mock_boto.called)
+        get_all_stats(skip=["bfo"])
+        self.assertTrue(mock_boto.called)
+        get_all_stats(get_only=["bfo"])
         self.assertTrue(mock_boto.called)
 
