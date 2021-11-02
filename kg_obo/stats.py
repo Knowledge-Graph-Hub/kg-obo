@@ -6,6 +6,7 @@ import yaml # type: ignore
 import boto3 # type: ignore
 from importlib import import_module
 import tarfile
+import shutil
 
 import kg_obo.upload
 
@@ -14,6 +15,7 @@ from ensmallen import Graph # type: ignore
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log"]
 FORMATS = ["TSV","JSON"]
+DATA_DIR = "./data/"
 
 def retrieve_tracking(bucket, track_file_remote_path,
                         track_file_local_path: str = "./stats/tracking.yaml",
@@ -176,8 +178,6 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     client = boto3.client('s3')
 
-    data_dir = "./data/"
-
     graph_details = {} # type: ignore
 
     # Get the list of file keys first so we refer back for downloads
@@ -200,7 +200,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
     for entry in clean_metadata:
         for version in clean_metadata[entry]:
             print(f"Downloading {entry}, version {version} from KG-OBO.")
-            outdir = os.path.join(data_dir,entry,version)
+            outdir = os.path.join(DATA_DIR,entry,version)
             outpath = os.path.join(outdir,"graph.tar.gz")
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
@@ -247,12 +247,14 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     return graph_details
 
-def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket"):
+def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
+                    save_local = False):
     """
     Get graph statistics for all specified OBOs.
     :param skip: list of OBOs to skip, by ID
     :param get_only: list of OBOs to retrieve, by ID (otherwise do all)
     :param bucket: str of S3 bucket, to be specified as argument
+    :param save_local: if True, retains all downloaded files. Deletes them otherwise.
     :return: boolean indicating success or existing run encountered (False for unresolved error)
     """
     success = True
@@ -299,6 +301,11 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket"):
         except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
             continue
+            # Remove all local data files
+        if not save_local:
+            outdir = os.path.join(DATA_DIR,entry["Name"])
+            if os.path.isdir(outdir):
+                shutil.rmtree(outdir)
 
     # Time to write
     write_stats(versions)

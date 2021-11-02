@@ -21,9 +21,13 @@ from kg_obo.stats import get_all_stats
                required=True,
                nargs=1,
                help="""The name of the AWS S3 bucket to retrieve nodes/edges from.""")
-def run(skip, get_only, bucket):
+@click.option("--save_local",
+               is_flag=True,
+               help="""If used, keeps all downloaded graph files.
+                     Otherwise, they are deleted.""")
+def run(skip, get_only, bucket, save_local):
     try:
-        if get_all_stats(skip, get_only, bucket): 
+        if get_all_stats(skip, get_only, bucket, save_local): 
             print("Operation completed without errors.")
         else:
             print("Operation did not complete successfully.")
