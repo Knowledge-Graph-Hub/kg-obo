@@ -148,6 +148,32 @@ def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
 
     return clean_metadata
 
+def decompress_graph(name, outpath) -> tuple:
+    """
+    Decompresses a graph file to its node and edgelists.
+    Assumes there is a single tar.gz file in the provided dir.
+    :param name: name to assign the prefix of the output files
+    :param outpath: path to the compressed graph file
+    :return: tuple of path of edgelist, path of nodelist
+    """
+
+    graph_file = tarfile.open(outpath, "r:gz")
+    outdir = os.path.dirname(outpath)
+
+    i = 0
+    for tarmember in graph_file.getmembers():
+        if "_kgx_tsv_" in tarmember.name:
+            graph_file.extract(tarmember, outdir)
+            i = i+1
+        if i > 2:
+            sys.exit(f"Compressed graph file contains unexpected members!")
+    graph_file.close()
+
+    edges_path = os.path.join(outdir,f"{name}_kgx_tsv_edges.tsv")
+    nodes_path = os.path.join(outdir,f"{name}_kgx_tsv_nodes.tsv")
+
+    return (edges_path, nodes_path)
+
 def get_graph_details(bucket, remote_path, versions) -> dict:
     """
     Given a list of dicts of OBO names and versions,
@@ -196,33 +222,20 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
         else:
             clean_metadata[name] = {version:{"path":""}}
 
-    # TODO: simplify
-
     for entry in clean_metadata:
+        os.mkdir(os.path.join(DATA_DIR,entry))
         for version in clean_metadata[entry]:
             print(f"Downloading {entry}, version {version} from KG-OBO.")
             outdir = os.path.join(DATA_DIR,entry,version)
             outpath = os.path.join(outdir,"graph.tar.gz")
-            if not os.path.exists(outdir):
-                os.makedirs(outdir)
+            os.mkdir(outdir)
 
             client.download_file(bucket, 
                                 clean_metadata[entry][version]['path'],
                                 outpath)
 
-            # Decompress, verifying that we just have two files
-            graph_file = tarfile.open(outpath, "r:gz")
-            i = 0
-            for tarmember in graph_file.getmembers():
-                if "_kgx_tsv_" in tarmember.name:
-                    graph_file.extract(tarmember, outdir)
-                    i = i+1
-                if i > 2:
-                    sys.exit(f"Compressed graph file for {entry} {version} contains unexpected members!")
-            graph_file.close()
-
-            edges_path = os.path.join(outdir,f"{entry}_kgx_tsv_edges.tsv")
-            nodes_path = os.path.join(outdir,f"{entry}_kgx_tsv_nodes.tsv")
+            # Decompress
+            edges_path, nodes_path = decompress_graph(entry, outpath)
             
             g = Graph.from_csv(name=f"{entry}_version_{version}",
                                 edge_path=edges_path,
