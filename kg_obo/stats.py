@@ -210,7 +210,9 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                                 outpath)
 
             graph_file = tarfile.open(outpath, "r:gz")
-            graph_file.extractall(outdir)
+            for tarmember in graph_file.getmembers():
+                if "_kgx_tsv_" in tarmember.name:
+                    graph_file.extract(tarmember, outdir)
             graph_file.close()
 
             edges_path = os.path.join(outdir,f"{entry}_kgx_tsv_edges.tsv")
