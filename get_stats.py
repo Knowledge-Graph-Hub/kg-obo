@@ -27,6 +27,10 @@ from kg_obo.stats import get_all_stats
                      Otherwise, they are deleted.""")
 def run(skip, get_only, bucket, save_local):
     try:
+        if len(skip) >0:
+            print(f"Ignoring these OBOs: {skip}" )
+        if len(get_only) >0:
+            print(f"Will only retrieve these OBOs: {get_only}" ) 
         if get_all_stats(skip, get_only, bucket, save_local): 
             print("Operation completed without errors.")
         else:

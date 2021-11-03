@@ -396,11 +396,6 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
 
     track_file_remote_path = "kg-obo/tracking.yaml"
 
-    if len(skip) >0:
-      print(f"Ignoring these OBOs: {skip}" )
-    if len(get_only) >0:
-       print(f"Will only retrieve these OBOs: {get_only}" ) 
-
     # Check for the tracking file first
     if not kg_obo.upload.check_tracking(bucket, track_file_remote_path):
         print("Cannot locate tracking file on remote storage. Exiting...")
