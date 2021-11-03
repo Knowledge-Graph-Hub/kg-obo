@@ -3,7 +3,8 @@ from unittest import TestCase, mock
 from unittest.mock import Mock
 
 from kg_obo.stats import retrieve_tracking, write_stats, get_clean_file_metadata, \
-                            get_graph_details, get_file_list, get_all_stats
+                            get_graph_details, get_file_list, get_all_stats, \
+                            decompress_graph
                             
 class TestStats(TestCase):
 
@@ -58,6 +59,13 @@ class TestStats(TestCase):
                                     self.versions)
         self.assertTrue(len(flist)==0) #This mock bucket is empty.
         self.assertTrue(mock_boto.called)
+
+    def test_decompress_graph(self):
+        tar_path = "./tests/resources/download_ontology/test_kgx_tsv.tar.gz"
+        edge_path = "./tests/resources/download_ontology/test_kgx_tsv_edges.tsv"
+        decompress_graph("test", tar_path)
+        with open(edge_path) as edgefile:
+            self.assertTrue(edgefile.read())
 
     #Without further mocking, buckets will look empty
     #so functions will quit early.
