@@ -306,6 +306,20 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     return graph_details
 
+def validate_version_name(version) -> bool:
+    """
+    Given an ontology version name, checks if it is all spaces,
+    poorly formatted, or contains other issues.
+    :param version: string of version name
+    :return: bool, True if version is valid, False if not
+    """
+    valid = True
+
+    if version in ["release","\n________"] or "%" in version:
+        valid = False
+
+    return valid
+
 def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                     save_local = False):
     """
@@ -350,6 +364,7 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
 
     # Now merge metadata into what we have from before
     for entry in versions:
+        issues = []
         try:
             name = entry["Name"]
             version = entry["Version"]
@@ -358,14 +373,19 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
             entry.update(clean_metadata[name][version][file_format])
             step = "graph details"
             entry.update(graph_details[name][version])
+
+            if not validate_version_name(version):
+                issues.append(f"Invalid version name")
+
             validations.append({"Name": name, "Version": version,
                                 "Format": file_format,
-                                "Issue": "OK"})
+                                "Issue": "|".join(issues)})
         except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
+            issues.append(f"Missing {step}")
             validations.append({"Name": name, "Version": version,
                                 "Format": file_format,
-                                "Issue": f"Missing {step}"})
+                                "Issue": "|".join(issues)})
             continue
         # Remove all local data files
         if not save_local:
