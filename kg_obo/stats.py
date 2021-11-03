@@ -149,6 +149,13 @@ def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
 
     metadata = get_file_list(bucket, remote_path, versions)
 
+    # Metadata will be empty if files don't exist for some reason,
+    # or if the specified OBO name doesn't exist.
+    # Will still continue if any OBO files can be found,
+    # and will simply ignore the missing ones.
+    if len(metadata) == 0:
+        sys.exit("Could not find OBO files on remote - please check names.")
+
     # Clean up the keys so they're indexable
     for entry in metadata:
         name = (entry.split("/"))[1]
