@@ -346,17 +346,8 @@ def compare_versions(entry, versions) -> dict:
                 new_versions[i]['LastModified'] == entry['LastModified']:
                 del new_versions[i]
                 break
-    except KeyError:
-        pass
-
-    try:
+    
         for other_entry in new_versions:
-            # Check for duplicate version names
-            if other_entry['Name'] == entry['Name'] and \
-                other_entry['Format'] == entry['Format'] and \
-                    other_entry['Version'] == entry['Version'] and \
-                        other_entry['LastModified'] == entry['LastModified']:
-                compare["Identical"].append(other_entry['Version'])
             # Check other versions to see if they're identical or v. different in size
             if other_entry['Name'] == entry['Name'] and \
                 other_entry['Format'] == entry['Format'] and \
@@ -414,6 +405,10 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
 
     # Get graph details
     graph_details = get_graph_details(bucket, "kg-obo", versions)
+
+    # TODO: Logic below isn't quite right - need to do validations
+    # after all data population to be comprehensive
+    # Still works this way, mostly
 
     # Now merge metadata into what we have from before
     for entry in versions:
