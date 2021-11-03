@@ -51,16 +51,31 @@ def retrieve_tracking(bucket, track_file_remote_path,
         if len(get_only) > 0 and name not in get_only:
             continue
         current_version = tracking["ontologies"][name]["current_version"]
-        for file_format in FORMATS:
-            versions.append({"Name": name, "Version": current_version, "Format": file_format})
+        add_all_formats(versions, name, current_version)
         # See if there are archived versions
         if "archive" in tracking["ontologies"][name]:
             for entry in tracking["ontologies"][name]["archive"]:
                 archive_version = entry["version"]
-                for file_format in FORMATS:
-                    versions.append({"Name": name, "Version": archive_version, "Format": file_format})
+                add_all_formats(versions, name, archive_version)
             
     return versions
+
+def add_all_formats(inlist, name, version) -> list:
+    """
+    Given a list of dicts of the form produced by retrieve_tracking,
+    adds a new name and version in all extant file formats.
+    :param inlist: list of dicts
+    :param name: value for Name
+    :param version: value for Version
+    :return: list with new dict entries added
+    """
+
+    for file_format in FORMATS:
+        inlist.append({"Name": name, 
+                        "Version": version, 
+                        "Format": file_format})
+
+    return inlist
 
 def write_stats(stats) -> None:
     """
