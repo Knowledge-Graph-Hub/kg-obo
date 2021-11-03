@@ -8,7 +8,7 @@ import boto3 # type: ignore
 from importlib import import_module
 import tarfile
 import shutil
-from typing import List
+from typing import List, Dict
 
 import kg_obo.upload
 
@@ -321,6 +321,52 @@ def validate_version_name(version) -> bool:
 
     return valid
 
+def compare_versions(entry, versions) -> dict:
+    """
+    Given an entry from the full set of versions,
+    compare it to other versions of the same OBO name.
+    :param entry: dict of single OBO entry
+    :param versions: dict of all versions, with added graph details
+    :return: dict of identical versions by size, 
+            or versions with >50% increase/decrease in file size
+    """
+
+    compare: Dict[str, list] = {"Identical":[],"Large Difference":[]}
+
+    # Duplicate the versions and remove target entry
+    new_versions = versions.copy()
+    try:
+        for i in range(len(new_versions)):
+            if new_versions[i]['Name'] == entry['Name'] and \
+                new_versions[i]['Version'] == entry['Version'] and \
+                new_versions[i]['LastModified'] == entry['LastModified']:
+                del new_versions[i]
+                break
+    except KeyError:
+        pass
+
+    try:
+        for other_entry in new_versions:
+            # Check for duplicate version names
+            if other_entry['Name'] == entry['Name'] and \
+                other_entry['Format'] == entry['Format'] and \
+                    other_entry['Version'] == entry['Version'] and \
+                        other_entry['LastModified'] == entry['LastModified']:
+                compare["Identical"].append(other_entry['Version'])
+            # Check other versions to see if they're identical or v. different in size
+            if other_entry['Name'] == entry['Name'] and \
+                other_entry['Format'] == entry['Format'] and \
+                    other_entry['Version'] != entry['Version']:
+                size_diff = abs(entry['Size'] / other_entry['Size'])
+                if other_entry['Size'] == entry['Size']:
+                    compare["Identical"].append(other_entry['Version'])
+                elif size_diff < 0.5 or size_diff > 1.5:
+                    compare["Large Difference"].append(other_entry['Version'])
+    except KeyError:
+        pass
+
+    return compare
+
 def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                     save_local = False):
     """
@@ -370,16 +416,27 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
             name = entry["Name"]
             version = entry["Version"]
             file_format = entry["Format"] #Just a placeholder initially
+
             step = "metadata"
             entry.update(clean_metadata[name][version][file_format])
+
             step = "graph details"
             entry.update(graph_details[name][version])
 
+            step = "validation"
             if not validate_version_name(version):
-                issues.append(f"Invalid version name")
+                issues.append("Invalid version name")
 
             if entry["Edges"] == 1:
-                issues.append(f"Single edge")
+                issues.append("Single edge")
+
+            compare = compare_versions(entry, versions)
+            identical_versions = compare["Identical"]
+            if len(identical_versions) > 0:
+                issues.append(f"Identical versions: {identical_versions}")
+            very_different_versions = compare["Large Difference"]
+            if len(very_different_versions) > 0:
+                issues.append(f"Large difference in size versus: {very_different_versions}")
 
             validations.append({"Name": name, "Version": version,
                                 "Format": file_format,
