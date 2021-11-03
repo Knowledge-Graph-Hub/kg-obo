@@ -180,7 +180,7 @@ def decompress_graph(name, outpath) -> tuple:
             lines = infile.readlines()
             if len(lines) < 2:
                 print(f"{filepath} looks empty!")
-                path_pair = (None, None)
+                path_pair = ("EMPTY", "EMPTY")
 
     return path_pair
 
@@ -246,8 +246,8 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
             # Decompress
             edges_path, nodes_path = decompress_graph(entry, outpath)
-            if not edges_path or not nodes_path: # Files are empty, unfortunately
-                continue
+            if edges_path == "EMPTY" or nodes_path == "EMPTY":
+                continue #Skip this one if the files are empty
             
             g = Graph.from_csv(name=f"{entry}_version_{version}",
                                 edge_path=edges_path,
