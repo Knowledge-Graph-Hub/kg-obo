@@ -32,7 +32,7 @@ class TestStats(TestCase):
         self.assertTrue(mock_boto.called)
 
     def test_write_stats(self):
-        write_stats(self.stats,"./test.tsv")
+        write_stats(self.stats,self.stats_path)
         with open(self.stats_path) as statsfile:
             self.assertTrue(statsfile.read())
 
