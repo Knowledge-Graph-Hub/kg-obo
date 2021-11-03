@@ -32,16 +32,19 @@ class TestStats(TestCase):
         self.assertTrue(mock_boto.called)
 
     def test_write_stats(self):
-        write_stats(self.stats)
+        write_stats(self.stats,"./test.tsv")
         with open(self.stats_path) as statsfile:
             self.assertTrue(statsfile.read())
 
+    #This mock bucket is empty, so function will exit.
     @mock.patch('boto3.client')    
     def test_get_clean_file_metadata(self, mock_boto):
-        mlist = get_clean_file_metadata(self.bucket, self.bucket_dir, 
+        with self.assertRaises(SystemExit) as e:
+            mlist = get_clean_file_metadata(self.bucket, self.bucket_dir, 
                                     self.versions)
-        self.assertTrue(len(mlist)==0) #This mock bucket is empty.
-        self.assertTrue(mock_boto.called)
+            self.assertTrue(len(mlist)==0) 
+            self.assertTrue(mock_boto.called)
+            assert e.type == SystemExit
 
     @mock.patch('boto3.client')  
     def test_get_graph_details(self, mock_boto):
@@ -56,13 +59,19 @@ class TestStats(TestCase):
         self.assertTrue(len(flist)==0) #This mock bucket is empty.
         self.assertTrue(mock_boto.called)
 
+    #Without further mocking, buckets will look empty
+    #so functions will quit early.
     @mock.patch('boto3.client')
     @mock.patch('kg_obo.stats.retrieve_tracking')
     def test_get_all_stats(self, mock_boto, mock_retrieve_tracking):
-        get_all_stats(save_local=True)
-        self.assertTrue(mock_boto.called)
-        get_all_stats(skip=["bfo"])
-        self.assertTrue(mock_boto.called)
-        get_all_stats(get_only=["bfo"])
-        self.assertTrue(mock_boto.called)
+        with self.assertRaises(SystemExit) as e:
+            get_all_stats(save_local=True)
+            assert e.type == SystemExit
+        with self.assertRaises(SystemExit) as e:
+            get_all_stats(skip=["bfo"])
+            assert e.type == SystemExit
+        with self.assertRaises(SystemExit) as e:
+            get_all_stats(get_only=["bfo"])
+            assert e.type == SystemExit
+
 
