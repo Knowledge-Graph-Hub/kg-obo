@@ -77,13 +77,11 @@ def add_all_formats(inlist, name, version) -> list:
 
     return inlist
 
-def write_stats(stats) -> None:
+def write_stats(stats, outpath) -> None:
     """
-    Writes OBO graph stats to tsv.
+    Writes OBO graph stats or validation file to tsv.
     :param stats: dict of stats in which keys are OBO names
     """
-
-    outpath = "stats/stats.tsv"
     columns = (stats[0]).keys()
 
     with open(outpath, 'w') as outfile:
@@ -341,6 +339,7 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     versions = retrieve_tracking(bucket, track_file_remote_path,
                                  "./stats/tracking.yaml",
                                  skip, get_only)
+    validations = []
 
     # Get metadata from remote files
     print("Retrieving file metadata.")
@@ -359,16 +358,24 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
             entry.update(clean_metadata[name][version][file_format])
             step = "graph details"
             entry.update(graph_details[name][version])
+            validations.append({"Name": name, "Version": version,
+                                "Format": file_format,
+                                "Issue": "OK"})
         except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
+            validations.append({"Name": name, "Version": version,
+                                "Format": file_format,
+                                "Issue": f"Missing {step}"})
             continue
-            # Remove all local data files
+        # Remove all local data files
         if not save_local:
             outdir = os.path.join(DATA_DIR,entry["Name"])
             if os.path.isdir(outdir):
                 shutil.rmtree(outdir)
 
     # Time to write
-    write_stats(versions)
+    for data, outpath in [(versions, "stats/stats.tsv"),
+                    (validations, "stats/validation.tsv")]:
+        write_stats(data, outpath)
 
     return success
