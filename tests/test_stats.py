@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from kg_obo.stats import retrieve_tracking, write_stats, get_clean_file_metadata, \
                             get_graph_details, get_file_list, get_all_stats, \
-                            decompress_graph
+                            decompress_graph, validate_version_name
                             
 class TestStats(TestCase):
 
@@ -66,6 +66,12 @@ class TestStats(TestCase):
         decompress_graph("test", tar_path)
         with open(edge_path) as edgefile:
             self.assertTrue(edgefile.read())
+
+    def test_validiate_version_name(self):
+        good_version = "2020-10-15"
+        bad_version = "release"
+        self.assertTrue(validate_version_name(good_version))
+        self.assertFalse(validate_version_name(bad_version))
 
     #Without further mocking, buckets will look empty
     #so functions will quit early.
