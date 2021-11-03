@@ -202,7 +202,7 @@ def decompress_graph(name, outpath) -> tuple:
             lines = infile.readlines()
             if len(lines) < 2:
                 print(f"{filepath} looks empty!")
-                path_pair = None
+                path_pair = None # type: ignore
 
     return path_pair
 
