@@ -378,6 +378,9 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
             if not validate_version_name(version):
                 issues.append(f"Invalid version name")
 
+            if entry["Edges"] == 1:
+                issues.append(f"Single edge")
+
             validations.append({"Name": name, "Version": version,
                                 "Format": file_format,
                                 "Issue": "|".join(issues)})
