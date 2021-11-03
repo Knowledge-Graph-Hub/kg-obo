@@ -225,6 +225,8 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
         number of nodes of the smallest component, and
         number of nodes of the biggest component)
       Singletons: count of singleton nodes
+      MaxNodeDegree: degree value of node with largest degree
+      MeanNodeDegree: (unweighted) mean node degree for the graph
 
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
@@ -289,11 +291,15 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
             edge_count = g.get_edges_number()
             connected_components = g.get_connected_components_number()
             singleton_count = g.get_singleton_nodes_number()
+            max_node_degree = g.get_maximum_node_degree()
+            mean_node_degree = g.get_node_degrees_mean() 
 
             graph_stats = {"Nodes":node_count,
                             "Edges":edge_count,
                             "ConnectedComponents":connected_components,
-                            "Singletons":singleton_count}
+                            "Singletons":singleton_count,
+                            "MaxNodeDegree": max_node_degree,
+                            "MeanNodeDegree": "{:.2f}".format(mean_node_degree)}
         
             if entry in graph_details: # i.e., we have >1 version
                 graph_details[entry][version] = graph_stats
