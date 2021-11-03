@@ -188,20 +188,21 @@ def decompress_graph(name, outpath) -> tuple:
             graph_file.extract(tarmember, outdir)
             i = i+1
         if i > 2:
+            cleanup(name)
             sys.exit(f"Compressed graph file contains unexpected members!")
     graph_file.close()
 
     edges_path = os.path.join(outdir,f"{name}_kgx_tsv_edges.tsv")
     nodes_path = os.path.join(outdir,f"{name}_kgx_tsv_nodes.tsv")
 
-    path_pair = (edges_path, nodes_path)
+    path_pair = (edges_path, nodes_path) # type: ignore
 
     for filepath in path_pair: # Verify the files aren't empty
         with open(filepath, "r") as infile:
             lines = infile.readlines()
             if len(lines) < 2:
                 print(f"{filepath} looks empty!")
-                path_pair = ("EMPTY", "EMPTY")
+                path_pair = None
 
     return path_pair
 
@@ -268,9 +269,12 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                                 outpath)
 
             # Decompress
-            edges_path, nodes_path = decompress_graph(entry, outpath)
-            if edges_path == "EMPTY" or nodes_path == "EMPTY":
+            path_pair = decompress_graph(entry, outpath)
+            if not path_pair:
                 continue #Skip this one if the files are empty
+            else:
+                edges_path, nodes_path = path_pair
+                
             
             g = Graph.from_csv(name=f"{entry}_version_{version}",
                                 edge_path=edges_path,
@@ -360,12 +364,23 @@ def compare_versions(entry, versions) -> dict:
                 size_diff = abs(entry['Size'] / other_entry['Size'])
                 if other_entry['Size'] == entry['Size']:
                     compare["Identical"].append(other_entry['Version'])
-                elif size_diff < 0.5 or size_diff > 1.5:
+                elif not 0.5 <= size_diff <= 1.5:
                     compare["Large Difference"].append(other_entry['Version'])
     except KeyError:
         pass
 
     return compare
+
+def cleanup(dir) -> None:
+    """
+    Removes files for a given OBO from the data directory.
+    :param dir: str for name of the directory
+    """
+
+    outdir = os.path.join(DATA_DIR,dir)
+    if os.path.isdir(outdir):
+        shutil.rmtree(outdir)
+
 
 def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                     save_local = False):
@@ -448,15 +463,13 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                                 "Format": file_format,
                                 "Issue": "|".join(issues)})
             continue
-        # Remove all local data files
+
+        # Clean up local data files
         if not save_local:
-            outdir = os.path.join(DATA_DIR,entry["Name"])
-            if os.path.isdir(outdir):
-                shutil.rmtree(outdir)
+            cleanup(entry["Name"])
 
     # Time to write
-    for data, outpath in [(versions, "stats/stats.tsv"),
-                    (validations, "stats/validation.tsv")]:
-        write_stats(data, outpath)
+    write_stats(versions, "stats/stats.tsv")
+    write_stats(validations, "stats/validation.tsv")
 
     return success
