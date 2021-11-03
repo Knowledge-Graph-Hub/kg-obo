@@ -401,10 +401,6 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     if len(get_only) >0:
        print(f"Will only retrieve these OBOs: {get_only}" ) 
 
-    # Set up local directories
-    if not os.path.exists("./stats/"):
-        os.mkdir("stats")
-
     # Check for the tracking file first
     if not kg_obo.upload.check_tracking(bucket, track_file_remote_path):
         print("Cannot locate tracking file on remote storage. Exiting...")

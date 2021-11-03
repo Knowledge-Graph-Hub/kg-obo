@@ -15,4 +15,3 @@ sphinx/_templates/
 sphinx/_static/
 *.pyc
 robot*
-stats/*
