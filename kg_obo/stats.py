@@ -8,6 +8,7 @@ import boto3 # type: ignore
 from importlib import import_module
 import tarfile
 import shutil
+from typing import List
 
 import kg_obo.upload
 
@@ -35,7 +36,7 @@ def retrieve_tracking(bucket, track_file_remote_path,
     # We'll get a list of dicts so it's nicely iterable
     # Name isn't primary key as it may have multiple versions
     # So each OBO name + version is its own list entry
-    versions = [] 
+    versions: List[dict]  = []
 
     client = boto3.client('s3')
 
