@@ -6,7 +6,7 @@ from kg_obo.upload import upload_dir_to_s3, mock_upload_dir_to_s3, \
                             check_lock, mock_check_lock, \
                             set_lock, mock_set_lock, \
                             update_index_files, mock_update_index_files, \
-                            verify_uploads
+                            verify_uploads, upload_reports
 
 class TestUploadDirToS3(TestCase):
 
@@ -90,3 +90,8 @@ class TestUploadDirToS3(TestCase):
         wrong_filelist = ['tsv_transform.log', 'obo_kgx.json.gz', 
                         'json_transform.log', 'obo_tsv.tar.gz']
         self.assertFalse(verify_uploads(wrong_filelist, self.name))
+
+    @mock.patch('boto3.client')
+    def test_upload_reports(self, mock_boto):
+        upload_reports(self.bucket)
+        self.assertTrue(mock_boto.called)
