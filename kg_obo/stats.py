@@ -258,12 +258,18 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
             clean_metadata[name] = {version:{"path":""}}
 
     for entry in clean_metadata:
-        os.mkdir(os.path.join(DATA_DIR,entry))
+        try:
+            os.mkdir(os.path.join(DATA_DIR,entry))
+        except FileExistsError: #If folder exists, don't need to make it.
+            pass
         for version in clean_metadata[entry]:
             print(f"Downloading {entry}, version {version} from KG-OBO.")
             outdir = os.path.join(DATA_DIR,entry,version)
             outpath = os.path.join(outdir,"graph.tar.gz")
-            os.mkdir(outdir)
+            try:
+                os.mkdir(outdir)
+            except FileExistsError: #If folder exists, don't need to make it.
+                pass
 
             client.download_file(bucket, 
                                 clean_metadata[entry][version]['path'],
