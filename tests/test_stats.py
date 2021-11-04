@@ -1,10 +1,13 @@
 import os
 from unittest import TestCase, mock
 from unittest.mock import Mock
+import datetime
+from dateutil.tz import tzutc
 
 from kg_obo.stats import retrieve_tracking, write_stats, get_clean_file_metadata, \
                             get_graph_details, get_file_list, get_all_stats, \
-                            decompress_graph, validate_version_name
+                            decompress_graph, validate_version_name, \
+                            compare_versions, cleanup
                             
 class TestStats(TestCase):
 
@@ -14,8 +17,38 @@ class TestStats(TestCase):
         self.stats_path = "stats/stats.tsv"
         self.stats = [{"Test1": "A", "Test2": "B"},
                         {"Test1": "C", "Test2": "D"}]
-        self.versions = [{"Name": "Foo", "Version": "1"},
-                        {"Name": "Bar", "Version": "2"}]
+        self.entry = {'Name': 'bfo', 
+                        'Version': '2019-08-26', 
+                        'Format': 'TSV', 'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                        'Size': 17251, 
+                        'Nodes': 73, 
+                        'Edges': 116, 
+                        'ConnectedComponents': (10, 1, 49), 
+                        'Singletons': 7, 
+                        'MaxNodeDegree': 47, 
+                        'MeanNodeDegree': '3.18'}
+        self.versions = [{'Name': 'bfo', 
+                        'Version': '2019-08-26',
+                        'Format': 'TSV', 
+                        'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()), 
+                        'Size': 17251, 
+                        'Nodes': 73, 
+                        'Edges': 116, 
+                        'ConnectedComponents': (10, 1, 49), 
+                        'Singletons': 7, 
+                        'MaxNodeDegree': 47, 
+                        'MeanNodeDegree': '3.18'},
+                        {'Name': 'bfo', 
+                        'Version': '2019-08-26', 
+                        'Format': 'JSON', 
+                        'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                        'Size': 114355, 
+                        'Nodes': 73, 
+                        'Edges': 116, 
+                        'ConnectedComponents': (10, 1, 49), 
+                        'Singletons': 7, 
+                        'MaxNodeDegree': 47, 
+                        'MeanNodeDegree': '3.18'}]
 
     @mock.patch('boto3.client')
     def test_retrieve_tracking(self, mock_boto):
@@ -60,12 +93,22 @@ class TestStats(TestCase):
         self.assertTrue(len(flist)==0) #This mock bucket is empty.
         self.assertTrue(mock_boto.called)
 
-    def test_decompress_graph(self):
+    def test_decompress_graph_and_cleanup(self):
         tar_path = "./tests/resources/download_ontology/test_kgx_tsv.tar.gz"
         edge_path = "./tests/resources/download_ontology/test_kgx_tsv_edges.tsv"
         decompress_graph("test", tar_path)
         with open(edge_path) as edgefile:
             self.assertTrue(edgefile.read())
+
+    def test_compare_versions(self):
+        compare = compare_versions(self.entry, self.versions)
+        self.assertEqual(compare,{"Identical":[],"Large Difference":[]})
+
+    def test_cleanup(self):
+        test_data_dir = "./data/testdir"
+        os.mkdir(test_data_dir)
+        cleanup("testdir")
+        self.assertFalse(os.path.isdir(test_data_dir))
 
     def test_validiate_version_name(self):
         good_version = "2020-10-15"
