@@ -80,8 +80,26 @@ class TestStats(TestCase):
             self.assertTrue(mock_boto.called)
             assert e.type == SystemExit
 
+    def test_decompress_graph(self):
+        tar_path = "./tests/resources/download_ontology/graph.tar.gz"
+        edge_path = "./tests/resources/download_ontology/bfo_kgx_tsv_edges.tsv"
+        decompress_graph("bfo", tar_path)
+        with open(edge_path) as edgefile:
+            self.assertTrue(edgefile.read())
+
     @mock.patch('boto3.client')  
-    def test_get_graph_details(self, mock_boto):
+    @mock.patch('kg_obo.stats.get_file_list', 
+                return_value={'kg-obo/bfo/2019-08-26/bfo_kgx.json': {'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                            'Size': 114355,
+                            'Format': 'JSON'},
+                            'kg-obo/bfo/2019-08-26/bfo_kgx_tsv.tar.gz': {'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                            'Size': 17251, 
+                            'Format': 'TSV'}})
+    @mock.patch('kg_obo.stats.decompress_graph',
+                return_value=('tests/resources/download_ontology/bfo_kgx_tsv_edges.tsv',
+                                'tests/resources/download_ontology/bfo_kgx_tsv_nodes.tsv'))
+    def test_get_graph_details(self, mock_boto, mock_get_file_list,
+                                mock_decompress_graph):
         glist = get_graph_details(self.bucket, self.bucket_dir, 
                                     self.versions)
         self.assertTrue(mock_boto.called)
@@ -93,20 +111,13 @@ class TestStats(TestCase):
         self.assertTrue(len(flist)==0) #This mock bucket is empty.
         self.assertTrue(mock_boto.called)
 
-    def test_decompress_graph_and_cleanup(self):
-        tar_path = "./tests/resources/download_ontology/test_kgx_tsv.tar.gz"
-        edge_path = "./tests/resources/download_ontology/test_kgx_tsv_edges.tsv"
-        decompress_graph("test", tar_path)
-        with open(edge_path) as edgefile:
-            self.assertTrue(edgefile.read())
-
     def test_compare_versions(self):
         compare = compare_versions(self.entry, self.versions)
         self.assertEqual(compare,{"Identical":[],"Large Difference":[]})
 
     def test_cleanup(self):
         test_data_dir = "./data/testdir/"
-        os.mkdir(test_data_dir)
+        os.makedirs(test_data_dir)
         cleanup("testdir")
         self.assertFalse(os.path.isdir(test_data_dir))
 
