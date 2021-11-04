@@ -3,12 +3,16 @@ ontologies:
     current_iri: "NA"
     current_version: "NA"
   chebi:
+
     current_iri: "NA"
     current_version: "NA"
   doid:
     current_iri: "NA"
     current_version: "NA"
   go:
+    archive:
+    - iri: "test"
+      version: "test"
     current_iri: "NA"
     current_version: "NA"
   obi:

@@ -804,8 +804,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
 
                     # Upload the most recently transformed version to bucket
+                    # Also verify that files have the expected name format
                     kg_obo_logger.info(f"Uploading {versioned_obo_path} to {versioned_remote_path}...")
-                    kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
+                    filelist = kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,
+                                                                versioned_remote_path,make_public=True)
+                    if not kg_obo.upload.verify_uploads(filelist,ontology_name):
+                        kg_obo_logger.info(f"Transform filenames for {ontology_name} and {owl_version} are incorrect!")
 
                     # Update indexes for this version and OBO only
                     if kg_obo.upload.update_index_files(bucket, versioned_remote_path, data_dir) and \
@@ -816,7 +820,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     
                 else:
                     kg_obo_logger.info(f"Mock uploading {versioned_obo_path} to {versioned_remote_path}...")
-                    kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,versioned_remote_path,make_public=True)
+                    filelist = kg_obo.upload.mock_upload_dir_to_s3(versioned_obo_path,bucket,
+                                                                    versioned_remote_path,make_public=True)
+                    if not kg_obo.upload.verify_uploads(filelist,ontology_name):
+                        kg_obo_logger.info(f"Transform filenames for {ontology_name} and {owl_version} are incorrect!")
+
                     if kg_obo.upload.mock_update_index_files(bucket, versioned_remote_path, data_dir) and \
                         kg_obo.upload.mock_update_index_files(bucket, obo_remote_path, data_dir):
                         kg_obo_logger.info(f"Mock created index for {ontology_name} and {owl_version}")
