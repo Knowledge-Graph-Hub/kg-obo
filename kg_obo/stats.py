@@ -243,7 +243,6 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     # Get the list of file keys first so we refer back for downloads
     metadata = get_file_list(bucket, remote_path, versions)
-    print(metadata)
     clean_metadata = {} # type: ignore
 
     # Clean up the metadata dict so we can index it

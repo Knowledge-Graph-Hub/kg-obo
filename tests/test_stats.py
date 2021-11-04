@@ -166,19 +166,41 @@ class TestStats(TestCase):
         self.assertTrue(validate_version_name(good_version))
         self.assertFalse(validate_version_name(bad_version))
 
-    #Without further mocking, buckets will look empty
-    #so functions will quit early.
-    @mock.patch('boto3.client')
-    @mock.patch('kg_obo.stats.retrieve_tracking')
-    def test_get_all_stats(self, mock_boto, mock_retrieve_tracking):
-        with self.assertRaises(SystemExit) as e:
-            get_all_stats(save_local=True)
-            assert e.type == SystemExit
-        with self.assertRaises(SystemExit) as e:
-            get_all_stats(skip=["bfo"])
-            assert e.type == SystemExit
-        with self.assertRaises(SystemExit) as e:
-            get_all_stats(get_only=["bfo"])
-            assert e.type == SystemExit
+    @mock.patch('kg_obo.upload.check_tracking', return_value = True)
+    @mock.patch('kg_obo.stats.retrieve_tracking', 
+                return_value = [{'Name': 'bfo',
+                            'Version': '2019-08-26',
+                            'Format': 'TSV'},
+                            {'Name': 'bfo',
+                            'Version': '2019-08-26',
+                            'Format': 'JSON'}])
+    @mock.patch('kg_obo.stats.get_clean_file_metadata', 
+                return_value={'bfo': {'2019-08-26': {'JSON': {'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                             'Size': 114355},
+                            'TSV': {'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                             'Size': 17251}}}})
+    @mock.patch('kg_obo.stats.get_graph_details', 
+                return_value={'bfo': {'2019-08-26': {'Nodes': 73,
+                            'Edges': 116,
+                            'ConnectedComponents': (10, 1, 49),
+                            'Singletons': 7, 
+                            'MaxNodeDegree': 47, 
+                            'MeanNodeDegree': '3.18'}}})
+    def test_get_all_stats(self, mock_check_tracking,
+                            mock_retrieve_tracking,
+                            mock_get_clean_file_metadata,
+                            mock_get_graph_details):
+        get_all_stats()
+        self.assertTrue(mock_check_tracking.called)
+        self.assertTrue(mock_retrieve_tracking.called)
+        self.assertTrue(mock_get_clean_file_metadata.called)
+        self.assertTrue(mock_get_graph_details.called)
+        get_all_stats(get_only=["bfo"])
+        self.assertTrue(mock_check_tracking.called)
+        self.assertTrue(mock_retrieve_tracking.called)
+        self.assertTrue(mock_get_clean_file_metadata.called)
+        self.assertTrue(mock_get_graph_details.called)
+
+            
 
 
