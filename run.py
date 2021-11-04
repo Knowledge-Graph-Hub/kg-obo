@@ -53,6 +53,10 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index
         print("Generating reports...")
         if get_all_stats(skip, get_only, bucket, save_local):
             print("Reports generated without errors. See stats directory.")
+            if kg_obo.upload.upload_reports(bucket):
+                print(f"Uploaded reports to {bucket}.")
+            else:
+                print(f"Could not upload reports to {bucket}.")
         else:
             print("Stats reports could not be generated.")
 

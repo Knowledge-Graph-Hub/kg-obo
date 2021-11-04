@@ -426,3 +426,30 @@ def verify_uploads(filelist: list, name: str) -> bool:
             success = False
 
     return success
+
+def upload_reports(s3_bucket: str) -> bool:
+    """
+    Upload the stats and validation reports to root of S3 bucket.
+    :param s3_bucket: str ID of the bucket to upload to
+    :return: bool, True if completed successfully
+    """
+
+    success = True
+
+    client = boto3.client('s3')
+
+    report_paths = ["./stats/stats.tsv",
+                    "./stats/validation.tsv"]
+
+    try:
+        for filepath in report_paths:
+            # construct the full path
+            s3_path = os.path.join("kg-obo", os.path.basename(filepath))
+            client.upload_file(filepath, Bucket=s3_bucket, Key=s3_path,
+                            ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
+            success = True
+    except botocore.exceptions.ClientError as e:
+        print(f"Encountered error in uploading reports to S3: {e}")
+        success = False
+
+    return success
