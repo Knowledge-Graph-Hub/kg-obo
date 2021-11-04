@@ -49,6 +49,39 @@ class TestStats(TestCase):
                         'Singletons': 7, 
                         'MaxNodeDegree': 47, 
                         'MeanNodeDegree': '3.18'}]
+        self.multiversions = [{'Name': 'bfo', 
+                        'Version': '2019-08-26',
+                        'Format': 'TSV', 
+                        'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()), 
+                        'Size': 17251, 
+                        'Nodes': 73, 
+                        'Edges': 116, 
+                        'ConnectedComponents': (10, 1, 49), 
+                        'Singletons': 7, 
+                        'MaxNodeDegree': 47, 
+                        'MeanNodeDegree': '3.18'},
+                        {'Name': 'bfo', 
+                        'Version': '2019-08-26', 
+                        'Format': 'TSV', 
+                        'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                        'Size': 17251, 
+                        'Nodes': 73, 
+                        'Edges': 116, 
+                        'ConnectedComponents': (10, 1, 49), 
+                        'Singletons': 7, 
+                        'MaxNodeDegree': 47, 
+                        'MeanNodeDegree': '3.18'},
+                        {'Name': 'bfo', 
+                        'Version': '2020-08-26', 
+                        'Format': 'TSV', 
+                        'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                        'Size': 300, 
+                        'Nodes': 73, 
+                        'Edges': 116, 
+                        'ConnectedComponents': (10, 1, 49), 
+                        'Singletons': 7, 
+                        'MaxNodeDegree': 47, 
+                        'MeanNodeDegree': '3.18'}]
 
     @mock.patch('boto3.client')
     def test_retrieve_tracking(self, mock_boto):
@@ -70,15 +103,17 @@ class TestStats(TestCase):
         with open(self.stats_path) as statsfile:
             self.assertTrue(statsfile.read())
 
-    #This mock bucket is empty, so function will exit.
-    @mock.patch('boto3.client')    
-    def test_get_clean_file_metadata(self, mock_boto):
-        with self.assertRaises(SystemExit) as e:
-            mlist = get_clean_file_metadata(self.bucket, self.bucket_dir, 
+    @mock.patch('kg_obo.stats.get_file_list', 
+                return_value={'kg-obo/bfo/2019-08-26/bfo_kgx.json': {'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                            'Size': 114355,
+                            'Format': 'JSON'},
+                            'kg-obo/bfo/2019-08-26/bfo_kgx_tsv.tar.gz': {'LastModified': datetime.datetime(2021, 10, 1, 20, 10, 9, tzinfo=tzutc()),
+                            'Size': 17251, 
+                            'Format': 'TSV'}})
+    def test_get_clean_file_metadata(self, mock_get_file_list):
+        mlist = get_clean_file_metadata(self.bucket, self.bucket_dir, 
                                     self.versions)
-            self.assertTrue(len(mlist)==0) 
-            self.assertTrue(mock_boto.called)
-            assert e.type == SystemExit
+        self.assertTrue(mock_get_file_list.called)
 
     def test_decompress_graph(self):
         tar_path = "./tests/resources/download_ontology/graph.tar.gz"
@@ -103,6 +138,8 @@ class TestStats(TestCase):
         glist = get_graph_details(self.bucket, self.bucket_dir, 
                                     self.versions)
         self.assertTrue(mock_boto.called)
+        self.assertTrue(mock_get_file_list.called)
+        self.assertTrue(mock_decompress_graph.called)
 
     @mock.patch('boto3.client')   
     def test_get_file_list(self, mock_boto):
@@ -114,6 +151,8 @@ class TestStats(TestCase):
     def test_compare_versions(self):
         compare = compare_versions(self.entry, self.versions)
         self.assertEqual(compare,{"Identical":[],"Large Difference":[]})
+        compare = compare_versions(self.entry, self.multiversions)
+        self.assertNotEqual(compare,{"Identical":[],"Large Difference":[]})
 
     def test_cleanup(self):
         test_data_dir = "./data/testdir/"
