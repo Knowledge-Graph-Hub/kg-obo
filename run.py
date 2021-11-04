@@ -9,6 +9,7 @@ to KGX TSV, with intermediate JSON.
 import click  #type: ignore
 import sys
 from kg_obo.transform import run_transform
+from kg_obo.stats import get_all_stats
 import kg_obo.upload
 
 @click.command()
@@ -48,6 +49,13 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index
             print("Operation completed without errors (not counting any OBO-specific errors).")
         else:
             print("Operation encountered errors. See logs for details.")
+
+        print("Generating reports...")
+        if get_all_stats(skip, get_only, bucket, save_local):
+            print("Reports generated without errors. See stats directory.")
+        else:
+            print("Stats reports could not be generated.")
+
     except Exception as e:
         print(f"Encountered unresolvable error: {type(e)} - {e} ({e.args})")
         print("Removing lock due to error...")
