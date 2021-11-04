@@ -105,7 +105,7 @@ class TestStats(TestCase):
         self.assertEqual(compare,{"Identical":[],"Large Difference":[]})
 
     def test_cleanup(self):
-        test_data_dir = "./data/testdir"
+        test_data_dir = "./data/testdir/"
         os.mkdir(test_data_dir)
         cleanup("testdir")
         self.assertFalse(os.path.isdir(test_data_dir))
