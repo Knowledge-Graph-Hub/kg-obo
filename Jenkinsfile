@@ -15,6 +15,8 @@ pipeline {
         // Distribution ID for the AWS CloudFront for this bucket
         // used solely for invalidations
         AWS_CLOUDFRONT_DISTRIBUTION_ID = 'EUVSWXZQBXCFP'
+
+        ENSMALLEN_URL = 'https://kg-hub.berkeleybop.io/kg-obo/utils/ensmallen-0.6.6.tar.gz'
     }
     options {
         timestamps()
@@ -52,6 +54,7 @@ pipeline {
             }
         }
 
+        // Build step does some extra work to prep for Ensmallen 
         stage('Build kg-obo') {
             steps {
                 dir('./gitrepo') {
@@ -60,7 +63,10 @@ pipeline {
                             branch: env.BRANCH_NAME
                     )
                     sh '/usr/bin/python3.8 -m venv venv'
-                    sh '. venv/bin/activate'
+                    sh 'curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly --profile default -y'
+                    sh '.cargo/bin/cargo install maturin'
+                    sh 'export PATH=$PATH:~/.cargo/bin/'
+                    sh '. venv/bin/activate && pip install $ENSMALLEN_URL'
                     sh './venv/bin/pip install .'
                 }
             }
