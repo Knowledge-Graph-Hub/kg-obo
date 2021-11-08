@@ -65,7 +65,7 @@ pipeline {
                     sh '/usr/bin/python3.8 -m venv venv'
                     sh 'curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly --profile default -y'
                     sh 'export PATH=$PATH:$HOME/.cargo/bin'
-                    sh '.cargo/bin/cargo install maturin'
+                    sh 'cargo install maturin'
                     sh '. venv/bin/activate && pip install $ENSMALLEN_URL'
                     sh './venv/bin/pip install .'
                 }
