@@ -36,7 +36,7 @@ test_deps = [
 ]
 
 extras = {
-    'test': test_deps,
+    'test': test_deps
 }
 
 setup(

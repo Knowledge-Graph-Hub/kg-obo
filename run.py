@@ -50,16 +50,6 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index
         else:
             print("Operation encountered errors. See logs for details.")
 
-        print("Generating reports...")
-        if get_all_stats(skip, get_only, bucket, save_local):
-            print("Reports generated without errors. See stats directory.")
-            if kg_obo.upload.upload_reports(bucket):
-                print(f"Uploaded reports to {bucket}.")
-            else:
-                print(f"Could not upload reports to {bucket}.")
-        else:
-            print("Stats reports could not be generated.")
-
     except Exception as e:
         print(f"Encountered unresolvable error: {type(e)} - {e} ({e.args})")
         print("Removing lock due to error...")
@@ -72,6 +62,19 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index
             else:
                 print("Lock removed.")
         sys.exit(-1)
+
+    print("Generating reports...")
+    try:
+        if get_all_stats(skip, get_only, bucket, save_local):
+            print("Reports generated without errors. See stats directory.")
+            if kg_obo.upload.upload_reports(bucket):
+                print(f"Uploaded reports to {bucket}.")
+            else:
+                print(f"Could not upload reports to {bucket}.")
+        else:
+            print("Stats reports could not be generated.")
+    except Exception as e:
+        print(f"Encountered unresolvable error while generating stats: {type(e)} - {e}")
 
 if __name__ == '__main__':
   run()
