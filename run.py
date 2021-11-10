@@ -9,7 +9,6 @@ to KGX TSV, with intermediate JSON.
 import click  #type: ignore
 import sys
 from kg_obo.transform import run_transform
-from kg_obo.stats import get_all_stats
 import kg_obo.upload
 
 @click.command()
@@ -65,6 +64,8 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index
 
     print("Generating reports...")
     try:
+        from kg_obo.stats import get_all_stats
+        
         if get_all_stats(skip, get_only, bucket, save_local):
             print("Reports generated without errors. See stats directory.")
             if kg_obo.upload.upload_reports(bucket):
