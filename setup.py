@@ -32,8 +32,7 @@ test_deps = [
     'coveralls',
     'validate_version_code',
     'codacy-coverage',
-    'parameterized',
-    'grape'
+    'parameterized'
 ]
 
 extras = {
@@ -72,7 +71,8 @@ setup(
         'moto[s3]',
         'sphinx_rtd_theme',
         'recommonmark',
-        'sh'
+        'sh',
+        'grape'
     ],
     extras_require=extras,
 )
