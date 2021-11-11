@@ -465,6 +465,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 save_local=False, s3_test=False,
                 no_dl_progress=False,
                 force_index_refresh=False,
+                replace_base_obos=False,
                 robot_path: str = os.path.join(os.getcwd(),"robot"),
                 lock_file_remote_path: str = "kg-obo/lock",
                 log_dir="logs", data_dir="data",
@@ -584,7 +585,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     errored_transforms = []
     failed_transforms = []
     all_completed_transforms = []
-    all_base_obo_transforms = []
     all_obos_with_weird_version_formats = []
 
     if len(skip) >0:
@@ -601,12 +601,20 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         base_obo_path = os.path.join(data_dir, ontology_name)
         obo_remote_path = os.path.join(remote_path,ontology_name)
 
-        # take base ontology if it exists, otherwise just use non-base
-        obo_is_base = False
-        url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
+        # This will be true if the ontology will be replaced
+        # even if the version has not changed since last upload
+        replace_previous_transform = False
+
+        # Get OBO URL
+        url = kg_obo.obolibrary_utils.get_url(ontology_name)
         print(url)
-        if url[-8:] == "base.owl":
-            obo_is_base = True
+
+        # Check if we may have previously used a base version of the OBO -
+        # the base-obo's aren't really informative without reasoning,
+        # so we'll overwrite them if they exist, and
+        # if the replace_base_obos option was used.
+        if replace_base_obos and kg_obo.obolibrary_utils.base_url_exists(ontology_name):
+            replace_previous_transform = True
 
         # Set up local directories
         if not os.path.exists(data_dir):
@@ -638,7 +646,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 all_obos_with_weird_version_formats.append(ontology_name)
 
             # Check version here
-            if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket):
+            # If it's already in the tracking file, do nothing more with it
+            # unless replace_previous_transform is True
+            if transformed_obo_exists(ontology_name, owl_iri, s3_test, bucket) and not replace_previous_transform:
                 kg_obo_logger.info(f"Have already transformed {ontology_name}: {owl_iri}")
                 print(f"Have already transformed {ontology_name}: {owl_iri} - skipping")
                 all_completed_transforms.append(ontology_name)
@@ -793,9 +803,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
 
-            if obo_is_base:
-                all_base_obo_transforms.append(ontology_name)
-
             if success:
                 versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if not s3_test:
@@ -845,9 +852,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
-
-    if len(all_base_obo_transforms) > 0:
-        kg_obo_logger.info(f"These {len(all_base_obo_transforms)} OBOs are the base versions: {all_base_obo_transforms}")
 
     if len(all_completed_transforms) > 0:
         kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}): "
