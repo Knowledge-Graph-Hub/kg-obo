@@ -584,7 +584,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     errored_transforms = []
     failed_transforms = []
     all_completed_transforms = []
-    all_base_obo_transforms = []
     all_obos_with_weird_version_formats = []
 
     if len(skip) >0:
@@ -601,12 +600,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
         base_obo_path = os.path.join(data_dir, ontology_name)
         obo_remote_path = os.path.join(remote_path,ontology_name)
 
-        # take base ontology if it exists, otherwise just use non-base
-        obo_is_base = False
-        url = kg_obo.obolibrary_utils.base_url_if_exists(ontology_name)
+        # Get OBO URL
+        url = kg_obo.obolibrary_utils.get_url(ontology_name)
         print(url)
-        if url[-8:] == "base.owl":
-            obo_is_base = True
 
         # Set up local directories
         if not os.path.exists(data_dir):
@@ -793,9 +789,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 kg_obo_logger.warning(f"Failed to transform {ontology_name}")
                 failed_transforms.append(ontology_name)
 
-            if obo_is_base:
-                all_base_obo_transforms.append(ontology_name)
-
             if success:
                 versioned_remote_path = os.path.join(remote_path,ontology_name,owl_version)
                 if not s3_test:
@@ -845,9 +838,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if len(failed_transforms) > 0:
         kg_obo_logger.info(f"Failed to transform {len(failed_transforms)}: {failed_transforms}")
-
-    if len(all_base_obo_transforms) > 0:
-        kg_obo_logger.info(f"These {len(all_base_obo_transforms)} OBOs are the base versions: {all_base_obo_transforms}")
 
     if len(all_completed_transforms) > 0:
         kg_obo_logger.info(f"All available transforms, including old versions ({len(all_completed_transforms)}): "

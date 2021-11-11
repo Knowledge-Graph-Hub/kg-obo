@@ -2,8 +2,8 @@ import urllib
 import requests  # type: ignore
 
 
-def base_url_if_exists(oid):
-    ourl = f"http://purl.obolibrary.org/obo/{oid}/{oid}-base.owl"
+def get_url(oid):
+    ourl = f"http://purl.obolibrary.org/obo/{oid}/{oid}.owl"
     try:
         ret = requests.head(ourl, allow_redirects=True)
         if ret.status_code != 200:
