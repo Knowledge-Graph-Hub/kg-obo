@@ -81,7 +81,7 @@ pipeline {
                                     echo "Transforming with --s3_test since we aren't on main/master branch"
                                     sh '. venv/bin/activate && env && python3.8 run.py --s3_test --bucket fake_bucket --no_dl_progress --force_index_refresh'
                                 } else {
-                                    sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data --no_dl_progress --force_index_refresh'
+                                    sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data --no_dl_progress --force_index_refresh --replace_base_obos'
                                 }
                             }
                     }
