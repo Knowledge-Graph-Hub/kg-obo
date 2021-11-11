@@ -45,7 +45,7 @@ def base_url_exists(oid):
                     break
                 if "ListBucketResult" in line:
                     base_exists = False
-    except Exception as e:
+    except Exception:
         base_exists = False
 
     return base_exists
