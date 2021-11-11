@@ -37,14 +37,19 @@ import kg_obo.upload
 @click.option("--force_index_refresh",
                is_flag=True,
                help="If used, rebuilds root index.html before beginning any transforms.")
+@click.option("--replace_base_obos",
+               is_flag=True,
+               help="""If used, retrieves a new non-base version of each OBO if base was previously used,
+                     even if the version name has not changed.""")
 @click.option("--robot_path",
                nargs=1,
                help="""The path to robot.jar. Use only if other than kg-obo directory.""")
-def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index_refresh, robot_path):
+def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index_refresh, replace_base_obos,
+        robot_path):
     lock_file_remote_path = "kg-obo/lock"
     try:
         if run_transform(skip, get_only, bucket, save_local, s3_test, no_dl_progress, 
-                         force_index_refresh, robot_path, lock_file_remote_path):
+                         force_index_refresh, replace_base_obos, robot_path, lock_file_remote_path):
             print("Operation completed without errors (not counting any OBO-specific errors).")
         else:
             print("Operation encountered errors. See logs for details.")
