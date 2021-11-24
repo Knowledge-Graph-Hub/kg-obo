@@ -17,6 +17,7 @@ import sys
 import hashlib
 
 import difflib
+import git
 
 from xml.sax._exceptions import SAXParseException  # type: ignore
 from rdflib.exceptions import ParserError # type: ignore
@@ -689,6 +690,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 os.mkdir(versioned_obo_path)
             
             # If this version is new, now we download the whole OBO
+            # It starts as a temp file, but once we have the full version we
+            # copy it to the same dir as where transforms will go
             if not download_ontology(url=url, file=tfile.name, logger=kg_obo_logger, 
                                      no_dl_progress=no_dl_progress, header_only=False):
                 success = False
@@ -696,8 +699,19 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 failed_transforms.append(ontology_name)
                 continue
             else:
+                orig_local_path = os.path.join(versioned_obo_path, ontology_name + ".owl")
                 kg_obo_logger.info(f"Completed download from {url} to {tfile.name}.")
                 print(f"Completed download from {url} to {tfile.name}.")
+                kg_obo_logger.info(f"Moving from {tfile.name} to {orig_local_path}.")
+                print(f"Moving from {tfile.name} to {orig_local_path}.")
+                shutil.copy(tfile.name, orig_local_path)
+            
+            # Write the current KG-OBO git commit
+            version_info_path = os.path.join(versioned_obo_path, "kg-obo_version")
+            with open(version_info_path, 'w') as version_info_file:
+                repo = git.Repo(search_parent_directories=True)
+                current_commit_hash = repo.head.object.hexsha
+                version_info_file.write(current_commit_hash)
 
             # Run ROBOT preprocessing here - relax all, then do merge -> convert if needed
             kg_obo_logger.info(f"ROBOT preprocessing: relax {ontology_name}")
@@ -811,6 +825,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     track_obo_version(ontology_name, owl_iri, owl_version, bucket)
 
                     # Upload the most recently transformed version to bucket
+                    # Include the original OWL too (this already happens because it's in the new dir)
+                    # Include the current KG-OBO git commit (ditto)
                     # Also verify that files have the expected name format
                     kg_obo_logger.info(f"Uploading {versioned_obo_path} to {versioned_remote_path}...")
                     filelist = kg_obo.upload.upload_dir_to_s3(versioned_obo_path,bucket,
