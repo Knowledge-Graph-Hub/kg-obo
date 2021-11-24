@@ -72,7 +72,8 @@ setup(
         'sphinx_rtd_theme',
         'recommonmark',
         'sh',
-        'grape'
+        'grape',
+        'gitpython'
     ],
     extras_require=extras,
 )
