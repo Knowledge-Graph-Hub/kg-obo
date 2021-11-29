@@ -15,7 +15,8 @@ import kg_obo.upload
 from ensmallen import Graph # type: ignore
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
-                "json_transform.log", "tsv_transform.log"]
+                "json_transform.log", "tsv_transform.log",
+                "kg-obo_version"]
 FORMATS = ["TSV","JSON"]
 DATA_DIR = "./data/"
 
@@ -98,6 +99,7 @@ def get_file_list(bucket, remote_path, versions) -> dict:
     """
     Given a list of dicts of OBO names and versions,
     retrieve the list of all matching keys from the remote.
+    For now we ignore owl and version files.
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
     :param versions: list of dicts returned from retrieve_tracking
@@ -134,6 +136,7 @@ def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
     """
     Given a list of dicts of OBO names and versions,
     retrieve their metadata from the remote.
+    Here, we ignore additional non-transform contents of each directory.
     For now this obtains the time each file was last modified.
     Retrieving the remote file list is done by a get_file_list.
     :param bucket: str of S3 bucket, to be specified as argument
@@ -157,15 +160,17 @@ def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
 
     # Clean up the keys so they're indexable
     for entry in metadata:
-        name = (entry.split("/"))[1]
-        version = (entry.split("/"))[2]
-        file_format = metadata[entry].pop("Format")
-        if name in clean_metadata and version in clean_metadata[name]:
-            clean_metadata[name][version][file_format] = metadata[entry]
-        elif name in clean_metadata and version not in clean_metadata[name]:
-            clean_metadata[name][version] = {file_format:metadata[entry]}
-        else:
-            clean_metadata[name] = {version:{file_format:metadata[entry]}}
+        filetype = (entry.split("."))[-1]
+        if filetype in ['json','gz']:
+            name = (entry.split("/"))[1]
+            version = (entry.split("/"))[2]
+            file_format = metadata[entry].pop("Format")
+            if name in clean_metadata and version in clean_metadata[name]:
+                clean_metadata[name][version][file_format] = metadata[entry]
+            elif name in clean_metadata and version not in clean_metadata[name]:
+                clean_metadata[name][version] = {file_format:metadata[entry]}
+            else:
+                clean_metadata[name] = {version:{file_format:metadata[entry]}}
 
     return clean_metadata
 
@@ -214,6 +219,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
     count of singletons.
     This is version-dependent; each version has its own
     details.
+    Ignores anything that isn't a tar.gz or a json file.
 
     This function relies upon grape/ensmallen,
     as it works very nicely with kg-obo's graphs.
@@ -247,6 +253,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     # Clean up the metadata dict so we can index it
     for entry in metadata:
+        filetype = (entry.split("."))[-1]
         name = (entry.split("/"))[1]
         version = (entry.split("/"))[2]
         if name in clean_metadata and version in clean_metadata[name]:
@@ -262,7 +269,8 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
         except FileExistsError: #If folder exists, don't need to make it.
             pass
         for version in clean_metadata[entry]:
-            print(f"Downloading {entry}, version {version} from KG-OBO.")
+            remote_loc = clean_metadata[entry][version]['path']
+            print(f"Downloading {entry}, version {version} from KG-OBO: {remote_loc}")
             outdir = os.path.join(DATA_DIR,entry,version)
             outpath = os.path.join(outdir,"graph.tar.gz")
             try:
@@ -271,7 +279,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 pass
 
             client.download_file(bucket, 
-                                clean_metadata[entry][version]['path'],
+                                remote_loc,
                                 outpath)
 
             # Decompress

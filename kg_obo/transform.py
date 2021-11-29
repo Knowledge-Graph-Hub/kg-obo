@@ -308,7 +308,7 @@ def track_obo_version(name: str = "", iri: str = "",
     # Check if this OBO name is in the tracking - it usually is,
     # but it may be a new OBO, so set that up
     if name not in tracking["ontologies"]:
-        tracking["ontologies"][name] = {"current_iri":"", "current_version":""}
+        tracking["ontologies"][name] = {"current_iri":"NA", "current_version":"NA"}
 
     #If we already have a version, move it to archive
     if tracking["ontologies"][name]["current_version"] != "NA": #If it's NA then we have no previous version
