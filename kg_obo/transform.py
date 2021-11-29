@@ -305,6 +305,11 @@ def track_obo_version(name: str = "", iri: str = "",
     with open(track_file_local_path, 'r') as track_file:
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
+    # Check if this OBO name is in the tracking - it usually is,
+    # but it may be a new OBO, so set that up
+    if name not in tracking["ontologies"]:
+        tracking["ontologies"][name] = {"current_iri":"", "current_version":""}
+
     #If we already have a version, move it to archive
     if tracking["ontologies"][name]["current_version"] != "NA": #If it's NA then we have no previous version
         if "archive" not in tracking["ontologies"][name]: #If there isn't an archive field we need to create it
@@ -340,7 +345,7 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
     
     exists = False # Assume we don't have the OBO yet unless proven otherwise
     
-    #If testing, assume OBO transform does not exist as we aren't really reading tracking
+    #If testing, assume OBO transform exists as we aren't really reading tracking
     if s3_test:
         return exists
     
@@ -352,11 +357,15 @@ def transformed_obo_exists(name: str, iri: str, s3_test=False, bucket: str = "",
         tracking = yaml.load(track_file, Loader=yaml.BaseLoader)
 
     # Check current and previous versions
-    if tracking["ontologies"][name]["current_iri"] == iri:
-        exists = True
-    elif "archive" in tracking["ontologies"][name] and \
-        iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
+    # If it's a new OBO, we'll have a KeyError so catch that
+    try:
+        if tracking["ontologies"][name]["current_iri"] == iri:
             exists = True
+        elif "archive" in tracking["ontologies"][name] and \
+            iri in [pair["iri"] for pair in tracking["ontologies"][name]["archive"]]:
+                exists = True
+    except KeyError:
+        print(f"No previous versions found for {name}!")
 
     return exists
 
