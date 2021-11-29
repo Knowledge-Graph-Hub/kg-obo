@@ -134,6 +134,7 @@ def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
     """
     Given a list of dicts of OBO names and versions,
     retrieve their metadata from the remote.
+    Here, we ignore additional non-transform contents of each directory.
     For now this obtains the time each file was last modified.
     Retrieving the remote file list is done by a get_file_list.
     :param bucket: str of S3 bucket, to be specified as argument
@@ -157,15 +158,17 @@ def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
 
     # Clean up the keys so they're indexable
     for entry in metadata:
-        name = (entry.split("/"))[1]
-        version = (entry.split("/"))[2]
-        file_format = metadata[entry].pop("Format")
-        if name in clean_metadata and version in clean_metadata[name]:
-            clean_metadata[name][version][file_format] = metadata[entry]
-        elif name in clean_metadata and version not in clean_metadata[name]:
-            clean_metadata[name][version] = {file_format:metadata[entry]}
-        else:
-            clean_metadata[name] = {version:{file_format:metadata[entry]}}
+        filetype = (entry.split("."))[-1:]
+        if filetype in ['json','gz']:
+            name = (entry.split("/"))[1]
+            version = (entry.split("/"))[2]
+            file_format = metadata[entry].pop("Format")
+            if name in clean_metadata and version in clean_metadata[name]:
+                clean_metadata[name][version][file_format] = metadata[entry]
+            elif name in clean_metadata and version not in clean_metadata[name]:
+                clean_metadata[name][version] = {file_format:metadata[entry]}
+            else:
+                clean_metadata[name] = {version:{file_format:metadata[entry]}}
 
     return clean_metadata
 
