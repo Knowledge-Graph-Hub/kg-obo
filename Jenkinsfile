@@ -63,6 +63,7 @@ pipeline {
                     )
                     sh '/usr/bin/python3.8 -m venv venv'
                     sh '. venv/bin/activate'
+                    sh './venv/bin/pip install pathlib' // fix for build config issues with pathlib
                     sh './venv/bin/pip install .'
                 }
             }
