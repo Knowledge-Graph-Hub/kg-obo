@@ -158,7 +158,7 @@ def get_clean_file_metadata(bucket, remote_path, versions) -> dict:
 
     # Clean up the keys so they're indexable
     for entry in metadata:
-        filetype = (entry.split("."))[-1:]
+        filetype = (entry.split("."))[-1]
         if filetype in ['json','gz']:
             name = (entry.split("/"))[1]
             version = (entry.split("/"))[2]
@@ -265,7 +265,8 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
         except FileExistsError: #If folder exists, don't need to make it.
             pass
         for version in clean_metadata[entry]:
-            print(f"Downloading {entry}, version {version} from KG-OBO.")
+            remote_loc = clean_metadata[entry][version]['path']
+            print(f"Downloading {entry}, version {version} from KG-OBO: {remote_loc}")
             outdir = os.path.join(DATA_DIR,entry,version)
             outpath = os.path.join(outdir,"graph.tar.gz")
             try:
@@ -274,7 +275,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 pass
 
             client.download_file(bucket, 
-                                clean_metadata[entry][version]['path'],
+                                remote_loc,
                                 outpath)
 
             # Decompress
