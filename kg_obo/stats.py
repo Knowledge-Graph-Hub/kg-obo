@@ -15,7 +15,8 @@ import kg_obo.upload
 from ensmallen import Graph # type: ignore
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
-                "json_transform.log", "tsv_transform.log"]
+                "json_transform.log", "tsv_transform.log",
+                "kg-obo_version"]
 FORMATS = ["TSV","JSON"]
 DATA_DIR = "./data/"
 
@@ -98,6 +99,7 @@ def get_file_list(bucket, remote_path, versions) -> dict:
     """
     Given a list of dicts of OBO names and versions,
     retrieve the list of all matching keys from the remote.
+    For now we ignore owl and version files.
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
     :param versions: list of dicts returned from retrieve_tracking
@@ -217,6 +219,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
     count of singletons.
     This is version-dependent; each version has its own
     details.
+    Ignores anything that isn't a tar.gz or a json file.
 
     This function relies upon grape/ensmallen,
     as it works very nicely with kg-obo's graphs.
@@ -250,6 +253,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     # Clean up the metadata dict so we can index it
     for entry in metadata:
+        filetype = (entry.split("."))[-1]
         name = (entry.split("/"))[1]
         version = (entry.split("/"))[2]
         if name in clean_metadata and version in clean_metadata[name]:
