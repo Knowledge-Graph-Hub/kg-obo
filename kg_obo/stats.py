@@ -83,8 +83,10 @@ def write_stats(stats, outpath) -> None:
     """
     Writes OBO graph stats or validation file to tsv.
     :param stats: dict of stats in which keys are OBO names
+    :param outpath: string for path to write file to
     """
-    columns = (stats[0]).keys()
+
+    columns = list((stats[0]).keys())
 
     with open(outpath, 'w') as outfile:
         writer = csv.DictWriter(outfile, delimiter='\t',
@@ -358,7 +360,7 @@ def compare_versions(entry, versions) -> dict:
                                 "Large Difference in Edge Count":[]}
 
     # Duplicate the versions and remove target entry
-    print(versions)
+
     new_versions = versions.copy()
     try:
         for i in range(len(new_versions)):
@@ -440,9 +442,8 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     # Get graph details
     graph_details = get_graph_details(bucket, "kg-obo", versions)
 
-    # TODO: Logic below isn't quite right - need to do validations
-    # after all data population to be comprehensive
-    # Still works this way, mostly
+    # Need to do comparison-based validations
+    # after all data population
 
     # Now merge metadata into what we have from before
     for entry in versions:
@@ -465,22 +466,6 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
             if entry["Edges"] == 1:
                 issues.append("Single edge")
 
-            compare = compare_versions(entry, versions)
-            print(compare)
-            identical_versions = compare["Identical"]
-            if len(identical_versions) > 0:
-                issues.append(f"Identical versions: {identical_versions}")
-            very_different_versions = [compare["Large Difference in Size"],
-                                        compare["Large Difference in Node Count"],
-                                        compare["Large Difference in Edge Count"]]
-            for count in very_different_versions:                     
-                if len(count) > 0:
-                    issues.append(f"Large difference in size or graph contents versus: {count}")
-                    break
-
-            validations.append({"Name": name, "Version": version,
-                                "Format": file_format,
-                                "Issue": "|".join(issues)})
         except KeyError: #Some entries still won't have metadata
             print(f"Missing {step} for {name}, version {version}.")
             issues.append(f"Missing {step}")
@@ -489,12 +474,51 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                                 "Issue": "|".join(issues)})
             continue
 
+        validations.append({"Name": name, "Version": version,
+                                "Format": file_format,
+                                "Issue": "|".join(issues)})
+
+    # Comparative validation time
+    new_validations = []
+    for entry in versions:
+        issues = []
+        compare = compare_versions(entry, versions)
+        identical_versions = compare["Identical"]
+        if len(identical_versions) > 0:
+            issues.append(f"Identical versions: {identical_versions}")
+        very_different_versions = [compare["Large Difference in Size"],
+                                    compare["Large Difference in Node Count"],
+                                    compare["Large Difference in Edge Count"]]
+        for count in very_different_versions:                     
+            if len(count) > 0:
+                issues.append(f"Large difference in size or graph contents versus: {count}")
+                break
+        
+        # TODO: Should probably refactor this
+        for val_entry in validations:
+            if entry["Name"] == val_entry["Name"] \
+                and entry["Version"] == val_entry["Version"] \
+                and entry["Format"] == val_entry["Format"]:
+                issues = issues + (val_entry["Issue"]).split("|")
+        issues = [i for i in issues if i] # No empty entries
+        new_validations_entry = {"Name": entry["Name"], 
+                                "Version": entry["Version"],
+                                "Format": entry["Format"],
+                                "Issue": "|".join(issues)}
+        new_validations.append(new_validations_entry)
+
         # Clean up local data files
         if not save_local:
             cleanup(entry["Name"])
 
+    # Clean up the output before writing
+    final_versions = []
+    final_versions = [i for n, i in enumerate(versions) if i not in versions[n + 1:]]
+    final_validations = []
+    final_validations = [i for n, i in enumerate(new_validations) if i not in new_validations[n + 1:]]
+
     # Time to write
-    write_stats(versions, "stats/stats.tsv")
-    write_stats(validations, "stats/validation.tsv")
+    write_stats(final_versions, "stats/stats.tsv")
+    write_stats(final_validations, "stats/validation.tsv")
 
     return success
