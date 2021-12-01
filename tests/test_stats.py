@@ -150,9 +150,15 @@ class TestStats(TestCase):
 
     def test_compare_versions(self):
         compare = compare_versions(self.entry, self.versions)
-        self.assertEqual(compare,{"Identical":[],"Large Difference":[]})
+        self.assertEqual(compare,{"Identical":[],
+                                'Large Difference in Edge Count': [],
+                                'Large Difference in Node Count': [],
+                                'Large Difference in Size': []})
         compare = compare_versions(self.entry, self.multiversions)
-        self.assertNotEqual(compare,{"Identical":[],"Large Difference":[]})
+        self.assertNotEqual(compare,{"Identical":[],
+                                'Large Difference in Edge Count': [],
+                                'Large Difference in Node Count': [],
+                                'Large Difference in Size': []})
 
     def test_cleanup(self):
         test_data_dir = "./data/testdir/"
