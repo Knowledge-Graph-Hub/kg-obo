@@ -491,9 +491,14 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                 print(f"Failed to obtain metrics for {name}, version {version}.")
                 continue
             
+            # Load the graph
+            edges_path = os.path.join(outdir,f"{name}_kgx_tsv_edges.tsv")
+            nodes_path = os.path.join(outdir,f"{name}_kgx_tsv_nodes.tsv")
+            g = load_graph(entry, version, edges_path, nodes_path)
+
             for namespace_and_count in metrics['namespace_axiom_count']:
                 namespace = (namespace_and_count.split())[0]
-                print(namespace)
+                
 
 def parse_robot_metrics(inpath: str, wanted_metrics: list) -> dict:
     '''
