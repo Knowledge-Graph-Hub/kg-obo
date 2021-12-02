@@ -486,10 +486,12 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
         very_different_versions = [compare[SIZE_DIFF_TYPES[0]],
                                     compare[SIZE_DIFF_TYPES[1]],
                                     compare[SIZE_DIFF_TYPES[2]]]
+        i = 0
         for count in very_different_versions:                     
             if len(count) > 0:
-                issues.append(f"Large difference in size or graph contents versus: {count}")
+                issues.append(f"{SIZE_DIFF_TYPES[i]}: {count}")
                 break
+            i = i +1
         
         # TODO: Should probably refactor this
         for val_entry in validations:
