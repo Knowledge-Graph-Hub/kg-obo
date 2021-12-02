@@ -20,6 +20,10 @@ IGNORED_FILES = ["index.html","tracking.yaml","lock",
 FORMATS = ["TSV","JSON"]
 DATA_DIR = "./data/"
 
+SIZE_DIFF_TYPES = ["Large Difference in Size",
+                    "Large Difference in Node Count",
+                    "Large Difference in Edge Count"]
+
 def retrieve_tracking(bucket, track_file_remote_path,
                         track_file_local_path: str = "./stats/tracking.yaml",
                         skip: list = [], 
@@ -355,9 +359,9 @@ def compare_versions(entry, versions) -> dict:
     """
 
     compare: Dict[str, list] = {"Identical":[],
-                                "Large Difference in Size":[],
-                                "Large Difference in Node Count":[],
-                                "Large Difference in Edge Count":[]}
+                                SIZE_DIFF_TYPES[0]:[],
+                                SIZE_DIFF_TYPES[1]:[],
+                                SIZE_DIFF_TYPES[2]:[]}
 
     # Duplicate the versions and remove target entry
 
@@ -381,17 +385,17 @@ def compare_versions(entry, versions) -> dict:
                 if other_entry['Size'] == entry['Size']:
                     compare["Identical"].append(other_entry['Version'])
                 elif not 0.5 <= size_diff <= 1.5:
-                    compare["Large Difference in Size"].append(other_entry['Version'])
+                    compare[SIZE_DIFF_TYPES[0]].append(other_entry['Version'])
 
                 # Check node count difference
                 size_diff = abs(entry['Nodes'] / other_entry['Nodes'])
                 if not 0.2 <= size_diff <= 1.2:
-                    compare["Large Difference in Node Count"].append(other_entry['Version'])
+                    compare[SIZE_DIFF_TYPES[1]].append(other_entry['Version'])
 
                 # Check edge count difference
                 size_diff = abs(entry['Edges'] / other_entry['Edges'])
                 if not 0.2 <= size_diff <= 1.2:
-                    compare["Large Difference in Edge Count"].append(other_entry['Version'])
+                    compare[SIZE_DIFF_TYPES[2]].append(other_entry['Version'])
 
     except KeyError:
         pass
@@ -486,9 +490,9 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
         identical_versions = compare["Identical"]
         if len(identical_versions) > 0:
             issues.append(f"Identical versions: {identical_versions}")
-        very_different_versions = [compare["Large Difference in Size"],
-                                    compare["Large Difference in Node Count"],
-                                    compare["Large Difference in Edge Count"]]
+        very_different_versions = [compare[SIZE_DIFF_TYPES[0]],
+                                    compare[SIZE_DIFF_TYPES[1]],
+                                    compare[SIZE_DIFF_TYPES[2]]]
         for count in very_different_versions:                     
             if len(count) > 0:
                 issues.append(f"Large difference in size or graph contents versus: {count}")
