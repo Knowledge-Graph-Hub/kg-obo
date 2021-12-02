@@ -11,6 +11,7 @@ import shutil
 from typing import List, Dict
 
 import kg_obo.upload
+from kg_obo.robot_utils import initialize_robot, validate_profile
 
 from ensmallen import Graph # type: ignore
 
@@ -398,7 +399,7 @@ def compare_versions(entry, versions) -> dict:
 
     return compare
 
-def cleanup(dir) -> None:
+def cleanup(dir: str) -> None:
     """
     Removes files for a given OBO from the data directory.
     :param dir: str for name of the directory
@@ -408,6 +409,20 @@ def cleanup(dir) -> None:
     if os.path.isdir(outdir):
         shutil.rmtree(outdir)
 
+
+def robot_axiom_validations(robot_path: str, robot_env: str, versions: list) -> None:
+    """
+    Runs three steps for each OBO:
+    1. Performs profile validations on each original OWL to find any
+       obvious issues
+    2. Selects at least one axiom
+    3. Locates the axiom in the transformed KGX TSV edges
+    Produces a log file for each profile validation.
+    :param robot_path: str of path to robot, usually in pwd
+    :param robot_env: str of robot environment variables
+    :param versions: list of dicts of each OBO name and version and format
+    """
+    pass
 
 def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                     save_local = False):
@@ -422,6 +437,16 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     success = True
 
     track_file_remote_path = "kg-obo/tracking.yaml"
+
+    print("Setting up ROBOT...")
+    robot_path = os.path.join(os.getcwd(),"robot")
+    robot_params = initialize_robot(robot_path)
+    print(f"ROBOT path: {robot_path}")
+    robot_env = robot_params[1]
+    print(f"ROBOT evironment variables: {robot_env['ROBOT_JAVA_ARGS']}")
+
+    if not robot_params[0]: #i.e., if we couldn't find ROBOT 
+        sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
 
     # Check for the tracking file first
     if not kg_obo.upload.check_tracking(bucket, track_file_remote_path):
@@ -477,6 +502,9 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
         validations.append({"Name": name, "Version": version,
                                 "Format": file_format,
                                 "Issue": "|".join(issues)})
+
+    # Axiom validation time
+    robot_axiom_validations(robot_path, robot_env, versions)
 
     # Comparative validation time
     new_validations = []

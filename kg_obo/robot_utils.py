@@ -108,3 +108,37 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robo
         success = False
 
     return success
+
+def validate_profile(robot_path: str, input_owl: str, output_log: str, robot_env: dict) -> bool:
+    """
+    This method runs the ROBOT profile validation command on a single OBO in OWL.
+    Uses the "Full" profile, i.e., the semantics of OWL 2 Full, as described here:
+    https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full
+    :param robot_path: Path to ROBOT files
+    :param input_owl: Ontology file to be validated
+    :param output_owl: Location of log file to be created
+    :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
+    :return: True if completed without errors, False if errors
+    """
+    success = False
+
+    print(f"Validating {input_owl} as OWL 2 Full...")
+
+    robot_command = sh.Command(robot_path)
+
+    profile = 'Full'
+
+    try:
+        robot_command('validate-profile',
+            '--profile', profile, 
+            '--input', input_owl,
+            '--output', output_log,
+            _env=robot_env,
+        )
+        print(f"Complete. See log in {output_log}")
+        success = True
+    except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
+        print(f"ROBOT encountered an error: {e}")
+        success = False
+
+    return success
