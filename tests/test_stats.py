@@ -150,13 +150,11 @@ class TestStats(TestCase):
 
     def test_compare_versions(self):
         compare = compare_versions(self.entry, self.versions)
-        self.assertEqual(compare,{"Identical":[],
-                                'Large Difference in Edge Count': [],
+        self.assertEqual(compare,{'Large Difference in Edge Count': [],
                                 'Large Difference in Node Count': [],
                                 'Large Difference in Size': []})
         compare = compare_versions(self.entry, self.multiversions)
-        self.assertNotEqual(compare,{"Identical":[],
-                                'Large Difference in Edge Count': [],
+        self.assertNotEqual(compare,{'Large Difference in Edge Count': [],
                                 'Large Difference in Node Count': [],
                                 'Large Difference in Size': []})
 
