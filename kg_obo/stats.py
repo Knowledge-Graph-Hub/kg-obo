@@ -419,11 +419,10 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                             versions: list) -> None:
     """
     Runs three steps for each OBO:
-    1. Gets metrics on each original OWL to find any
-       obvious issues and establish baseline axiom set
-    2. Selects axiom subset
-    3. Locates the axiom in the transformed KGX TSV edges
-    Produces a log file for each profile validation.
+    1. Gets metrics on each original OWL and writes to file
+    2. Loads list of axiom counts by namespace
+    3. Locates edges involving each namespace in the graph.
+    Produces a log file for each set of metrics.
 
     This assumes that get_graph_details has already been run,
     as that's when all the graph downloads happen,
@@ -438,6 +437,8 @@ def robot_axiom_validations(bucket: str, remote_path: str,
     """
 
     client = boto3.client('s3')
+
+    wanted_metrics = ['namespace_axiom_count']
 
     for entry in versions:
         if entry["Format"] == 'TSV': # Just the TSVs for now
@@ -467,8 +468,39 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                 continue
 
             # Run robot measure to get stats we'll use for comparison
-            measure_owl(robot_path, outpath, logpath, robot_env)
+            # and load its output
+            if measure_owl(robot_path, outpath, logpath, robot_env):
+                metrics = parse_robot_metrics(logpath, wanted_metrics)
+                print(metrics)
+            else:
+                print(f"Failed to obtain metrics for {name}, version {version}.")
+                continue
 
+def parse_robot_metrics(inpath: str, wanted_metrics: list) -> dict:
+    '''
+    Opens a tsv file containing results of a robot measure command.
+    Returns contents as a dict of lists with metric names as keys
+    and metric values as values, given a list of desired metrics.
+    If wanted_metrics is empty then all metrics are parsed.
+    :param inpath: str of path to tsv file to load
+    :param wanted_metrics: list of metrics to get, e.g. ['axiom_types', 'class_count']
+    :return: dict of specific metrics and values as list 
+    '''
+
+    metrics = {}
+
+    owl_metrics = csv.DictReader(open(inpath, 'r'), delimiter='\t')
+    for line in owl_metrics:
+        if line['metric'] not in metrics:
+            metrics[line['metric']] = [line['metric_value']]
+        else:
+            metrics[line['metric']].append(line['metric_value'])
+
+    if len(wanted_metrics) > 0:
+        new_metrics = {k: metrics[k] for k in wanted_metrics}
+        metrics = new_metrics
+
+    return metrics 
 
 
 def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
