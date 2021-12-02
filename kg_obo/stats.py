@@ -10,7 +10,7 @@ import tarfile
 import shutil
 from typing import List, Dict
 
-import botocore.exceptions
+import botocore.exceptions # type: ignore
 
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, validate_profile
