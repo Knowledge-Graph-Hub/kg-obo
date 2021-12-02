@@ -13,7 +13,7 @@ from typing import List, Dict
 import botocore.exceptions # type: ignore
 
 import kg_obo.upload
-from kg_obo.robot_utils import initialize_robot, validate_profile
+from kg_obo.robot_utils import initialize_robot, measure_owl
 
 from ensmallen import Graph # type: ignore
 
@@ -419,9 +419,9 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                             versions: list) -> None:
     """
     Runs three steps for each OBO:
-    1. Performs profile validations on each original OWL to find any
-       obvious issues
-    2. Selects at least one axiom
+    1. Gets metrics on each original OWL to find any
+       obvious issues and establish baseline axiom set
+    2. Selects axiom subset
     3. Locates the axiom in the transformed KGX TSV edges
     Produces a log file for each profile validation.
 
@@ -451,7 +451,7 @@ def robot_axiom_validations(bucket: str, remote_path: str,
             outdir = os.path.join(DATA_DIR,name,version)
             outpath = os.path.join(outdir,f"{name}.owl")
             logdir = os.path.join("stats",name,version)
-            logpath = os.path.join(logdir,f"{name}-owl-profile-validation.log")
+            logpath = os.path.join(logdir,f"{name}-owl-profile-validation.tsv")
             try:
                 os.makedirs(logdir)
             except FileExistsError: #If folder exists, don't need to make it.
@@ -466,8 +466,10 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                 shutil.rmtree(logdir)
                 continue
 
-            # Run robot validate-profile
-            validate_profile(robot_path, outpath, logpath, robot_env)
+            # Run robot measure to get stats we'll use for comparison
+            measure_owl(robot_path, outpath, logpath, robot_env)
+
+
 
 def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                     save_local = False):
@@ -548,7 +550,7 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                                 "Format": file_format,
                                 "Issue": "|".join(issues)})
 
-    # Axiom validation time
+    # Now validate vs. the original OWL
     robot_axiom_validations(bucket, "kg-obo", robot_path, robot_env, versions)
 
     # Comparative validation time

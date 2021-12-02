@@ -109,11 +109,11 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robo
 
     return success
 
-def validate_profile(robot_path: str, input_owl: str, output_log: str, robot_env: dict) -> bool:
+def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dict) -> bool:
     """
-    This method runs the ROBOT profile validation command on a single OBO in OWL.
-    Uses the "Full" profile, i.e., the semantics of OWL 2 Full, as described here:
-    https://www.w3.org/2007/OWL/wiki/Primer#OWL_2_DL_and_OWL_2_Full
+    This method runs the ROBOT measure command on a single OBO in OWL.
+    Yields all metrics as string and as a log file.
+
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be validated
     :param output_owl: Location of log file to be created
@@ -122,16 +122,17 @@ def validate_profile(robot_path: str, input_owl: str, output_log: str, robot_env
     """
     success = False
 
-    print(f"Validating {input_owl} as OWL 2 Full...")
+    print(f"Obtaining metrics for {input_owl}...")
 
     robot_command = sh.Command(robot_path)
 
     profile = 'Full'
 
     try:
-        robot_command('validate-profile',
-            '--profile', profile, 
+        robot_command('measure',
             '--input', input_owl,
+            '--format', 'tsv',
+            '--metrics', 'all',
             '--output', output_log,
             _env=robot_env,
         )
