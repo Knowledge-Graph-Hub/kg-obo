@@ -170,6 +170,7 @@ class TestStats(TestCase):
         self.assertTrue(validate_version_name(good_version))
         self.assertFalse(validate_version_name(bad_version))
 
+    @mock.patch('boto3.client') 
     @mock.patch('kg_obo.upload.check_tracking', return_value = True)
     @mock.patch('kg_obo.stats.retrieve_tracking', 
                 return_value = [{'Name': 'bfo',
@@ -190,16 +191,19 @@ class TestStats(TestCase):
                             'Singletons': 7, 
                             'MaxNodeDegree': 47, 
                             'MeanNodeDegree': '3.18'}}})
-    def test_get_all_stats(self, mock_check_tracking,
+    def test_get_all_stats(self, mock_boto,
+                            mock_check_tracking,
                             mock_retrieve_tracking,
                             mock_get_clean_file_metadata,
                             mock_get_graph_details):
         get_all_stats()
+        self.assertTrue(mock_boto.called)
         self.assertTrue(mock_check_tracking.called)
         self.assertTrue(mock_retrieve_tracking.called)
         self.assertTrue(mock_get_clean_file_metadata.called)
         self.assertTrue(mock_get_graph_details.called)
         get_all_stats(get_only=["bfo"])
+        self.assertTrue(mock_boto.called)
         self.assertTrue(mock_check_tracking.called)
         self.assertTrue(mock_retrieve_tracking.called)
         self.assertTrue(mock_get_clean_file_metadata.called)
