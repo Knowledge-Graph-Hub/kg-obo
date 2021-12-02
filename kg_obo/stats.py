@@ -349,8 +349,7 @@ def compare_versions(entry, versions) -> dict:
     """
     Given an entry from the full set of versions,
     compare it to other versions of the same OBO name.
-    Identify identical versions by size, 
-    or versions with >50% increase/decrease in file size,
+    Identify versions with >50% increase/decrease in file size,
     or versions with >20% increase/decrease in node or edge count.
     :param entry: dict of single OBO entry
     :param versions: dict of all versions, with added graph details
@@ -358,8 +357,7 @@ def compare_versions(entry, versions) -> dict:
 
     """
 
-    compare: Dict[str, list] = {"Identical":[],
-                                SIZE_DIFF_TYPES[0]:[],
+    compare: Dict[str, list] = {SIZE_DIFF_TYPES[0]:[],
                                 SIZE_DIFF_TYPES[1]:[],
                                 SIZE_DIFF_TYPES[2]:[]}
 
@@ -375,16 +373,14 @@ def compare_versions(entry, versions) -> dict:
                 break
     
         for other_entry in new_versions:
-            # Check other versions to see if they're identical or v. different in size
+            # Check other versions to see if they're v. different in size
             if other_entry['Name'] == entry['Name'] and \
                 other_entry['Format'] == entry['Format'] and \
                     other_entry['Version'] != entry['Version']:
                 
                 # Check raw file size difference
                 size_diff = abs(entry['Size'] / other_entry['Size'])
-                if other_entry['Size'] == entry['Size']:
-                    compare["Identical"].append(other_entry['Version'])
-                elif not 0.5 <= size_diff <= 1.5:
+                if not 0.5 <= size_diff <= 1.5:
                     compare[SIZE_DIFF_TYPES[0]].append(other_entry['Version'])
 
                 # Check node count difference
@@ -487,9 +483,6 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     for entry in versions:
         issues = []
         compare = compare_versions(entry, versions)
-        identical_versions = compare["Identical"]
-        if len(identical_versions) > 0:
-            issues.append(f"Identical versions: {identical_versions}")
         very_different_versions = [compare[SIZE_DIFF_TYPES[0]],
                                     compare[SIZE_DIFF_TYPES[1]],
                                     compare[SIZE_DIFF_TYPES[2]]]
