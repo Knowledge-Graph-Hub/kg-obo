@@ -10,6 +10,8 @@ import tarfile
 import shutil
 from typing import List, Dict
 
+import botocore.exceptions
+
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, validate_profile
 
@@ -275,6 +277,9 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
             os.mkdir(os.path.join(DATA_DIR,entry))
         except FileExistsError: #If folder exists, don't need to make it.
             pass
+
+        # We download the compressed graph nodes/edges
+        # then load with ensmallen and get graph details
         for version in clean_metadata[entry]:
             remote_loc = clean_metadata[entry][version]['path']
             print(f"Downloading {entry}, version {version} from KG-OBO: {remote_loc}")
@@ -296,7 +301,6 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
             else:
                 edges_path, nodes_path = path_pair
                 
-            
             g = Graph.from_csv(name=f"{entry}_version_{version}",
                                 edge_path=edges_path,
                                 sources_column="subject",
@@ -410,7 +414,9 @@ def cleanup(dir: str) -> None:
         shutil.rmtree(outdir)
 
 
-def robot_axiom_validations(robot_path: str, robot_env: str, versions: list) -> None:
+def robot_axiom_validations(bucket: str, remote_path: str,
+                            robot_path: str, robot_env: dict, 
+                            versions: list) -> None:
     """
     Runs three steps for each OBO:
     1. Performs profile validations on each original OWL to find any
@@ -418,11 +424,49 @@ def robot_axiom_validations(robot_path: str, robot_env: str, versions: list) -> 
     2. Selects at least one axiom
     3. Locates the axiom in the transformed KGX TSV edges
     Produces a log file for each profile validation.
+
+    This assumes that get_graph_details has already been run,
+    as that's when all the graph downloads happen,
+    and we don't need to do those multiple times.
+    But we still need original OWLs, which we retrieve from KG-HUB.
+
+    :param bucket: str of S3 bucket, to be specified as argument
+    :param remote_path: str of remote directory to start from
     :param robot_path: str of path to robot, usually in pwd
-    :param robot_env: str of robot environment variables
+    :param robot_env: dict of robot environment variables
     :param versions: list of dicts of each OBO name and version and format
     """
-    pass
+
+    client = boto3.client('s3')
+
+    for entry in versions:
+        if entry["Format"] == 'TSV': # Just the TSVs for now
+            # Retreive OWL for each.
+            # Skip if it isn't available for any reason.
+
+            name = entry["Name"]
+            version = entry["Version"]
+            remote_loc = f'kg-obo/{name}/{version}/{name}.owl'
+            print(f"Downloading OWL for {name}, version {version} from KG-OBO: {remote_loc}")
+            outdir = os.path.join(DATA_DIR,name,version)
+            outpath = os.path.join(outdir,f"{name}.owl")
+            logdir = os.path.join("stats",name,version)
+            logpath = os.path.join(logdir,f"{name}-owl-profile-validation.log")
+            try:
+                os.makedirs(logdir)
+            except FileExistsError: #If folder exists, don't need to make it.
+                pass
+
+            try:
+                client.download_file(bucket, 
+                                    remote_loc,
+                                    outpath)
+            except botocore.exceptions.ClientError as e:
+                print(f"Could not retrieve OWL for {name}, version {version} due to: {e}")
+                continue
+
+            # Run robot validate-profile
+            validate_profile(robot_path, outpath, logpath, robot_env)
 
 def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                     save_local = False):
@@ -504,7 +548,7 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                                 "Issue": "|".join(issues)})
 
     # Axiom validation time
-    robot_axiom_validations(robot_path, robot_env, versions)
+    robot_axiom_validations(bucket, "kg-obo", robot_path, robot_env, versions)
 
     # Comparative validation time
     new_validations = []
