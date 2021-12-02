@@ -463,6 +463,7 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                                     outpath)
             except botocore.exceptions.ClientError as e:
                 print(f"Could not retrieve OWL for {name}, version {version} due to: {e}")
+                shutil.rmtree(logdir)
                 continue
 
             # Run robot validate-profile
