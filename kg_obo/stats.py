@@ -301,19 +301,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
             else:
                 edges_path, nodes_path = path_pair
                 
-            g = Graph.from_csv(name=f"{entry}_version_{version}",
-                                edge_path=edges_path,
-                                sources_column="subject",
-                                destinations_column="object",
-                                edge_list_header = True,
-                                edge_list_separator="\t",
-                                node_path = nodes_path,
-                                nodes_column = "id",
-                                node_list_header = True,
-                                node_list_separator="\t",
-                                directed =False,
-                                verbose=True
-                                )
+            g = load_graph(entry, version, edges_path, nodes_path)
             
             node_count = g.get_nodes_number()
             edge_count = g.get_edges_number()
@@ -335,6 +323,34 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 graph_details[entry] = {version:graph_stats}
 
     return graph_details
+
+def load_graph(name: str, version: str, edges_path: str, 
+                nodes_path: str) -> Graph:
+    """
+    Load a graph with Ensmallen.
+    :param name: OBO name
+    :param version: OBO version
+    :param edges_path: path to edgefile
+    :param nodes_path: path to nodefile
+    :return: ensmallen Graph object
+    """
+
+    loaded_graph = Graph.from_csv(name=f"{name}_version_{version}",
+                                edge_path=edges_path,
+                                sources_column="subject",
+                                destinations_column="object",
+                                edge_list_header = True,
+                                edge_list_separator="\t",
+                                node_path = nodes_path,
+                                nodes_column = "id",
+                                node_list_header = True,
+                                node_list_separator="\t",
+                                directed =False,
+                                verbose=True
+                                )
+
+    return loaded_graph
+
 
 def validate_version_name(version) -> bool:
     """
@@ -471,10 +487,13 @@ def robot_axiom_validations(bucket: str, remote_path: str,
             # and load its output
             if measure_owl(robot_path, outpath, logpath, robot_env):
                 metrics = parse_robot_metrics(logpath, wanted_metrics)
-                print(metrics)
             else:
                 print(f"Failed to obtain metrics for {name}, version {version}.")
                 continue
+            
+            for namespace_and_count in metrics['namespace_axiom_count']:
+                namespace = (namespace_and_count.split())[0]
+                print(namespace)
 
 def parse_robot_metrics(inpath: str, wanted_metrics: list) -> dict:
     '''
