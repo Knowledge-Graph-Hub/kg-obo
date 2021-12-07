@@ -94,7 +94,7 @@ def write_stats(stats, outpath) -> None:
     """
 
     columns = list((stats[0]).keys())
-
+    
     with open(outpath, 'w') as outfile:
         writer = csv.DictWriter(outfile, delimiter='\t',
                                 fieldnames=columns)
@@ -246,7 +246,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
     :param bucket: str of S3 bucket, to be specified as argument
     :param remote_path: str of remote directory to start from
     :param versions: list of dicts returned from retrieve_tracking
-    :return: dict of dicts, with file paths as keys, versions and 2ary keys, 
+    :return: dict of dicts, with file paths as keys, versions are 2ary keys, 
                 and metadata as key-value pairs
     """
 
@@ -375,7 +375,6 @@ def compare_versions(entry, versions) -> dict:
     :param entry: dict of single OBO entry
     :param versions: dict of all versions, with added graph details
     :return: dict of versions with notes as described above.
-
     """
 
     compare: Dict[str, list] = {SIZE_DIFF_TYPES[0]:[],
@@ -432,7 +431,7 @@ def cleanup(dir: str) -> None:
 
 def robot_axiom_validations(bucket: str, remote_path: str,
                             robot_path: str, robot_env: dict, 
-                            versions: list) -> None:
+                            versions: list) -> dict:
     """
     Runs three steps for each OBO:
     1. Gets metrics on each original OWL and writes to file
@@ -450,11 +449,15 @@ def robot_axiom_validations(bucket: str, remote_path: str,
     :param robot_path: str of path to robot, usually in pwd
     :param robot_env: dict of robot environment variables
     :param versions: list of dicts of each OBO name and version and format
+    :return: dict of dicts, with OBO names as 1ary keys, versions as 
+            2ary keys, and metadata as key-value pairs
     """
 
     client = boto3.client('s3')
 
     wanted_metrics = ['namespace_axiom_count']
+
+    validations_vs_owl = []
 
     for entry in versions:
         if entry["Format"] == 'TSV': # Just the TSVs for now
@@ -496,9 +499,34 @@ def robot_axiom_validations(bucket: str, remote_path: str,
             nodes_path = os.path.join(outdir,f"{name}_kgx_tsv_nodes.tsv")
             g = load_graph(entry, version, edges_path, nodes_path)
 
+            # Get axiom namespaces
+            owl_namespaces = []
+            missing_namespaces = []
             for namespace_and_count in metrics['namespace_axiom_count']:
                 namespace = (namespace_and_count.split())[0]
+                owl_namespaces.append(namespace)
                 
+            # Compare axiom namespaces in OWL and in graph 
+            # We don't expect a perfect numerical match,
+            # but we do want to know which types of axioms are present (or not)
+            graph_namespaces = []
+            for item in g.get_node_names():
+                graph_namespaces.append((item.split(":"))[0])
+            graph_namespaces = list(set(graph_namespaces))
+            for namespace in owl_namespaces:
+                if namespace not in graph_namespaces:
+                    missing_namespaces.append(namespace)
+
+            # Append what we got
+            these_validations = {"Name":name,
+                                "Version":version,
+                                "Format":entry["Format"],
+                                "OWL Namespaces":"|".join(owl_namespaces),
+                                "Graph Namespaces":"|".join(graph_namespaces),
+                                "OWL Namespaces Not In Graph":"|".join(missing_namespaces)}
+            validations_vs_owl.append(these_validations)
+    
+    return validations_vs_owl
 
 def parse_robot_metrics(inpath: str, wanted_metrics: list) -> dict:
     '''
@@ -607,7 +635,8 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                                 "Issue": "|".join(issues)})
 
     # Now validate vs. the original OWL
-    robot_axiom_validations(bucket, "kg-obo", robot_path, robot_env, versions)
+    axiom_validations = robot_axiom_validations(bucket, "kg-obo", 
+                                        robot_path, robot_env, versions)
 
     # Comparative validation time
     new_validations = []
@@ -650,5 +679,6 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     # Time to write
     write_stats(final_versions, "stats/stats.tsv")
     write_stats(final_validations, "stats/validation.tsv")
+    write_stats(axiom_validations, "stats/axiom_validations.tsv" )
 
     return success
