@@ -119,8 +119,16 @@ class TestStats(TestCase):
 
     def test_decompress_graph(self):
         tar_path = "./tests/resources/download_ontology/graph.tar.gz"
+        empty_tar_path = "./tests/resources/download_ontology/emptygraph.tar.gz"
+        overfull_tar_path = "./tests/resources/download_ontology/overfullgraph.tar.gz"
         edge_path = "./tests/resources/download_ontology/bfo_kgx_tsv_edges.tsv"
         decompress_graph("bfo", tar_path)
+        with open(edge_path) as edgefile:
+            self.assertTrue(edgefile.read())
+        decompress_graph("bfo", empty_tar_path)
+        with open(edge_path) as edgefile:
+            self.assertTrue(edgefile.read())
+        decompress_graph("bfo", overfull_tar_path)
         with open(edge_path) as edgefile:
             self.assertTrue(edgefile.read())
 
