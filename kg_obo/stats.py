@@ -93,7 +93,10 @@ def write_stats(stats, outpath) -> None:
     :param outpath: string for path to write file to
     """
 
-    columns = list((stats[0]).keys())
+    try:
+        columns = list((stats[0]).keys())
+    except IndexError: # Raised if input is empty
+        columns = []
     
     with open(outpath, 'w') as outfile:
         writer = csv.DictWriter(outfile, delimiter='\t',
