@@ -434,7 +434,7 @@ def cleanup(dir: str) -> None:
 
 def robot_axiom_validations(bucket: str, remote_path: str,
                             robot_path: str, robot_env: dict, 
-                            versions: list) -> dict:
+                            versions: list) -> list:
     """
     Runs three steps for each OBO:
     1. Gets metrics on each original OWL and writes to file
