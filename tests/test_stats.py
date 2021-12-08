@@ -4,10 +4,12 @@ from unittest.mock import Mock
 import datetime
 from dateutil.tz import tzutc
 
-from kg_obo.stats import retrieve_tracking, write_stats, get_clean_file_metadata, \
+from kg_obo.stats import retrieve_tracking, robot_axiom_validations, write_stats, get_clean_file_metadata, \
                             get_graph_details, get_file_list, get_all_stats, \
                             decompress_graph, validate_version_name, \
                             compare_versions, cleanup
+
+from kg_obo.robot_utils import initialize_robot
                             
 class TestStats(TestCase):
 
@@ -169,6 +171,17 @@ class TestStats(TestCase):
         bad_version = "release"
         self.assertTrue(validate_version_name(good_version))
         self.assertFalse(validate_version_name(bad_version))
+
+    @mock.patch('boto3.client') 
+    def test_robot_axiom_validations(self, mock_boto):
+        robot_path = os.path.join(os.getcwd(),"robot")
+        robot_params = initialize_robot(robot_path)
+        print(f"ROBOT path: {robot_path}")
+        robot_env = robot_params[1]
+        robot_axiom_validations(self.bucket, self.bucket_dir,
+                                robot_path, robot_env,
+                                self.versions)
+        self.assertTrue(mock_boto.called)
 
     @mock.patch('boto3.client') 
     @mock.patch('kg_obo.upload.check_tracking', return_value = True)
