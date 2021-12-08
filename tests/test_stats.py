@@ -7,7 +7,7 @@ from dateutil.tz import tzutc
 from kg_obo.stats import retrieve_tracking, robot_axiom_validations, write_stats, get_clean_file_metadata, \
                             get_graph_details, get_file_list, get_all_stats, \
                             decompress_graph, validate_version_name, \
-                            compare_versions, cleanup
+                            compare_versions, cleanup, parse_robot_metrics
 
 from kg_obo.robot_utils import initialize_robot
                             
@@ -176,12 +176,18 @@ class TestStats(TestCase):
     def test_robot_axiom_validations(self, mock_boto):
         robot_path = os.path.join(os.getcwd(),"robot")
         robot_params = initialize_robot(robot_path)
-        print(f"ROBOT path: {robot_path}")
         robot_env = robot_params[1]
         robot_axiom_validations(self.bucket, self.bucket_dir,
                                 robot_path, robot_env,
                                 self.versions)
         self.assertTrue(mock_boto.called)
+    
+    def test_parse_robot_metrics(self):
+        inpath = "./tests/resources/test-owl-profile-validation.tsv"
+        wanted_metrics = ['constructs', 'rule_count']
+        metrics = parse_robot_metrics(inpath, wanted_metrics)
+        self.assertEqual(metrics, {'constructs':['I','O','Q','R','S'],
+                                    'rule_count':['0']})
 
     @mock.patch('boto3.client') 
     @mock.patch('kg_obo.upload.check_tracking', return_value = True)
