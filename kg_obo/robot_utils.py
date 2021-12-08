@@ -108,3 +108,38 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robo
         success = False
 
     return success
+
+def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dict) -> bool:
+    """
+    This method runs the ROBOT measure command on a single OBO in OWL.
+    Yields all metrics as string and as a log file.
+
+    :param robot_path: Path to ROBOT files
+    :param input_owl: Ontology file to be validated
+    :param output_owl: Location of log file to be created
+    :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
+    :return: True if completed without errors, False if errors
+    """
+    success = False
+
+    print(f"Obtaining metrics for {input_owl}...")
+
+    robot_command = sh.Command(robot_path)
+
+    profile = 'Full'
+
+    try:
+        robot_command('measure',
+            '--input', input_owl,
+            '--format', 'tsv',
+            '--metrics', 'all',
+            '--output', output_log,
+            _env=robot_env,
+        )
+        print(f"Complete. See log in {output_log}")
+        success = True
+    except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
+        print(f"ROBOT encountered an error: {e}")
+        success = False
+
+    return success

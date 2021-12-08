@@ -1,0 +1,341 @@
+metric	metric_value	metric_type
+abox_axiom_count	19	single_value
+abox_axiom_count_incl	19	single_value
+abox_nominals	false	single_value
+abox_nominals_incl	false	single_value
+annotation_property_count	167	single_value
+annotation_property_count_incl	167	single_value
+assert_n_subclass_avg	1.4686046511627906	single_value
+assert_n_subclass_avg_incl	1.4686046511627906	single_value
+assert_n_superclass_avg	1.4709302325581395	single_value
+assert_n_superclass_avg_incl	1.4709302325581395	single_value
+ax_complexrhs_count	6899	single_value
+ax_complexrhs_count_incl	6899	single_value
+axiom_count	53786	single_value
+axiom_count_incl	53786	single_value
+axiom_length_max	34	single_value
+axiom_length_max_incl	34	single_value
+axiom_type_count	AnnotationAssertion 37086	map_value
+axiom_type_count	AsymmetricObjectProperty 1	map_value
+axiom_type_count	ClassAssertion 17	map_value
+axiom_type_count	Declaration 3876	map_value
+axiom_type_count	DifferentIndividuals 2	map_value
+axiom_type_count	DisjointClasses 158	map_value
+axiom_type_count	DisjointObjectProperties 1	map_value
+axiom_type_count	EquivalentClasses 1787	map_value
+axiom_type_count	FunctionalObjectProperty 2	map_value
+axiom_type_count	InverseFunctionalObjectProperty 1	map_value
+axiom_type_count	InverseObjectProperties 52	map_value
+axiom_type_count	IrrefexiveObjectProperty 2	map_value
+axiom_type_count	ObjectPropertyDomain 79	map_value
+axiom_type_count	ObjectPropertyRange 72	map_value
+axiom_type_count	Rule 26	map_value
+axiom_type_count	SubAnnotationPropertyOf 55	map_value
+axiom_type_count	SubClassOf 10168	map_value
+axiom_type_count	SubObjectPropertyOf 246	map_value
+axiom_type_count	SubPropertyChainOf 106	map_value
+axiom_type_count	SymmetricObjectProperty 7	map_value
+axiom_type_count	TransitiveObjectProperty 42	map_value
+axiom_type_count_incl	AnnotationAssertion 37086	map_value
+axiom_type_count_incl	AsymmetricObjectProperty 1	map_value
+axiom_type_count_incl	ClassAssertion 17	map_value
+axiom_type_count_incl	Declaration 3876	map_value
+axiom_type_count_incl	DifferentIndividuals 2	map_value
+axiom_type_count_incl	DisjointClasses 158	map_value
+axiom_type_count_incl	DisjointObjectProperties 1	map_value
+axiom_type_count_incl	EquivalentClasses 1787	map_value
+axiom_type_count_incl	FunctionalObjectProperty 2	map_value
+axiom_type_count_incl	InverseFunctionalObjectProperty 1	map_value
+axiom_type_count_incl	InverseObjectProperties 52	map_value
+axiom_type_count_incl	IrrefexiveObjectProperty 2	map_value
+axiom_type_count_incl	ObjectPropertyDomain 79	map_value
+axiom_type_count_incl	ObjectPropertyRange 72	map_value
+axiom_type_count_incl	Rule 26	map_value
+axiom_type_count_incl	SubAnnotationPropertyOf 55	map_value
+axiom_type_count_incl	SubClassOf 10168	map_value
+axiom_type_count_incl	SubObjectPropertyOf 246	map_value
+axiom_type_count_incl	SubPropertyChainOf 106	map_value
+axiom_type_count_incl	SymmetricObjectProperty 7	map_value
+axiom_type_count_incl	TransitiveObjectProperty 42	map_value
+axiom_types	AnnotationAssertion	list_value
+axiom_types	AsymmetricObjectProperty	list_value
+axiom_types	ClassAssertion	list_value
+axiom_types	Declaration	list_value
+axiom_types	DifferentIndividuals	list_value
+axiom_types	DisjointClasses	list_value
+axiom_types	DisjointObjectProperties	list_value
+axiom_types	EquivalentClasses	list_value
+axiom_types	FunctionalObjectProperty	list_value
+axiom_types	InverseFunctionalObjectProperty	list_value
+axiom_types	InverseObjectProperties	list_value
+axiom_types	IrrefexiveObjectProperty	list_value
+axiom_types	ObjectPropertyDomain	list_value
+axiom_types	ObjectPropertyRange	list_value
+axiom_types	Rule	list_value
+axiom_types	SubAnnotationPropertyOf	list_value
+axiom_types	SubClassOf	list_value
+axiom_types	SubObjectPropertyOf	list_value
+axiom_types	SubPropertyChainOf	list_value
+axiom_types	SymmetricObjectProperty	list_value
+axiom_types	TransitiveObjectProperty	list_value
+axiom_types_incl	AnnotationAssertion	list_value
+axiom_types_incl	AsymmetricObjectProperty	list_value
+axiom_types_incl	ClassAssertion	list_value
+axiom_types_incl	Declaration	list_value
+axiom_types_incl	DifferentIndividuals	list_value
+axiom_types_incl	DisjointClasses	list_value
+axiom_types_incl	DisjointObjectProperties	list_value
+axiom_types_incl	EquivalentClasses	list_value
+axiom_types_incl	FunctionalObjectProperty	list_value
+axiom_types_incl	InverseFunctionalObjectProperty	list_value
+axiom_types_incl	InverseObjectProperties	list_value
+axiom_types_incl	IrrefexiveObjectProperty	list_value
+axiom_types_incl	ObjectPropertyDomain	list_value
+axiom_types_incl	ObjectPropertyRange	list_value
+axiom_types_incl	Rule	list_value
+axiom_types_incl	SubAnnotationPropertyOf	list_value
+axiom_types_incl	SubClassOf	list_value
+axiom_types_incl	SubObjectPropertyOf	list_value
+axiom_types_incl	SubPropertyChainOf	list_value
+axiom_types_incl	SymmetricObjectProperty	list_value
+axiom_types_incl	TransitiveObjectProperty	list_value
+certain_cycle	true	single_value
+certain_cycle_incl	true	single_value
+class_count	3440	single_value
+class_count_incl	3440	single_value
+class_expression_count	Class 30260	map_value
+class_expression_count	ObjectAllValuesFrom 6	map_value
+class_expression_count	ObjectComplementOf 14	map_value
+class_expression_count	ObjectExactCardinality 2	map_value
+class_expression_count	ObjectHasSelf 1	map_value
+class_expression_count	ObjectIntersectionOf 2148	map_value
+class_expression_count	ObjectMaxCardinality 5	map_value
+class_expression_count	ObjectMinCardinality 9	map_value
+class_expression_count	ObjectOneOf 3	map_value
+class_expression_count	ObjectSomeValuesFrom 7659	map_value
+class_expression_count	ObjectUnionOf 35	map_value
+class_expression_count_incl	Class 30260	map_value
+class_expression_count_incl	ObjectAllValuesFrom 6	map_value
+class_expression_count_incl	ObjectComplementOf 14	map_value
+class_expression_count_incl	ObjectExactCardinality 2	map_value
+class_expression_count_incl	ObjectHasSelf 1	map_value
+class_expression_count_incl	ObjectIntersectionOf 2148	map_value
+class_expression_count_incl	ObjectMaxCardinality 5	map_value
+class_expression_count_incl	ObjectMinCardinality 9	map_value
+class_expression_count_incl	ObjectOneOf 3	map_value
+class_expression_count_incl	ObjectSomeValuesFrom 7659	map_value
+class_expression_count_incl	ObjectUnionOf 35	map_value
+class_sgl_subcl_count	658	single_value
+class_sgl_subcl_count_incl	658	single_value
+constructs	I	list_value
+constructs	O	list_value
+constructs	Q	list_value
+constructs	R	list_value
+constructs	S	list_value
+constructs_incl	I	list_value
+constructs_incl	O	list_value
+constructs_incl	Q	list_value
+constructs_incl	R	list_value
+constructs_incl	S	list_value
+curie_map	BFO http://purl.obolibrary.org/obo/BFO_	map_value
+curie_map	BSPO http://purl.obolibrary.org/obo/BSPO_	map_value
+curie_map	CARO http://purl.obolibrary.org/obo/CARO_	map_value
+curie_map	CHEBI http://purl.obolibrary.org/obo/CHEBI_	map_value
+curie_map	CL http://purl.obolibrary.org/obo/CL_	map_value
+curie_map	GO http://purl.obolibrary.org/obo/GO_	map_value
+curie_map	IAO http://purl.obolibrary.org/obo/IAO_	map_value
+curie_map	NBO http://purl.obolibrary.org/obo/NBO_	map_value
+curie_map	NCBITaxon http://purl.obolibrary.org/obo/NCBITaxon_	map_value
+curie_map	OBI http://purl.obolibrary.org/obo/OBI_	map_value
+curie_map	PATO http://purl.obolibrary.org/obo/PATO_	map_value
+curie_map	PR http://purl.obolibrary.org/obo/PR_	map_value
+curie_map	RO http://purl.obolibrary.org/obo/RO_	map_value
+curie_map	SO http://purl.obolibrary.org/obo/SO_	map_value
+curie_map	UBERON http://purl.obolibrary.org/obo/UBERON_	map_value
+curie_map	dc http://purl.org/dc/terms/	map_value
+curie_map	dc11 http://purl.org/dc/elements/1.1/	map_value
+curie_map	foaf http://xmlns.com/foaf/0.1/	map_value
+curie_map	obo http://purl.obolibrary.org/obo/	map_value
+curie_map	oboInOwl http://www.geneontology.org/formats/oboInOwl#	map_value
+curie_map	owl http://www.w3.org/2002/07/owl#	map_value
+curie_map	rdf http://www.w3.org/1999/02/22-rdf-syntax-ns#	map_value
+curie_map	rdfs http://www.w3.org/2000/01/rdf-schema#	map_value
+curie_map	skos http://www.w3.org/2004/02/skos/core#	map_value
+curie_map	xsd http://www.w3.org/2001/XMLSchema#	map_value
+dataproperty_count	0	single_value
+dataproperty_count_incl	0	single_value
+datatypes_axiom_count	RDF_PLAIN_LITERAL 2163	map_value
+datatypes_axiom_count	XSD_BOOLEAN 9	map_value
+datatypes_axiom_count	XSD_STRING 735	map_value
+datatypes_axiom_count_incl	RDF_PLAIN_LITERAL 2163	map_value
+datatypes_axiom_count_incl	XSD_BOOLEAN 9	map_value
+datatypes_axiom_count_incl	XSD_STRING 735	map_value
+datatypes_builtin	RDF_PLAIN_LITERAL	list_value
+datatypes_builtin	XSD_ANY_URI	list_value
+datatypes_builtin	XSD_BOOLEAN	list_value
+datatypes_builtin	XSD_DATE_TIME	list_value
+datatypes_builtin	XSD_NON_NEGATIVE_INTEGER	list_value
+datatypes_builtin	XSD_STRING	list_value
+datatypes_builtin_incl	RDF_PLAIN_LITERAL	list_value
+datatypes_builtin_incl	XSD_ANY_URI	list_value
+datatypes_builtin_incl	XSD_BOOLEAN	list_value
+datatypes_builtin_incl	XSD_DATE_TIME	list_value
+datatypes_builtin_incl	XSD_NON_NEGATIVE_INTEGER	list_value
+datatypes_builtin_incl	XSD_STRING	list_value
+datatypes_count	6	single_value
+datatypes_count_incl	6	single_value
+dt_builtin_count	6	single_value
+dt_builtin_count_incl	6	single_value
+dt_notbuiltin_count	0	single_value
+dt_notbuiltin_count_incl	0	single_value
+expressivity	SROIQ	single_value
+expressivity_incl	SROIQ	single_value
+gci_count	67	single_value
+gci_count_incl	67	single_value
+gci_hidden_count	1734	single_value
+gci_hidden_count_incl	1734	single_value
+individual_count	17	single_value
+individual_count_incl	17	single_value
+instance_per_class_avg	0.004941860465116279	single_value
+instance_per_class_avg_incl	0.004941860465116279	single_value
+logical_axiom_count	12743	single_value
+logical_axiom_count_incl	12743	single_value
+most_freq_concept	http://purl.obolibrary.org/obo/AISM_0000167	single_value
+most_freq_concept_incl	http://purl.obolibrary.org/obo/AISM_0000167	single_value
+multiple_inheritance_count	1728	single_value
+multiple_inheritance_count_incl	1728	single_value
+named_supercl_count_max	1	single_value
+named_supercl_count_max_incl	1	single_value
+namespace_axiom_count	BFO 3732	map_value
+namespace_axiom_count	BSPO 1211	map_value
+namespace_axiom_count	CARO 370	map_value
+namespace_axiom_count	CHEBI 284	map_value
+namespace_axiom_count	CL 2405	map_value
+namespace_axiom_count	GO 4735	map_value
+namespace_axiom_count	IAO 4833	map_value
+namespace_axiom_count	NBO 18	map_value
+namespace_axiom_count	NCBITaxon 339	map_value
+namespace_axiom_count	OBI 7	map_value
+namespace_axiom_count	PATO 637	map_value
+namespace_axiom_count	PR 448	map_value
+namespace_axiom_count	RO 4599	map_value
+namespace_axiom_count	SO 30	map_value
+namespace_axiom_count	UBERON 15197	map_value
+namespace_axiom_count	dc 6	map_value
+namespace_axiom_count	dc11 2598	map_value
+namespace_axiom_count	foaf 241	map_value
+namespace_axiom_count	obo 6722	map_value
+namespace_axiom_count	oboInOwl 40717	map_value
+namespace_axiom_count	owl 58	map_value
+namespace_axiom_count	prefix_unknown 85	map_value
+namespace_axiom_count	rdf 2163	map_value
+namespace_axiom_count	rdfs 4258	map_value
+namespace_axiom_count	skos 3	map_value
+namespace_axiom_count	xsd 744	map_value
+namespace_axiom_count_incl	BFO 3732	map_value
+namespace_axiom_count_incl	BSPO 1211	map_value
+namespace_axiom_count_incl	CARO 370	map_value
+namespace_axiom_count_incl	CHEBI 284	map_value
+namespace_axiom_count_incl	CL 2405	map_value
+namespace_axiom_count_incl	GO 4735	map_value
+namespace_axiom_count_incl	IAO 4833	map_value
+namespace_axiom_count_incl	NBO 18	map_value
+namespace_axiom_count_incl	NCBITaxon 339	map_value
+namespace_axiom_count_incl	OBI 7	map_value
+namespace_axiom_count_incl	PATO 637	map_value
+namespace_axiom_count_incl	PR 448	map_value
+namespace_axiom_count_incl	RO 4599	map_value
+namespace_axiom_count_incl	SO 30	map_value
+namespace_axiom_count_incl	UBERON 15197	map_value
+namespace_axiom_count_incl	dc 6	map_value
+namespace_axiom_count_incl	dc11 2598	map_value
+namespace_axiom_count_incl	foaf 241	map_value
+namespace_axiom_count_incl	obo 6722	map_value
+namespace_axiom_count_incl	oboInOwl 40717	map_value
+namespace_axiom_count_incl	owl 58	map_value
+namespace_axiom_count_incl	prefix_unknown 85	map_value
+namespace_axiom_count_incl	rdf 2163	map_value
+namespace_axiom_count_incl	rdfs 4258	map_value
+namespace_axiom_count_incl	skos 3	map_value
+namespace_axiom_count_incl	xsd 744	map_value
+namespace_entity_count	BFO 24	map_value
+namespace_entity_count	BSPO 107	map_value
+namespace_entity_count	CARO 11	map_value
+namespace_entity_count	CHEBI 69	map_value
+namespace_entity_count	CL 339	map_value
+namespace_entity_count	GO 629	map_value
+namespace_entity_count	IAO 50	map_value
+namespace_entity_count	NBO 6	map_value
+namespace_entity_count	NCBITaxon 36	map_value
+namespace_entity_count	OBI 1	map_value
+namespace_entity_count	PATO 117	map_value
+namespace_entity_count	PR 51	map_value
+namespace_entity_count	RO 192	map_value
+namespace_entity_count	SO 4	map_value
+namespace_entity_count	UBERON 1516	map_value
+namespace_entity_count	dc 3	map_value
+namespace_entity_count	dc11 6	map_value
+namespace_entity_count	foaf 2	map_value
+namespace_entity_count	obo 650	map_value
+namespace_entity_count	oboInOwl 38	map_value
+namespace_entity_count	owl 2	map_value
+namespace_entity_count	prefix_unknown 21	map_value
+namespace_entity_count	rdf 1	map_value
+namespace_entity_count	rdfs 4	map_value
+namespace_entity_count	skos 1	map_value
+namespace_entity_count	xsd 5	map_value
+namespace_entity_count_incl	BFO 24	map_value
+namespace_entity_count_incl	BSPO 107	map_value
+namespace_entity_count_incl	CARO 11	map_value
+namespace_entity_count_incl	CHEBI 69	map_value
+namespace_entity_count_incl	CL 339	map_value
+namespace_entity_count_incl	GO 629	map_value
+namespace_entity_count_incl	IAO 50	map_value
+namespace_entity_count_incl	NBO 6	map_value
+namespace_entity_count_incl	NCBITaxon 36	map_value
+namespace_entity_count_incl	OBI 1	map_value
+namespace_entity_count_incl	PATO 117	map_value
+namespace_entity_count_incl	PR 51	map_value
+namespace_entity_count_incl	RO 192	map_value
+namespace_entity_count_incl	SO 4	map_value
+namespace_entity_count_incl	UBERON 1516	map_value
+namespace_entity_count_incl	dc 3	map_value
+namespace_entity_count_incl	dc11 6	map_value
+namespace_entity_count_incl	foaf 2	map_value
+namespace_entity_count_incl	obo 650	map_value
+namespace_entity_count_incl	oboInOwl 38	map_value
+namespace_entity_count_incl	owl 2	map_value
+namespace_entity_count_incl	prefix_unknown 21	map_value
+namespace_entity_count_incl	rdf 1	map_value
+namespace_entity_count_incl	rdfs 4	map_value
+namespace_entity_count_incl	skos 1	map_value
+namespace_entity_count_incl	xsd 5	map_value
+obj_property_count	255	single_value
+obj_property_count_incl	255	single_value
+ontology_anno_count	8	single_value
+ontology_iri	http://purl.obolibrary.org/obo/aism.owl	single_value
+ontology_version_iri	http://purl.obolibrary.org/obo/aism/releases/2021-11-19/aism.owl	single_value
+owl2	true	single_value
+owl2_dl	false	single_value
+owl2_el	false	single_value
+owl2_ql	false	single_value
+owl2_rl	false	single_value
+owl2dl_profile_violation	UseOfPropertyInChainCausesCycle 4	map_value
+rbox_axiom_count	457	single_value
+rbox_axiom_count_incl	457	single_value
+rdfs	false	single_value
+rule_count	0	single_value
+rule_count_incl	0	single_value
+signature_entity_count	3885	single_value
+signature_entity_count_incl	3885	single_value
+syntax	RDF/XML Syntax	single_value
+tautology_count	28	single_value
+tautology_count_incl	28	single_value
+tbox_axiom_count	12267	single_value
+tbox_axiom_count_incl	12267	single_value
+tbox_nominals	true	single_value
+tbox_nominals_incl	true	single_value
+tboxrbox_axiom_count	12724	single_value
+tboxrbox_axiom_count_incl	12724	single_value
+undecl_entity_count	9	single_value
+undecl_entity_count_incl	9	single_value

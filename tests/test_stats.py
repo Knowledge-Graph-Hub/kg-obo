@@ -4,10 +4,12 @@ from unittest.mock import Mock
 import datetime
 from dateutil.tz import tzutc
 
-from kg_obo.stats import retrieve_tracking, write_stats, get_clean_file_metadata, \
+from kg_obo.stats import retrieve_tracking, robot_axiom_validations, write_stats, get_clean_file_metadata, \
                             get_graph_details, get_file_list, get_all_stats, \
                             decompress_graph, validate_version_name, \
-                            compare_versions, cleanup
+                            compare_versions, cleanup, parse_robot_metrics
+
+from kg_obo.robot_utils import initialize_robot
                             
 class TestStats(TestCase):
 
@@ -117,8 +119,16 @@ class TestStats(TestCase):
 
     def test_decompress_graph(self):
         tar_path = "./tests/resources/download_ontology/graph.tar.gz"
+        empty_tar_path = "./tests/resources/download_ontology/emptygraph.tar.gz"
+        overfull_tar_path = "./tests/resources/download_ontology/overfullgraph.tar.gz"
         edge_path = "./tests/resources/download_ontology/bfo_kgx_tsv_edges.tsv"
         decompress_graph("bfo", tar_path)
+        with open(edge_path) as edgefile:
+            self.assertTrue(edgefile.read())
+        decompress_graph("bfo", empty_tar_path)
+        with open(edge_path) as edgefile:
+            self.assertTrue(edgefile.read())
+        decompress_graph("bfo", overfull_tar_path)
         with open(edge_path) as edgefile:
             self.assertTrue(edgefile.read())
 
@@ -150,9 +160,13 @@ class TestStats(TestCase):
 
     def test_compare_versions(self):
         compare = compare_versions(self.entry, self.versions)
-        self.assertEqual(compare,{"Identical":[],"Large Difference":[]})
+        self.assertEqual(compare,{'Large Difference in Edge Count': [],
+                                'Large Difference in Node Count': [],
+                                'Large Difference in Size': []})
         compare = compare_versions(self.entry, self.multiversions)
-        self.assertNotEqual(compare,{"Identical":[],"Large Difference":[]})
+        self.assertNotEqual(compare,{'Large Difference in Edge Count': [],
+                                'Large Difference in Node Count': [],
+                                'Large Difference in Size': []})
 
     def test_cleanup(self):
         test_data_dir = "./data/testdir/"
@@ -166,6 +180,24 @@ class TestStats(TestCase):
         self.assertTrue(validate_version_name(good_version))
         self.assertFalse(validate_version_name(bad_version))
 
+    @mock.patch('boto3.client') 
+    def test_robot_axiom_validations(self, mock_boto):
+        robot_path = os.path.join(os.getcwd(),"robot")
+        robot_params = initialize_robot(robot_path)
+        robot_env = robot_params[1]
+        robot_axiom_validations(self.bucket, self.bucket_dir,
+                                robot_path, robot_env,
+                                self.versions)
+        self.assertTrue(mock_boto.called)
+    
+    def test_parse_robot_metrics(self):
+        inpath = "./tests/resources/test-owl-profile-validation.tsv"
+        wanted_metrics = ['constructs', 'rule_count']
+        metrics = parse_robot_metrics(inpath, wanted_metrics)
+        self.assertEqual(metrics, {'constructs':['I','O','Q','R','S'],
+                                    'rule_count':['0']})
+
+    @mock.patch('boto3.client') 
     @mock.patch('kg_obo.upload.check_tracking', return_value = True)
     @mock.patch('kg_obo.stats.retrieve_tracking', 
                 return_value = [{'Name': 'bfo',
@@ -186,16 +218,19 @@ class TestStats(TestCase):
                             'Singletons': 7, 
                             'MaxNodeDegree': 47, 
                             'MeanNodeDegree': '3.18'}}})
-    def test_get_all_stats(self, mock_check_tracking,
+    def test_get_all_stats(self, mock_boto,
+                            mock_check_tracking,
                             mock_retrieve_tracking,
                             mock_get_clean_file_metadata,
                             mock_get_graph_details):
         get_all_stats()
+        self.assertTrue(mock_boto.called)
         self.assertTrue(mock_check_tracking.called)
         self.assertTrue(mock_retrieve_tracking.called)
         self.assertTrue(mock_get_clean_file_metadata.called)
         self.assertTrue(mock_get_graph_details.called)
         get_all_stats(get_only=["bfo"])
+        self.assertTrue(mock_boto.called)
         self.assertTrue(mock_check_tracking.called)
         self.assertTrue(mock_retrieve_tracking.called)
         self.assertTrue(mock_get_clean_file_metadata.called)
