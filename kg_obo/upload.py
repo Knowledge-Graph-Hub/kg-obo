@@ -216,6 +216,7 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
 
     client = boto3.client('s3')
     s3_path = s3_bucket_dir
+    print("Testing S3 only - mock checking lock status.")
 
     # For mock purposes, we need to create the virtual bucket first.
     try:

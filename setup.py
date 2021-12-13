@@ -60,7 +60,7 @@ setup(
     tests_require=test_deps,
     # add package dependencies
     install_requires=[
-        'kgx==1.5.1', # KGX should probably have its own pip install
+        'kgx==1.5.1',
         'requests',
         'setuptools',
         'boto3',
