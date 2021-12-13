@@ -60,11 +60,11 @@ setup(
     tests_require=test_deps,
     # add package dependencies
     install_requires=[
-        'kgx==1.5.1',
+        'kgx==1.5.1', # KGX should probably have its own pip install
         'requests',
         'setuptools',
         'boto3',
-        'botocore',
+        'botocore', 
         'pyyaml',
         'tqdm',
         'click',
@@ -72,8 +72,8 @@ setup(
         'sphinx_rtd_theme',
         'recommonmark',
         'sh',
-        'grape',
-        'gitpython'
+        'ensmallen==0.7.0.dev5',
+        'gitpython' 
     ],
     extras_require=extras,
 )
