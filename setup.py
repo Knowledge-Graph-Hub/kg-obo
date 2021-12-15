@@ -64,7 +64,7 @@ setup(
         'requests',
         'setuptools',
         'boto3',
-        'botocore',
+        'botocore', 
         'pyyaml',
         'tqdm',
         'click',
@@ -72,8 +72,8 @@ setup(
         'sphinx_rtd_theme',
         'recommonmark',
         'sh',
-        'grape',
-        'gitpython'
+        'ensmallen==0.7.0.dev6',
+        'gitpython' 
     ],
     extras_require=extras,
 )
