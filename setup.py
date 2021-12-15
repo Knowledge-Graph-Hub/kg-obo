@@ -72,7 +72,7 @@ setup(
         'sphinx_rtd_theme',
         'recommonmark',
         'sh',
-        'ensmallen==0.7.0.dev5',
+        'ensmallen==0.7.0.dev6',
         'gitpython' 
     ],
     extras_require=extras,
