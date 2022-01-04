@@ -583,7 +583,10 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
         sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
 
     # Make local stats directory
-    os.mkdir("stats")
+    try:
+        os.mkdir("stats")
+    except FileExistsError: #If folder exists, don't need to make it.
+        pass
 
     # Check for the tracking file first
     if not kg_obo.upload.check_tracking(bucket, track_file_remote_path):
@@ -593,7 +596,7 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     # Get current versions for all OBO graphs
     # Or just the specified ones
     versions = retrieve_tracking(bucket, track_file_remote_path,
-                                 "./stats/tracking.yaml",
+                                 "./tracking.yaml",
                                  skip, get_only)
     validations = []
 
