@@ -75,10 +75,18 @@ def run(skip, get_only, bucket, save_local, s3_test, no_dl_progress, force_index
             print("Reports generated without errors. See stats directory.")
             if kg_obo.upload.upload_reports(bucket):
                 print(f"Uploaded reports to {bucket}.")
+
+                # Write a new index for the stats reports, too
+                if kg_obo.upload.update_index_files(bucket, "kg-obo/stats/", "stats/"):
+                    print(f"Wrote new index for stats directory on {bucket}.")
+                else:
+                    print(f"Could not write new index for stats directory on {bucket}.")
+
             else:
                 print(f"Could not upload reports to {bucket}.")
         else:
             print("Stats reports could not be generated.")
+
     except Exception as e:
         print(f"Encountered unresolvable error while generating stats: {type(e)} - {e}")
 

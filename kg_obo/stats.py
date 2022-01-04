@@ -680,8 +680,12 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     final_validations = [i for n, i in enumerate(new_validations) if i not in new_validations[n + 1:]]
 
     # Time to write
-    write_stats(final_versions, "stats/stats.tsv")
-    write_stats(final_validations, "stats/validation.tsv")
-    write_stats(axiom_validations, "stats/axiom_validations.tsv" )
+    stats_paths = ["stats/stats.tsv", "stats/validation.tsv", "stats/axiom_validations.tsv"]
+    write_stats(final_versions, stats_paths[0])
+    print(f"Wrote stats on all ontologies and versions to {stats_paths[0]}")
+    write_stats(final_validations, stats_paths[1])
+    print(f"Wrote validations for all ontologies and versions to {stats_paths[1]}")
+    write_stats(axiom_validations,  stats_paths[2])
+    print(f"Wrote axiom analyses for all ontologies and versions to {stats_paths[2]}")
 
     return success

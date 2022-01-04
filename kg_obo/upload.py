@@ -430,7 +430,7 @@ def verify_uploads(filelist: list, name: str) -> bool:
 
 def upload_reports(s3_bucket: str) -> bool:
     """
-    Upload the stats and validation reports to root of S3 bucket.
+    Upload the stats and validation reports to stats directory on S3 bucket.
     :param s3_bucket: str ID of the bucket to upload to
     :return: bool, True if completed successfully
     """
@@ -439,13 +439,21 @@ def upload_reports(s3_bucket: str) -> bool:
 
     client = boto3.client('s3')
 
-    report_paths = ["./stats/stats.tsv",
+    local_report_paths = ["./stats/stats.tsv",
                     "./stats/validation.tsv"]
 
+
     try:
-        for filepath in report_paths:
-            # construct the full path
-            s3_path = os.path.join("kg-obo", os.path.basename(filepath))
+        for filepath in local_report_paths:
+            # construct the full remote path
+            s3_path = os.path.join("kg-obo", "stats", os.path.basename(filepath))
+
+            # Remove file if it already exists on remote, which is likely
+            try:
+                client.delete_object(Bucket=s3_bucket, Key=s3_path)
+            except botocore.exceptions.ClientError:
+                pass
+
             client.upload_file(filepath, Bucket=s3_bucket, Key=s3_path,
                             ExtraArgs={'ContentType':'text/html','ACL':'public-read'})
             success = True
