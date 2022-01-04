@@ -28,7 +28,7 @@ SIZE_DIFF_TYPES = ["Large Difference in Size",
                     "Large Difference in Edge Count"]
 
 def retrieve_tracking(bucket, track_file_remote_path,
-                        track_file_local_path: str = "./stats/tracking.yaml",
+                        track_file_local_path: str = "./tracking.yaml",
                         skip: list = [], 
                         get_only: list = [] ) -> list:
     """
@@ -581,6 +581,9 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
 
     if not robot_params[0]: #i.e., if we couldn't find ROBOT 
         sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
+
+    # Make local stats directory
+    os.mkdir("stats")
 
     # Check for the tracking file first
     if not kg_obo.upload.check_tracking(bucket, track_file_remote_path):
