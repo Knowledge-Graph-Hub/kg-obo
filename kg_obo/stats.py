@@ -481,6 +481,8 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                 pass
 
             try:
+                # Check if it exists first
+                client.head_object(Bucket=bucket, Key=remote_loc)
                 client.download_file(bucket, 
                                     remote_loc,
                                     outpath)
