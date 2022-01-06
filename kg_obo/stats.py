@@ -507,9 +507,14 @@ def robot_axiom_validations(bucket: str, remote_path: str,
             # Get axiom namespaces
             owl_namespaces = []
             missing_namespaces = []
-            for namespace_and_count in metrics['namespace_axiom_count']:
-                namespace = (namespace_and_count.split())[0]
-                owl_namespaces.append(namespace)
+            try: # Sometimes we need to use namespace_axiom_count_incl
+                for namespace_and_count in metrics['namespace_axiom_count']:
+                    namespace = (namespace_and_count.split())[0]
+                    owl_namespaces.append(namespace)
+            except KeyError:
+                for namespace_and_count in metrics['namespace_axiom_count_incl']:
+                    namespace = (namespace_and_count.split())[0]
+                    owl_namespaces.append(namespace)
                 
             # Compare axiom namespaces in OWL and in graph 
             # We don't expect a perfect numerical match,
@@ -554,9 +559,12 @@ def parse_robot_metrics(inpath: str, wanted_metrics: list) -> dict:
             metrics[line['metric']].append(line['metric_value'])
 
     if len(wanted_metrics) > 0:
-        new_metrics = {k: metrics[k] for k in wanted_metrics}
-        metrics = new_metrics
-
+        try:
+            new_metrics = {k: metrics[k] for k in wanted_metrics}
+            metrics = new_metrics
+        except KeyError:
+            pass # Can't update if the wanted metric doesn't exist
+        
     return metrics 
 
 
