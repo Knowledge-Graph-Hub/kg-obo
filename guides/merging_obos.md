@@ -9,3 +9,42 @@ With both methods, the final product will be nodes and edges corresponding to th
 ## Ontology Development Kit (ODK)
 
 ## KGX
+
+Install KGX:
+
+```
+pip install kgx
+```
+
+Retreive ontologies from KG-OBO, replacing each URL here with one to the .tar.gz for the desired ontology and version:
+
+```
+wget -i - https://kg-hub.berkeleybop.io/kg-obo/fbbi/2020-11-06/fbbi_kgx_tsv.tar.gz https://kg-hub.berkeleybop.io/kg-obo/bfo/2019-08-26/bfo_kgx_tsv.tar.gz
+```
+
+Once downloads are complete, press CTRL+D to finish.
+
+Decompress all freshly downloaded files:
+```
+cat *.tar.gz | tar zxvf - -i
+```
+
+Edit the merge config file (here, it's `merge-template.yaml`) so that it defines your ontologies.
+
+Each entry should look like:
+```
+    obo1:
+      name: "OBO One"
+      input:
+        format: tsv
+        filename:
+          - obo1_nodes.tsv
+          - obo1_edges.tsv
+```
+
+Finally, use KGX to merge:
+```
+kgx merge --merge-config merge-template.yaml
+```
+
+The merged node and edgelists will be written to the current directory.
