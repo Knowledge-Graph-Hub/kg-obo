@@ -506,6 +506,7 @@ def robot_axiom_validations(bucket: str, remote_path: str,
             # and load its output
             if need_metrics:
                 if measure_owl(robot_path, outpath, logpath, robot_env):
+                    print(f"Generated new ROBOT metrics for {name}, version {version}.")
                     pass
                 else:
                     print(f"Failed to obtain metrics for {name}, version {version}.")
