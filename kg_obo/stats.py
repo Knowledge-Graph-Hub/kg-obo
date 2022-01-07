@@ -495,10 +495,12 @@ def robot_axiom_validations(bucket: str, remote_path: str,
             try:
                 remote_metrics = f'kg-obo/{name}/{version}/{name}-owl-profile-validation.tsv'
                 client.head_object(Bucket=bucket, Key=remote_metrics)
+                print(f"Will download existing metrics for {name}, version {version}.")
                 client.download_file(bucket, remote_metrics, logpath)
                 need_metrics = False
             except botocore.exceptions.ClientError:
                 need_metrics = True
+                print(f"Will get metrics for {name}, version {version}.")
 
             # Run robot measure to get stats we'll use for comparison
             # and load its output
@@ -508,7 +510,11 @@ def robot_axiom_validations(bucket: str, remote_path: str,
                 else:
                     print(f"Failed to obtain metrics for {name}, version {version}.")
                     continue
-            metrics = parse_robot_metrics(logpath, wanted_metrics)
+            try:
+                metrics = parse_robot_metrics(logpath, wanted_metrics)
+            except FileNotFoundError: # If we still don't have metrics
+                print(f"No metrics could be obtained for {name}, version {version}.")
+                continue
             
             # Load the graph
             edges_path = os.path.join(outdir,f"{name}_kgx_tsv_edges.tsv")
