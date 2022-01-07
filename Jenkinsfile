@@ -82,7 +82,6 @@ pipeline {
                                     sh '. venv/bin/activate && env && python3.8 run.py --s3_test --bucket fake_bucket --no_dl_progress'
                                 } else {
                                     sh '. venv/bin/activate && env && python3.8 run.py --bucket kg-hub-public-data --no_dl_progress --force_index_refresh'
-                                    sh '. venv/bin/activate && s3cmd -c $S3CMD_CFG --acl-public --mime-type=plain/text --cf-invalidate put -r stats/ s3://kg-hub-public-data/$S3PROJECTDIR/'
                                 }
                             }
                             

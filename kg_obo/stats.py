@@ -483,20 +483,38 @@ def robot_axiom_validations(bucket: str, remote_path: str,
             try:
                 # Check if it exists first
                 client.head_object(Bucket=bucket, Key=remote_loc)
-                client.download_file(bucket, 
-                                    remote_loc,
-                                    outpath)
+                client.download_file(bucket, remote_loc, outpath)
             except botocore.exceptions.ClientError as e:
                 print(f"Could not retrieve OWL for {name}, version {version} due to: {e}")
                 shutil.rmtree(logdir)
                 continue
 
+            # Check to see if we already have robot measure results
+            # to avoid a redundant operation.
+            # If we have 'em, download 'em
+            try:
+                remote_metrics = f'kg-obo/{name}/{version}/{name}-owl-profile-validation.tsv'
+                client.head_object(Bucket=bucket, Key=remote_metrics)
+                print(f"Will download existing metrics for {name}, version {version}.")
+                client.download_file(bucket, remote_metrics, logpath)
+                need_metrics = False
+            except botocore.exceptions.ClientError:
+                need_metrics = True
+                print(f"Will get metrics for {name}, version {version}.")
+
             # Run robot measure to get stats we'll use for comparison
             # and load its output
-            if measure_owl(robot_path, outpath, logpath, robot_env):
+            if need_metrics:
+                if measure_owl(robot_path, outpath, logpath, robot_env):
+                    print(f"Generated new ROBOT metrics for {name}, version {version}.")
+                    pass
+                else:
+                    print(f"Failed to obtain metrics for {name}, version {version}.")
+                    continue
+            try:
                 metrics = parse_robot_metrics(logpath, wanted_metrics)
-            else:
-                print(f"Failed to obtain metrics for {name}, version {version}.")
+            except FileNotFoundError: # If we still don't have metrics
+                print(f"No metrics could be obtained for {name}, version {version}.")
                 continue
             
             # Load the graph
