@@ -6,7 +6,7 @@ pipeline {
         }
     }
     triggers{
-        cron('H H 1 1-12 *')
+        cron('0 0 * * 6')
     }
     environment {
         BUILDSTARTDATE = sh(script: "echo `date +%Y%m%d`", returnStdout: true).trim()
