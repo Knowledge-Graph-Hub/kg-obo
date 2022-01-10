@@ -10,6 +10,6 @@ export_formats:
 import_group:
   products:
     - id: envo 
-    - id: ecto
+    - id: exo
 robot_java_args: '-Xmx8G'
 allow_equivalents: all
