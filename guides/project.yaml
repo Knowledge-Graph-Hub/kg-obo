@@ -2,7 +2,14 @@ id: examplo
 title: Example ontology
 github_org: user
 repo: examplo
+report_fail_on: ERROR
+release_artefacts: 
+  - full
+export_formats:
+  - owl
 import_group:
   products:
-    - id: zfa
-    - id: xao
+    - id: envo 
+    - id: ecto
+robot_java_args: '-Xmx8G'
+allow_equivalents: all
