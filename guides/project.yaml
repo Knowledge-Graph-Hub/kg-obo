@@ -1,0 +1,8 @@
+id: examplo
+title: Example ontology
+github_org: user
+repo: examplo
+import_group:
+  products:
+    - id: zfa
+    - id: xao
