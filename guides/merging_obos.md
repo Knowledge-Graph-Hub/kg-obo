@@ -35,7 +35,14 @@ Use the script to retrive your OBOs:
 
 A `target` directory will be created in the current working directory.
 
-**TODO: complete this section.**
+The root of `kg-obo` contains a script named `transform_only.py`. This can be used to transform the ODK output. Copy the "full" version of the combined ontologies out of the `target/your_ontology_name_here` directory and into the root of the `kg-obo` directory.
+
+```
+python transform_only.py --input_file examplo-full.owl --output_file graph_things
+```
+
+The graph edge and node lists will be output to a tar.gz compressed file.
+
 
 ## KGX
 
