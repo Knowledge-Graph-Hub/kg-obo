@@ -6,8 +6,9 @@
 
 A package to transform all [OBO ontologies](http://obofoundry.org/) into [KGX TSV format](https://github.com/biolink/kgx/blob/master/specification/kgx-format.md), and put the transformed graph in [KGhub](http://kg-hub.berkeleybop.io/index.html).
 
-Documentation is [here](https://knowledge-graph-hub.github.io/kg-obo/getting_started.html)
+Documentation is [here](https://knowledge-graph-hub.github.io/kg-obo/getting_started.html).
+See also the guides in the `guides` directory for specific use case examples.
 
-OBO ontologies transformed into are available [here](https://kg-hub.berkeleybop.io/kg-obo/).
+OBO ontologies transformed into graph nodes and edges are available [here](https://kg-hub.berkeleybop.io/kg-obo/).
 
-Requires [ROBOT](http://robot.obolibrary.org/) to be installed and available on the system PATH. 
+Uses [ROBOT](http://robot.obolibrary.org/) - this will be installed if it is not already present.
