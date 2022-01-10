@@ -30,11 +30,14 @@ def run(input_file, output_file):
     robot_env = robot_params[1]
 
     relaxed_file = os.path.splitext(input_file)[0]+'_relaxed.owl'
-
     if not relax_owl(robot_path, input_file, relaxed_file, robot_env):
                 print(f"ROBOT relaxing of {input_file} failed!")
 
-    kg_obo.transform.kgx_transform(input_file=[relaxed_file], 
+    merged_file = os.path.splitext(relaxed_file)[0]+'_merged.owl'
+    if not merge_and_convert_owl(robot_path, relaxed_file, merged_file, robot_env):
+                print(f"ROBOT merge and convert of {relaxed_file} failed!")
+
+    kg_obo.transform.kgx_transform(input_file=[merged_file], 
                                 input_format='owl',
                                 output_file=output_file,
                                 output_format='tsv', 
