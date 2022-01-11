@@ -1,0 +1,35 @@
+---
+configuration:
+  output_directory: .
+  checkpoint: false
+
+merged_graph:
+  name: Merged OBO Graph
+  source:
+    obo1:
+      name: "BFO"
+      input:
+        format: tsv
+        filename:
+          - bfo_kgx_tsv_nodes.tsv
+          - bfo_kgx_tsv_edges.tsv
+    obo2:
+      name: "FBBI"
+      input:
+        format: tsv
+        filename:
+          - fbbi_kgx_tsv_nodes.tsv
+          - fbbi_kgx_tsv_edges.tsv
+  operations:
+    - name: kgx.graph_operations.summarize_graph.generate_graph_stats
+      args:
+        graph_name: Merged OBO Graph
+        filename: merged_graph_stats.yaml
+        node_facet_properties:
+          - provided_by
+        edge_facet_properties:
+          - provided_by
+  destination:
+    merged-kg-tsv:
+      format: tsv
+      filename: merged-kg
