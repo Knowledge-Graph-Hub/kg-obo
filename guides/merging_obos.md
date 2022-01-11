@@ -1,6 +1,6 @@
 # Merging OBOs
 
-Why merge OBOs into a single graph? A snapshot of combined hierarchical relationships may be a necessary component of a knowledge graph, or it may simply be the most convenient (and more importantly, reproducible) way to share sets of related axioms. For example, projects involving both zebrafish and Xenopus as model organisms may require both the [Phenotype And Trait Ontology (PATO)](https://obofoundry.org/ontology/pato.html) and the [environment ontology (ENVO)](https://obofoundry.org/ontology/envo.html). Or, you may require the conceptual relationships provided by the [Biological Imaging Methods Ontology (FBBI)](https://obofoundry.org/ontology/fbbi.html) and the [Basic Formal Ontology (BFO)](https://obofoundry.org/ontology/bfo.html).
+Why merge OBOs into a single graph? A snapshot of combined hierarchical relationships may be a necessary component of a knowledge graph, or it may simply be the most convenient (and more importantly, reproducible) way to share sets of related axioms. For example, projects may require both the [Phenotype And Trait Ontology (PATO)](https://obofoundry.org/ontology/pato.html) and the [Food Ontology (FOODON)](https://obofoundry.org/ontology/foodon.html). Or, you may require the conceptual relationships provided by the [Biological Imaging Methods Ontology (FBBI)](https://obofoundry.org/ontology/fbbi.html) and the [Basic Formal Ontology (BFO)](https://obofoundry.org/ontology/bfo.html).
 
 Ontologies from the [OBO Foundry](http://obofoundry.org/) may be merged in two different ways: through a pipeline for the [Ontology Development Kit](https://github.com/INCATools/ontology-development-kit) or directly through [KGX](https://github.com/biolink/kgx). The former method offers the benefit of providing all necessary dependencies in a premade Docker image and may be most appropriate for ontology developers (e.g., if you are actively working on an OBO ontology but wish to use it in a graph along with other OBOs). The strategy relies upon selecting a set of OBOs, merging them, then using KG-OBO to transform to nodes/edges. The KGX method offers more direct control over the desired contents of the output, as its inputs are defined by a single configuration file. Unlike ODK, this approach works with individual sets of transformed OBOs, then merges the node and edgelists. While this method is more straightforward, its tools are blissfully unaware of ideosyncracies such as equivalent classes
 
@@ -35,7 +35,7 @@ components:
       source: http://purl.obolibrary.org/obo/some_ontology/some_ontology-base.owl
 ```
 
-*Please note*: this requires the existence of the "base" form of the OBO OWL. As an alternative, you can include something like the following in the config file:
+As an alternative, you can include something like the following in the config file - but note the imported contents will not be in the "base" file but rather in the non-base (e.g., some_ontology.owl).
 
 ```
 import_group:

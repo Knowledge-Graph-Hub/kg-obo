@@ -9,5 +9,7 @@ components:
   products:
     - filename: pato.owl
       source: http://purl.obolibrary.org/obo/pato/pato-base.owl
+    - filename: foodon.owl
+      source: http://purl.obolibrary.org/obo/foodon.owl
 robot_java_args: '-Xmx8G'
 allow_equivalents: all
