@@ -3,13 +3,11 @@ title: Example ontology
 github_org: user
 repo: examplo
 report_fail_on: ERROR
-release_artefacts: 
-  - full
 export_formats:
   - owl
-import_group:
+components:
   products:
-    - id: envo 
-    - id: exo
+    - filename: pato.owl
+      source: http://purl.obolibrary.org/obo/pato/pato-base.owl
 robot_java_args: '-Xmx8G'
 allow_equivalents: all
