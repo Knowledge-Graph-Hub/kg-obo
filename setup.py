@@ -60,20 +60,20 @@ setup(
     tests_require=test_deps,
     # add package dependencies
     install_requires=[
-        'kgx==1.5.1',
+        'kgx==1.5.7',
         'requests',
         'setuptools',
         'boto3',
         'botocore', 
         'pyyaml',
         'tqdm',
-        'click',
         'moto[s3]',
         'sphinx_rtd_theme',
         'recommonmark',
         'sh',
         'ensmallen==0.7.0.dev6',
-        'gitpython' 
+        'gitpython',
+        'click'
     ],
     extras_require=extras,
 )
