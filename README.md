@@ -58,6 +58,25 @@ This allows automatic completion of:
 
 KG-OBO uses [ROBOT](http://robot.obolibrary.org/) - this is installed if it is not already present.
 
+### How can I try it out? ###
+
+KG-OBO assumes you are working in a Linux environment with at least Python 3.8.
+
+Install it by cloning this respository:
+```
+$ git clone https://github.com/Knowledge-Graph-Hub/kg-obo.git
+$ cd kg-obo
+$ python -m pip install .
+```
+
+Then run the following to test it out:
+```
+$ python run.py --get_only bfo --s3_test --bucket test --save_local
+```
+This will tell KG-OBO to retrieve the [Basic Formal Ontology](https://obofoundry.org/ontology/bfo) and transform it, skipping uploading steps.
+
+With the `--save_local` option, the transformed output will be found in `kg-obo/data/bfo/` (otherwise, it is deleted). Expect to see six files in total, one of which, bfo_kgx_tsv.tar.gz, will contain the nodes and edges of this ontology.
+
 ## Where should issues be reported?
 [Please let us know about any issues with KG-OBO transforms on GitHub.](https://github.com/Knowledge-Graph-Hub/kg-obo/issues/new/choose)
 
