@@ -15,7 +15,7 @@ import botocore.exceptions # type: ignore
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, measure_owl
 
-from ensmallen import Graph # type: ignore
+from grape import Graph # type: ignore
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log",
@@ -330,7 +330,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 def load_graph(name: str, version: str, edges_path: str, 
                 nodes_path: str) -> Graph:
     """
-    Load a graph with Ensmallen.
+    Load a graph with Ensmallen (from grape).
     :param name: OBO name
     :param version: OBO version
     :param edges_path: path to edgefile
