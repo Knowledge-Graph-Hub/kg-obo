@@ -15,7 +15,7 @@ import botocore.exceptions # type: ignore
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, measure_owl
 
-from ensmallen import Graph # type: ignore
+from grape import Graph # type: ignore
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log",
@@ -306,10 +306,10 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 
             g = load_graph(entry, version, edges_path, nodes_path)
             
-            node_count = g.get_nodes_number()
-            edge_count = g.get_edges_number()
-            connected_components = g.get_connected_components_number()
-            singleton_count = g.get_singleton_nodes_number()
+            node_count = g.get_number_of_nodes()
+            edge_count = g.get_number_of_edges()
+            connected_components = g.get_number_of_connected_components()
+            singleton_count = g.get_number_of_singleton_nodes()
             max_node_degree = g.get_maximum_node_degree()
             mean_node_degree = g.get_node_degrees_mean() 
 
@@ -330,7 +330,7 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 def load_graph(name: str, version: str, edges_path: str, 
                 nodes_path: str) -> Graph:
     """
-    Load a graph with Ensmallen.
+    Load a graph with Ensmallen (from grape).
     :param name: OBO name
     :param version: OBO version
     :param edges_path: path to edgefile
