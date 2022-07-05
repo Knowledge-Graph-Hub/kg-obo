@@ -239,11 +239,17 @@ def get_owl_iri(input_file_name: str) -> tuple:
                     ((iri.split(";"))[-1] in ["ino.owl"]): # More edge cases
                         version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
                         version_search = re.search(version_tag, owl_string)  # type: ignore
-                        version = (version_search.group(1)).decode("utf-8")
+                        try:
+                            version = (version_search.group(1)).decode("utf-8")
+                        except AttributeError: # thrown if result of search is None
+                            version = (version_search.decode("utf-8"))
                 elif (iri.split("/"))[-1] in ["cheminf.owl"]:
                         version_tag = b'owl:versionInfo rdf:datatype=\"&xsd;string\">([^<]+)'
                         version_search = re.search(version_tag, owl_string)  # type: ignore
-                        version = (version_search.group(1)).decode("utf-8")
+                        try:
+                            version = (version_search.group(1)).decode("utf-8")
+                        except AttributeError: # thrown if result of search is None
+                            version = (version_search.decode("utf-8"))
             elif version_iri_only_search:
                 version_format = "versionIRI (but missing the owl: prefix)"
                 iri = (version_iri_only_search.group(1)).decode("utf-8")
