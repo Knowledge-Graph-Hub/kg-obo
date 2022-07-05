@@ -306,8 +306,8 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 
             g = load_graph(entry, version, edges_path, nodes_path)
             
-            node_count = g.get_nodes_number()
-            edge_count = g.get_edges_number()
+            node_count = g.get_number_of_nodes()
+            edge_count = g.get_number_of_edges()
             connected_components = g.get_connected_components_number()
             singleton_count = g.get_singleton_nodes_number()
             max_node_degree = g.get_maximum_node_degree()
