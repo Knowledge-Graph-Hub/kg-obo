@@ -25,13 +25,19 @@ from kg_obo.stats import get_all_stats
                is_flag=True,
                help="""If used, keeps all downloaded graph files.
                      Otherwise, they are deleted.""")
-def run(skip, get_only, bucket, save_local):
+@click.option("--no_robot",
+               is_flag=True,
+               help="""If used, skips all ROBOT error checking and validation.
+                        This can save a lot of time and memory.""")
+def run(skip, get_only, bucket, save_local, no_robot):
     try:
         if len(skip) >0:
             print(f"Ignoring these OBOs: {skip}" )
         if len(get_only) >0:
-            print(f"Will only retrieve these OBOs: {get_only}" ) 
-        if get_all_stats(skip, get_only, bucket, save_local): 
+            print(f"Will only retrieve these OBOs: {get_only}" )
+        if no_robot:
+            print(f"Will skip ROBOT error checking and validation.")
+        if get_all_stats(skip, get_only, bucket, save_local, no_robot): 
             print("Operation completed without errors.")
         else:
             print("Operation did not complete successfully.")
