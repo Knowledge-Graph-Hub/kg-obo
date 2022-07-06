@@ -293,9 +293,12 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
             except FileExistsError: #If folder exists, don't need to make it.
                 pass
 
-            client.download_file(bucket, 
+            if not os.path.exists(outpath):
+                client.download_file(bucket, 
                                 remote_loc,
                                 outpath)
+            else:
+                print(f"Found existing graph file for {entry} at {outpath}. Will use.")
 
             # Decompress
             path_pair = decompress_graph(entry, outpath)
@@ -586,29 +589,34 @@ def parse_robot_metrics(inpath: str, wanted_metrics: list) -> dict:
     return metrics 
 
 
-def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
-                    save_local = False):
+def get_all_stats(skip: list = [], 
+                    get_only: list = [], 
+                    bucket="bucket",
+                    save_local = False,
+                    no_robot = False):
     """
     Get graph statistics for all specified OBOs.
     :param skip: list of OBOs to skip, by ID
     :param get_only: list of OBOs to retrieve, by ID (otherwise do all)
     :param bucket: str of S3 bucket, to be specified as argument
     :param save_local: if True, retains all downloaded files. Deletes them otherwise.
+    :param no_robot: if True, skips all ROBOT error checking and validation.
     :return: boolean indicating success or existing run encountered (False for unresolved error)
     """
     success = True
 
     track_file_remote_path = "kg-obo/tracking.yaml"
 
-    print("Setting up ROBOT...")
-    robot_path = os.path.join(os.getcwd(),"robot")
-    robot_params = initialize_robot(robot_path)
-    print(f"ROBOT path: {robot_path}")
-    robot_env = robot_params[1]
-    print(f"ROBOT evironment variables: {robot_env['ROBOT_JAVA_ARGS']}")
+    if not no_robot:
+        print("Setting up ROBOT...")
+        robot_path = os.path.join(os.getcwd(),"robot")
+        robot_params = initialize_robot(robot_path)
+        print(f"ROBOT path: {robot_path}")
+        robot_env = robot_params[1]
+        print(f"ROBOT evironment variables: {robot_env['ROBOT_JAVA_ARGS']}")
 
-    if not robot_params[0]: #i.e., if we couldn't find ROBOT 
-        sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
+        if not robot_params[0]: #i.e., if we couldn't find ROBOT 
+            sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
 
     # Make local stats directory
     try:
@@ -672,7 +680,8 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
                                 "Issue": "|".join(issues)})
 
     # Now validate vs. the original OWL
-    axiom_validations = robot_axiom_validations(bucket, "kg-obo", 
+    if not no_robot:
+        axiom_validations = robot_axiom_validations(bucket, "kg-obo", 
                                         robot_path, robot_env, versions)
 
     # Comparative validation time
@@ -719,7 +728,8 @@ def get_all_stats(skip: list = [], get_only: list = [], bucket="bucket",
     print(f"Wrote stats on all ontologies and versions to {stats_paths[0]}")
     write_stats(final_validations, stats_paths[1])
     print(f"Wrote validations for all ontologies and versions to {stats_paths[1]}")
-    write_stats(axiom_validations,  stats_paths[2])
-    print(f"Wrote axiom analyses for all ontologies and versions to {stats_paths[2]}")
+    if not no_robot:
+        write_stats(axiom_validations, stats_paths[2])
+        print(f"Wrote axiom analyses for all ontologies and versions to {stats_paths[2]}")
 
     return success
