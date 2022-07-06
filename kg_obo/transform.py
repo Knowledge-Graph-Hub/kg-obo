@@ -62,10 +62,7 @@ def retrieve_obofoundry_yaml(
     yaml_req = requests.get(yaml_url)
     yaml_content = yaml_req.content.decode('utf-8')
     yaml_parsed = yaml.safe_load(yaml_content)
-    if not yaml_parsed or 'ontologies' not in yaml_parsed:
-        raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
-    else:
-        yaml_onto_list: list = yaml_parsed['ontologies']
+    yaml_onto_list: list = yaml_parsed['ontologies']
 
     if len(skip) > 0:
         yaml_onto_list_filtered = \
