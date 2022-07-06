@@ -60,7 +60,7 @@ setup(
     tests_require=test_deps,
     # add package dependencies
     install_requires=[
-        'kgx==1.5.7',
+        'kgx',
         'requests',
         'setuptools',
         'boto3',
