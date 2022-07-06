@@ -147,11 +147,10 @@ def kgx_transform(input_file: list, input_format: str,
             output_msg = f"Encountered errors in transforming or parsing to {output_format}: {error_collect}"
             errors = True
 
-    except (FileNotFoundError,
-            SAXParseException,
+    except (SAXParseException,
             ParserError,
-            Exception,
-            TypeError) as e:
+            Exception
+            ) as e:
         success = False
         output_msg = f"KGX problem while transforming {input_file} to {output_format} due to {e}"
 
