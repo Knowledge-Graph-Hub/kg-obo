@@ -293,9 +293,12 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
             except FileExistsError: #If folder exists, don't need to make it.
                 pass
 
-            client.download_file(bucket, 
+            if not os.path.exists(outpath):
+                client.download_file(bucket, 
                                 remote_loc,
                                 outpath)
+            else:
+                print(f"Found existing graph file for {entry} at {outpath}. Will use.")
 
             # Decompress
             path_pair = decompress_graph(entry, outpath)
