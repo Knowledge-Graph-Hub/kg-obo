@@ -11,7 +11,8 @@
 Documentation is [here](https://knowledge-graph-hub.github.io/kg-obo/getting_started.html).
 See also the guides in the `guides` directory for specific use case examples.
 
-OBO ontologies transformed into graph nodes and edges are available [here](https://kg-hub.berkeleybop.io/kg-obo/).
+OBO ontologies transformed into graph nodes and edges are available [here](https://knowledge-graph-hub.github.io/kg_obo/).
+You may also see the full collection of graphs [here](https://kg-hub.berkeleybop.io/kg-obo/).
 
 ## Why?
 
@@ -26,16 +27,19 @@ KG-OBO takes care of this for you.
 ### How can KG-OBO graphs be used in a new project?
 
 Individual versions of OBO ontology graphs [may be downloaded directly from KG-Hub](https://kg-hub.berkeleybop.io/kg-obo/). Each directory has the same identifier as on OBO Foundry. Inside a directory, each version has its own subdirectory, and each subdirectory contains:
+
 * {name}_kgx_tsv.tar.gz - a compressed file containing the graph nodes and edges, both in KGX TSV format.
 * {name}_kgx.json - the graph nodes and edges in [OBO JSON format](https://github.com/geneontology/obographs).
 * tsv_transform.log - a log of the transformation process for TSV format.
 * json_transform.log  - a log of the transformation process for OBO JSON format.
 
 For example, if you need to retrieve the 2021-12-12 release of the Zebrafish Phenotype ontology, you may do the following on a Linux command line:
+
 ```
 $ wget https://kg-hub.berkeleybop.io/kg-obo/zp/2021-12-12/zp_kgx_tsv.tar.gz
 $ tar xvzf zp_kgx_tsv.tar.gz
 ```
+
 The nodes and edges will be in `zp_kgx_tsv_nodes.tsv` and `zp_kgx_tsv_edges.tsv`, respectively.
 
 Ontologies from KG-OBO are great foundations for a [new KG-Hub project based on our template](https://github.com/Knowledge-Graph-Hub/kg-dtm-template), too! They may be loaded into KG-Hub graphs with minimal further effort.

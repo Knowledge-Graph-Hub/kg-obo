@@ -62,10 +62,7 @@ def retrieve_obofoundry_yaml(
     yaml_req = requests.get(yaml_url)
     yaml_content = yaml_req.content.decode('utf-8')
     yaml_parsed = yaml.safe_load(yaml_content)
-    if not yaml_parsed or 'ontologies' not in yaml_parsed:
-        raise RuntimeError(f"Can't retrieve ontology info from YAML at this url {yaml_url}")
-    else:
-        yaml_onto_list: list = yaml_parsed['ontologies']
+    yaml_onto_list: list = yaml_parsed['ontologies']
 
     if len(skip) > 0:
         yaml_onto_list_filtered = \
@@ -150,11 +147,10 @@ def kgx_transform(input_file: list, input_format: str,
             output_msg = f"Encountered errors in transforming or parsing to {output_format}: {error_collect}"
             errors = True
 
-    except (FileNotFoundError,
-            SAXParseException,
+    except (SAXParseException,
             ParserError,
-            Exception,
-            TypeError) as e:
+            Exception
+            ) as e:
         success = False
         output_msg = f"KGX problem while transforming {input_file} to {output_format} due to {e}"
 
@@ -235,8 +231,7 @@ def get_owl_iri(input_file_name: str) -> tuple:
             elif iri_about_tag_search: #In this case, we likely don't have a version
                 version_format = "versionInfo"
                 iri = (iri_about_tag_search.group(1)).decode("utf-8")
-                if ((iri.split("/"))[-1] in ["oae.owl", "opmi.owl", "ons.owl", "geo.owl"]) or \
-                    ((iri.split(";"))[-1] in ["ino.owl"]): # More edge cases
+                if ((iri.split("/"))[-1] in ["oae.owl","opmi.owl","ons.owl","geo.owl","dideo.owl","ino.owl"]):
                         version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
                         version_search = re.search(version_tag, owl_string)  # type: ignore
                         version = (version_search.group(1)).decode("utf-8") # type: ignore
