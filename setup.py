@@ -65,7 +65,7 @@ setup(
         'click',
         'curies',
         'gitpython',
-        'grape'
+        'grape',
         'kgx',
         'moto[s3]',
         'pyyaml',
