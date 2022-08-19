@@ -884,6 +884,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         f"{filename} {os.stat(os.path.join(versioned_obo_path, filename)).st_size} bytes")
 
             # Standardize node CURIEs
+            # Note that some http-containing prefixes need to be changed to https,
+            # or vice-versa, to match the provided converter maps
+            # Also remove bnode IDs - they aren't adding anything
             if success:
                 pass
 
