@@ -48,7 +48,7 @@ setup(
     author_email='justinreese@lbl.gov, jhc@lbl.gov',
     description='Code to import OBO ontologies into KGHub',
     long_description=long_description,
-    python_requires='>=3.7',
+    python_requires='>=3.9',
 
     include_package_data=True,
     classifiers=[
@@ -66,7 +66,7 @@ setup(
         'curies',
         'gitpython',
         'grape',
-        'kgx',
+        'kgx==1.6.1',
         'moto[s3]',
         'prefixmaps @ git+https://github.com/linkml/prefixmaps.git',
         'pyyaml',
