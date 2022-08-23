@@ -9,7 +9,6 @@ import sys
 import tempfile
 from datetime import datetime
 from io import StringIO
-from urllib.parse import quote
 from xml.sax._exceptions import SAXParseException  # type: ignore
 
 import boto3  # type: ignore
@@ -71,17 +70,17 @@ def retrieve_obofoundry_yaml(
     if len(skip) > 0:
         yaml_onto_list_filtered = \
             [ontology for ontology in yaml_onto_list if ontology['id'] not in skip
-             if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+             if ("is_obsolete" not in ontology) or not (ontology['is_obsolete'])
              ]
     elif len(get_only) > 0:
         yaml_onto_list_filtered = \
             [ontology for ontology in yaml_onto_list if ontology['id'] in get_only
-             if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+             if ("is_obsolete" not in ontology) or not (ontology['is_obsolete'])
              ]
     else:
         yaml_onto_list_filtered = \
             [ontology for ontology in yaml_onto_list
-             if ("is_obsolete" not in ontology) or (ontology['is_obsolete'] == False)
+             if ("is_obsolete" not in ontology) or not (ontology['is_obsolete'])
              ]
 
     return yaml_onto_list_filtered
@@ -243,14 +242,12 @@ def get_owl_iri(input_file_name: str) -> tuple:
                     version_tag = b'owl:versionInfo xml:lang=\"en\">([^<]+)'
                     version_search = re.search(
                         version_tag, owl_string)  # type: ignore
-                    version = (version_search.group(1)).decode(
-                        "utf-8")  # type: ignore
+                    version = (version_search.group(1)).decode("utf-8")  # type: ignore
                 elif (iri.split("/"))[-1] in ["cheminf.owl"]:
                     version_tag = b'owl:versionInfo rdf:datatype=\"&xsd;string\">([^<]+)'
                     version_search = re.search(
                         version_tag, owl_string)  # type: ignore
-                    version = (version_search.group(1)).decode(
-                        "utf-8")  # type: ignore
+                    version = (version_search.group(1)).decode("utf-8")  # type: ignore
             elif version_iri_only_search:
                 version_format = "versionIRI (but missing the owl: prefix)"
                 iri = (version_iri_only_search.group(1)).decode("utf-8")
@@ -536,7 +533,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     if not robot_params[0]:  # i.e., if we couldn't find ROBOT
         sys.exit(
-            f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
+            "\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
 
     # Set up logging
     timestring = (datetime.now()).strftime("%Y-%m-%d_%H-%M-%S")
