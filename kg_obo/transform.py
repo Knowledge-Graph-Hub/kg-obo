@@ -19,6 +19,7 @@ import requests  # type: ignore
 import yaml  # type: ignore
 from curies import Converter  # type: ignore
 from kgx.config import get_logger  # type: ignore
+from prefixmaps.io.parser import load_multi_context # type: ignore
 from rdflib.exceptions import ParserError  # type: ignore
 from tqdm import tqdm  # type: ignore
 
@@ -554,9 +555,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     kgx_logger.addHandler(root_logger_handler)
 
     # Set up CURIE checking and conversion converters
-    obo_conv = curies.get_obo_converter()
-    br_conv = curies.get_bioregistry_converter()
-    kgobo_conv = Converter.from_reverse_prefix_map(KGOBO_PREFIXES)
+    curie_contexts = load_multi_context(["obo", "bioregistry.upper"])
+    curie_converter = Converter.from_prefix_map(curie_contexts.as_dict())
+    internal_converter = Converter.from_reverse_prefix_map(KGOBO_PREFIXES)
 
     # Check if there's already a run in progress (i.e., lock file exists)
     # This isn't an error so it does not trigger an exit
