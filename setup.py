@@ -68,7 +68,7 @@ setup(
         'grape',
         'kgx==1.6.1',
         'moto[s3]',
-        'prefixmaps @ git+https://github.com/linkml/prefixmaps.git',
+        'prefixmaps',
         'pyyaml',
         'recommonmark',
         'requests',
