@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sh # type: ignore
-from sh import chmod # type: ignore
+
+import sh  # type: ignore
+from curies import Converter  # type: ignore
+from sh import chmod  # type: ignore
 
 from post_setup.post_setup import robot_setup
 
@@ -112,7 +114,6 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robo
 def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dict) -> bool:
     """
     This method runs the ROBOT measure command on a single OBO in OWL.
-    Yields all metrics as string and as a log file.
 
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be validated
@@ -141,5 +142,67 @@ def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dic
     except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
         print(f"ROBOT encountered an error: {e}")
         success = False
+
+    return success
+
+def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, robot_env: dict) -> bool:
+    """
+    This method attempts to normalize all entity identifiers a single OBO in OWL.
+
+    Reports all identifiers of unexpected format,
+    and attempts to rename if possible.
+    :param robot_path: Path to ROBOT files
+    :param input_owl: Ontology file to be normalized
+    :param coverter: a curies Converter object with defined prefix maps
+    :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
+    :return: True if completed without errors, False if errors
+    """
+
+    # TODO: get other things KGX will use as nodes, beyond entity IRIs
+
+    success = False
+
+    id_list = []
+    mal_id_list = []
+    normalized_ids = {}
+
+    print(f"Retrieving entity names in {input_owl}...")
+
+    robot_command = sh.Command(robot_path)
+    tempfile_name = input_owl + ".ids.csv"
+
+    try:
+        robot_command('export',
+            '--input', input_owl,
+            '--header', 'ID',
+            '--export', tempfile_name,
+            _env=robot_env,
+        )
+        print(f"Exported IDs to {tempfile_name}.")
+        success = True
+    except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
+        print(f"ROBOT encountered an error: {e}")
+        success = False
+
+    if success:
+        with open(tempfile_name, 'r') as idfile:
+            idfile.readline()
+            for line in idfile:
+                id_list.append(line.rstrip())
+
+        for identifier in id_list:
+            try: 
+                print(identifier)
+                assert converter.expand(identifier)
+            except AssertionError:
+                mal_id_list.append(identifier)
+        
+        mal_id_list_len = len(mal_id_list)
+        if mal_id_list_len > 0:
+            print(f"Found {mal_id_list_len} unexpected identifiers:")
+            for identifier in mal_id_list:
+                print(identifier)
+        else:
+            print(f"All identifiers in {input_owl} are as expected.")
 
     return success

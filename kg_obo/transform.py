@@ -27,7 +27,7 @@ import kg_obo.obolibrary_utils
 import kg_obo.upload
 from kg_obo.prefixes import KGOBO_PREFIXES
 from kg_obo.robot_utils import (initialize_robot, merge_and_convert_owl,
-                                relax_owl)
+                                relax_owl, normalize_owl_names)
 
 
 def delete_path(root_dir: str, omit: list = []) -> bool:
@@ -555,9 +555,10 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     kgx_logger.addHandler(root_logger_handler)
 
     # Set up CURIE checking and conversion converters
+    # TODO: merge internal converter and curie_converter into one thing
     curie_contexts = load_multi_context(["obo", "bioregistry.upper"])
     curie_converter = Converter.from_prefix_map(curie_contexts.as_dict())
-    internal_converter = Converter.from_reverse_prefix_map(KGOBO_PREFIXES)
+    # internal_converter = Converter.from_reverse_prefix_map(KGOBO_PREFIXES)
 
     # Check if there's already a run in progress (i.e., lock file exists)
     # This isn't an error so it does not trigger an exit
@@ -832,16 +833,27 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         f"ROBOT merging of {ontology_name} yielded an empty result!")
                     continue  # Need to skip this one or we will upload empty results
 
+            if need_imports:
+                input_owl = tfile_merged.name
+            else:
+                input_owl = tfile_relaxed.name
+
+            # Standardize IDs
+            # Note that some http-containing prefixes need to be changed to https,
+            # or vice-versa, to match the provided converter maps
+            print(f"ROBOT preprocessing: node ID normalization on {ontology_name}")
+
+            if not normalize_owl_names(robot_path, input_owl, curie_converter, robot_env):
+                kg_obo_logger.error(
+                    f"ROBOT name normalization of {ontology_name} failed - skipping.")
+                print(f"ROBOT name normalization of {ontology_name} failed - skipping.")
+
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
             success = True  # for all transforms
             errors = False  # for all transforms
             all_success_and_errors = {}
             desired_output_formats = ['tsv', 'json']
-            if need_imports:
-                input_owl = tfile_merged.name
-            else:
-                input_owl = tfile_relaxed.name
             for output_format in desired_output_formats:
                 kg_obo_logger.info(f"Transforming to {output_format}...")
                 if output_format == 'tsv':
@@ -857,6 +869,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 all_success_and_errors[output_format] = (
                     this_success, this_errors)
                 kg_obo_logger.info(this_output_msg)
+
+            # TODO: remove bnode ids
+            # this may require editing the tsv nodefile
 
             # Check results of all transforms
             # If we didn't get JSON, that's acceptable
@@ -880,13 +895,6 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 else:
                     kg_obo_logger.info(
                         f"{filename} {os.stat(os.path.join(versioned_obo_path, filename)).st_size} bytes")
-
-            # Standardize node CURIEs
-            # Note that some http-containing prefixes need to be changed to https,
-            # or vice-versa, to match the provided converter maps
-            # Also remove bnode IDs - they aren't adding anything
-            if success:
-                pass
 
             if success and not errors:
                 kg_obo_logger.info(
