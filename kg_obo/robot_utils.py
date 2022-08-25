@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from curses.ascii import islower
 import os
+from typing import Dict
 
 import sh  # type: ignore
 from curies import Converter  # type: ignore
@@ -159,12 +161,13 @@ def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, r
     """
 
     # TODO: get other things KGX will use as nodes, beyond entity IRIs
+    # TODO: ensure all CURIEs are capitalized
 
     success = False
 
     id_list = []
     mal_id_list = []
-    normalized_ids = {}
+    update_ids: Dict[str, str] = {}
 
     print(f"Retrieving entity names in {input_owl}...")
 
@@ -190,12 +193,20 @@ def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, r
             for line in idfile:
                 id_list.append(line.rstrip())
 
+        # For each id, assume it is a CURIE and try to convert to IRI.
+        # If that doesn't work, it might be an IRI - try to
+        # convert it to a CURIE. If that works, we need to update it.
         for identifier in id_list:
             try: 
-                print(identifier)
                 assert converter.expand(identifier)
             except AssertionError:
                 mal_id_list.append(identifier)
+                new_id = converter.compress(identifier)
+                if new_id:
+                    if new_id[0].islower(): # Need to capitalize
+                        split_id = new_id.split(":")
+                        new_id = f"{split_id[0].upper()}:{split_id[1]}"
+                    update_ids[identifier] = new_id
         
         mal_id_list_len = len(mal_id_list)
         if mal_id_list_len > 0:
@@ -204,5 +215,13 @@ def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, r
                 print(identifier)
         else:
             print(f"All identifiers in {input_owl} are as expected.")
+
+        update_id_len = len(update_ids)
+        if update_id_len > 0:
+            print(f"Will normalize {update_id_len} identifiers:")
+            for identifier in update_ids:
+                print(f"{identifier} -> {update_ids[identifier]}")
+        else:
+            print(f"No identifiers in {input_owl} will be normalized.")
 
     return success

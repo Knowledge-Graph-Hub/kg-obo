@@ -12,7 +12,6 @@ from io import StringIO
 from xml.sax._exceptions import SAXParseException  # type: ignore
 
 import boto3  # type: ignore
-import curies  # type: ignore
 import git
 import kgx.cli  # type: ignore
 import requests  # type: ignore
@@ -556,7 +555,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
     # Set up CURIE checking and conversion converters
     # TODO: merge internal converter and curie_converter into one thing
-    curie_contexts = load_multi_context(["obo", "bioregistry.upper"])
+    curie_contexts = load_multi_context(["obo", "bioregistry.upper", "prefixcc"])
     curie_converter = Converter.from_prefix_map(curie_contexts.as_dict())
     # internal_converter = Converter.from_reverse_prefix_map(KGOBO_PREFIXES)
 
