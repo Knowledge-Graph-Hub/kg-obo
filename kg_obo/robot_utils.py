@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from curses.ascii import islower
 import os
+import shutil
 from typing import Dict
 
 import sh  # type: ignore
@@ -173,6 +173,7 @@ def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, r
 
     robot_command = sh.Command(robot_path)
     tempfile_name = input_owl + ".ids.csv"
+    mapping_file_name = input_owl + ".maps.csv"
 
     try:
         robot_command('export',
@@ -207,6 +208,8 @@ def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, r
                         split_id = new_id.split(":")
                         new_id = f"{split_id[0].upper()}:{split_id[1]}"
                     update_ids[identifier] = new_id
+
+        
         
         mal_id_list_len = len(mal_id_list)
         if mal_id_list_len > 0:
@@ -219,9 +222,28 @@ def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, r
         update_id_len = len(update_ids)
         if update_id_len > 0:
             print(f"Will normalize {update_id_len} identifiers:")
-            for identifier in update_ids:
-                print(f"{identifier} -> {update_ids[identifier]}")
+            with open(mapping_file_name, 'w') as mapfile:
+                for identifier in update_ids:
+                    print(f"{identifier} -> {update_ids[identifier]}")
+                    mapfile.write(f"{identifier},{update_ids[identifier]}")
         else:
             print(f"No identifiers in {input_owl} will be normalized.")
+
+        if update_id_len > 0:
+            temp_outfile = input_owl + ".tmp.owl"
+            try:
+                robot_command('rename',
+                    '--input', input_owl,
+                    '--mappings', mapping_file_name,
+                    '--output', temp_outfile,
+                    _env=robot_env,
+                )
+
+                shutil.move(temp_outfile, input_owl)
+
+                success = True
+            except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
+                print(f"ROBOT encountered an error: {e}")
+                success = False
 
     return success
