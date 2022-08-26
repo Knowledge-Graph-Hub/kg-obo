@@ -556,8 +556,9 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     # Set up CURIE checking and conversion converters
     # TODO: merge internal converter and curie_converter into one thing
     curie_contexts = load_multi_context(["obo", "bioregistry.upper", "prefixcc"])
-    curie_converter = Converter.from_prefix_map(curie_contexts.as_dict())
-    # internal_converter = Converter.from_reverse_prefix_map(KGOBO_PREFIXES)
+    all_contexts = curie_contexts.as_dict()
+    all_contexts.update(KGOBO_PREFIXES)
+    curie_converter = Converter.from_prefix_map(all_contexts)
 
     # Check if there's already a run in progress (i.e., lock file exists)
     # This isn't an error so it does not trigger an exit
