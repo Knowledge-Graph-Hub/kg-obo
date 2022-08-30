@@ -147,7 +147,11 @@ def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dic
 
     return success
 
-def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, robot_env: dict) -> bool:
+def normalize_owl_names(robot_path: str, 
+                        input_owl: str, 
+                        curie_converter: Converter, 
+                        iri_converter: Converter, 
+                        robot_env: dict) -> bool:
     """
     This method attempts to normalize all entity identifiers a single OBO in OWL.
 
@@ -199,18 +203,16 @@ def normalize_owl_names(robot_path: str, input_owl: str, converter: Converter, r
         # convert it to a CURIE. If that works, we need to update it.
         for identifier in id_list:
             try: 
-                assert converter.expand(identifier)
+                assert curie_converter.expand(identifier)
             except AssertionError:
                 mal_id_list.append(identifier)
-                new_id = converter.compress(identifier)
+                new_id = iri_converter.compress(identifier)
                 if new_id:
                     if new_id[0].islower(): # Need to capitalize
                         split_id = new_id.split(":")
                         new_id = f"{split_id[0].upper()}:{split_id[1]}"
                     update_ids[identifier] = new_id
 
-        
-        
         mal_id_list_len = len(mal_id_list)
         if mal_id_list_len > 0:
             print(f"Found {mal_id_list_len} unexpected identifiers:")

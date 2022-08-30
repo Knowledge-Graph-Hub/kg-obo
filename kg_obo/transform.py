@@ -554,11 +554,15 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     kgx_logger.addHandler(root_logger_handler)
 
     # Set up CURIE checking and conversion converters
-    # TODO: merge internal converter and curie_converter into one thing
+    # We need both maps for CURIE -> IRI (for validating) - this is curie_converter
+    # and for IRI -> CURIE (for converting) - this is iri_converter
+    # Note: not all prefixes in all_contexts are in all_reverse_contexts
     curie_contexts = load_multi_context(["obo", "bioregistry.upper", "prefixcc"])
     all_contexts = curie_contexts.as_dict()
-    all_contexts.update(KGOBO_PREFIXES)
     curie_converter = Converter.from_prefix_map(all_contexts)
+    all_reverse_contexts = {val: key.upper() for key, val in all_contexts.items()}
+    all_reverse_contexts.update(KGOBO_PREFIXES)
+    iri_converter = Converter.from_reverse_prefix_map(all_reverse_contexts)
 
     # Check if there's already a run in progress (i.e., lock file exists)
     # This isn't an error so it does not trigger an exit
@@ -843,7 +847,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
             # or vice-versa, to match the provided converter maps
             print(f"ROBOT preprocessing: node ID normalization on {ontology_name}")
 
-            if not normalize_owl_names(robot_path, input_owl, curie_converter, robot_env):
+            if not normalize_owl_names(robot_path, input_owl, curie_converter, iri_converter, robot_env):
                 kg_obo_logger.error(
                     f"ROBOT name normalization of {ontology_name} failed - skipping.")
                 print(f"ROBOT name normalization of {ontology_name} failed - skipping.")
