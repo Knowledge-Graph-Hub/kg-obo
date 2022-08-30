@@ -66,7 +66,7 @@ setup(
         'curies',
         'gitpython',
         'grape',
-        'kgx==1.6.1',
+        'kgx==1.7.0',
         'moto[s3]',
         'prefixmaps',
         'pyyaml',
