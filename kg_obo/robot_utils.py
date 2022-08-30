@@ -148,7 +148,8 @@ def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dic
     return success
 
 def normalize_owl_names(robot_path: str, 
-                        input_owl: str, 
+                        input_owl: str,
+                        prefix_map: dict, 
                         curie_converter: Converter, 
                         iri_converter: Converter, 
                         robot_env: dict) -> bool:
@@ -159,19 +160,24 @@ def normalize_owl_names(robot_path: str,
     and attempts to rename if possible.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be normalized
-    :param coverter: a curies Converter object with defined prefix maps
+    :param prefix_map: dict of CURIE prefix to IRI prefix maps,
+    to provide prefixes for ROBOT when renaming 
+    :param curie_converter: a curies Converter object with defined prefix maps,
+    from CURIE prefix to IRI prefix
+    :param iri_converter: a curies Converter object with defined prefix maps,
+    from IRI prefix to CURIE prefix
     :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
     :return: True if completed without errors, False if errors
     """
 
     # TODO: get other things KGX will use as nodes, beyond entity IRIs
-    # TODO: ensure all CURIEs are capitalized
 
     success = False
 
     id_list = []
     mal_id_list = []
     update_ids: Dict[str, str] = {}
+    new_prefixes: Dict[str, str] = {}
 
     print(f"Retrieving entity names in {input_owl}...")
 
@@ -208,10 +214,14 @@ def normalize_owl_names(robot_path: str,
                 mal_id_list.append(identifier)
                 new_id = iri_converter.compress(identifier)
                 if new_id:
+                    parsed_curie = iri_converter.parse_uri(identifier)
                     if new_id[0].islower(): # Need to capitalize
                         split_id = new_id.split(":")
                         new_id = f"{split_id[0].upper()}:{split_id[1]}"
                     update_ids[identifier] = new_id
+                    if parsed_curie[0] not in new_prefixes:
+                        iri_prefix = prefix_map[parsed_curie[0]]
+                        new_prefixes[parsed_curie[0]] = iri_prefix
 
         mal_id_list_len = len(mal_id_list)
         if mal_id_list_len > 0:
@@ -232,6 +242,15 @@ def normalize_owl_names(robot_path: str,
         else:
             print(f"No identifiers in {input_owl} will be normalized.")
 
+        # Rename command needs prefix assignments for each rename
+        # e.g. "--add-prefix PDRO: http://purl.obolibrary.org/obo/PDRO_"
+        # but these need to be "baked" into the command to run them
+
+        for prefixpair in new_prefixes:
+            iri_prefix = new_prefixes[prefixpair]
+            npx = f"\"{prefixpair}: {iri_prefix}\" "
+            robot_command = robot_command.bake("--add-prefix", npx)
+
         if update_id_len > 0:
             temp_outfile = input_owl + ".tmp.owl"
             print(f"Renaming classes in {temp_outfile}.")
@@ -240,6 +259,7 @@ def normalize_owl_names(robot_path: str,
                     '--input', input_owl,
                     '--mappings', mapping_file_name,
                     '--output', temp_outfile,
+                    '--noprefixes',
                     _env=robot_env,
                 )
 
