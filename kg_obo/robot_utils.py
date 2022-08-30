@@ -227,12 +227,14 @@ def normalize_owl_names(robot_path: str,
             with open(mapping_file_name, 'w') as mapfile:
                 for identifier in update_ids:
                     print(f"{identifier} -> {update_ids[identifier]}")
-                    mapfile.write(f"{identifier},{update_ids[identifier]}")
+                    mapfile.write(f"{identifier},{update_ids[identifier]}\n")
+                print(f"Wrote IRI maps to {mapping_file_name}.")
         else:
             print(f"No identifiers in {input_owl} will be normalized.")
 
         if update_id_len > 0:
             temp_outfile = input_owl + ".tmp.owl"
+            print(f"Renaming classes in {temp_outfile}.")
             try:
                 robot_command('rename',
                     '--input', input_owl,
@@ -242,6 +244,7 @@ def normalize_owl_names(robot_path: str,
                 )
 
                 shutil.move(temp_outfile, input_owl)
+                print(f"Moved {temp_outfile} to {input_owl}.")
 
                 success = True
             except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error

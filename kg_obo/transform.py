@@ -557,7 +557,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     # We need both maps for CURIE -> IRI (for validating) - this is curie_converter
     # and for IRI -> CURIE (for converting) - this is iri_converter
     # Note: not all prefixes in all_contexts are in all_reverse_contexts
-    curie_contexts = load_multi_context(["obo", "bioregistry.upper", "prefixcc"])
+    curie_contexts = load_multi_context(["obo", "bioregistry.upper"])
     all_contexts = curie_contexts.as_dict()
     curie_converter = Converter.from_prefix_map(all_contexts)
     all_reverse_contexts = {val: key.upper() for key, val in all_contexts.items()}
