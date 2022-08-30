@@ -182,7 +182,7 @@ def normalize_owl_names(robot_path: str,
     try:
         robot_command('export',
             '--input', input_owl,
-            '--header', 'ID',
+            '--header', 'IRI',
             '--export', tempfile_name,
             _env=robot_env,
         )
