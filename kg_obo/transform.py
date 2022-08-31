@@ -909,13 +909,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(versioned_obo_path):
-                if os.stat(os.path.join(versioned_obo_path, filename)).st_size == 0:
-                    kg_obo_logger.warning(
-                        "Output is empty - something went wrong during transformation.")
-                    success = False
-                else:
-                    kg_obo_logger.info(
-                        f"{filename} {os.stat(os.path.join(versioned_obo_path, filename)).st_size} bytes")
+                kg_obo_logger.info(
+                    f"{filename} {os.stat(os.path.join(versioned_obo_path, filename)).st_size} bytes")
 
             if success and not errors:
                 kg_obo_logger.info(
