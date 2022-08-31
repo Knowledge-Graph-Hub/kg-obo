@@ -119,7 +119,7 @@ def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dic
 
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be validated
-    :param output_owl: Location of log file to be created
+    :param output_log: Location of log file to be created
     :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
     :return: True if completed without errors, False if errors
     """
@@ -147,21 +147,21 @@ def measure_owl(robot_path: str, input_owl: str, output_log: str, robot_env: dic
 
     return success
 
-def normalize_owl_names(robot_path: str, 
+def examine_owl_names(robot_path: str, 
                         input_owl: str,
-                        prefix_map: dict, 
+                        output_dir: str,
                         curie_converter: Converter, 
                         iri_converter: Converter, 
                         robot_env: dict) -> bool:
     """
-    This method attempts to normalize all entity identifiers a single OBO in OWL.
+    This method attempts to retrieve all entity identifiers for a single OBO in OWL.
 
-    Reports all identifiers of unexpected format,
-    and attempts to rename if possible.
+    Reports all identifiers of expected and unexpected format,
+    and finds more appropriate prefixes if possible.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be normalized
-    :param prefix_map: dict of CURIE prefix to IRI prefix maps,
-    to provide prefixes for ROBOT when renaming 
+    :param output_dir: string of directory, location of unexpected id 
+    and update map file to be created
     :param curie_converter: a curies Converter object with defined prefix maps,
     from CURIE prefix to IRI prefix
     :param iri_converter: a curies Converter object with defined prefix maps,
@@ -177,18 +177,18 @@ def normalize_owl_names(robot_path: str,
     id_list = []
     mal_id_list = []
     update_ids: Dict[str, str] = {}
-    new_prefixes: Dict[str, str] = {}
 
     print(f"Retrieving entity names in {input_owl}...")
 
     robot_command = sh.Command(robot_path)
     tempfile_name = input_owl + ".ids.csv"
-    mapping_file_name = input_owl + ".maps.csv"
+    mal_id_file_name = os.path.join(output_dir, "unexpected_ids.tsv")
+    update_mapfile_name = os.path.join(output_dir, "update_id_maps.tsv")
 
     try:
         robot_command('export',
             '--input', input_owl,
-            '--header', 'IRI',
+            '--header', 'ID',
             '--export', tempfile_name,
             _env=robot_env,
         )
@@ -214,61 +214,30 @@ def normalize_owl_names(robot_path: str,
                 mal_id_list.append(identifier)
                 new_id = iri_converter.compress(identifier)
                 if new_id:
-                    parsed_curie = iri_converter.parse_uri(identifier)
                     if new_id[0].islower(): # Need to capitalize
                         split_id = new_id.split(":")
                         new_id = f"{split_id[0].upper()}:{split_id[1]}"
                     update_ids[identifier] = new_id
-                    if parsed_curie[0] not in new_prefixes:
-                        iri_prefix = prefix_map[parsed_curie[0]]
-                        new_prefixes[parsed_curie[0]] = iri_prefix
 
         mal_id_list_len = len(mal_id_list)
         if mal_id_list_len > 0:
-            print(f"Found {mal_id_list_len} unexpected identifiers:")
-            for identifier in mal_id_list:
-                print(identifier)
+            print(f"Found {mal_id_list_len} unexpected identifiers.")
+            with open(mal_id_file_name, 'w') as idfile:
+                idfile.write("ID\n")
+                for identifier in mal_id_list:
+                    idfile.write(f"{identifier}\n")
         else:
             print(f"All identifiers in {input_owl} are as expected.")
 
         update_id_len = len(update_ids)
         if update_id_len > 0:
-            print(f"Will normalize {update_id_len} identifiers:")
-            with open(mapping_file_name, 'w') as mapfile:
+            print(f"Will normalize {update_id_len} identifiers.")
+            with open(update_mapfile_name, 'w') as mapfile:
+                mapfile.write("Old ID\tNew ID\n")
                 for identifier in update_ids:
-                    print(f"{identifier} -> {update_ids[identifier]}")
-                    mapfile.write(f"{identifier},{update_ids[identifier]}\n")
-                print(f"Wrote IRI maps to {mapping_file_name}.")
+                    mapfile.write(f"{identifier}\t{update_ids[identifier]}\n")
+                print(f"Wrote IRI maps to {update_mapfile_name}.")
         else:
             print(f"No identifiers in {input_owl} will be normalized.")
-
-        # Rename command needs prefix assignments for each rename
-        # e.g. "--add-prefix PDRO: http://purl.obolibrary.org/obo/PDRO_"
-        # but these need to be "baked" into the command to run them
-
-        for prefixpair in new_prefixes:
-            iri_prefix = new_prefixes[prefixpair]
-            npx = f"\"{prefixpair}: {iri_prefix}\" "
-            robot_command = robot_command.bake("--add-prefix", npx)
-
-        if update_id_len > 0:
-            temp_outfile = input_owl + ".tmp.owl"
-            print(f"Renaming classes in {temp_outfile}.")
-            try:
-                robot_command('rename',
-                    '--input', input_owl,
-                    '--mappings', mapping_file_name,
-                    '--output', temp_outfile,
-                    '--noprefixes',
-                    _env=robot_env,
-                )
-
-                shutil.move(temp_outfile, input_owl)
-                print(f"Moved {temp_outfile} to {input_owl}.")
-
-                success = True
-            except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
-                print(f"ROBOT encountered an error: {e}")
-                success = False
 
     return success

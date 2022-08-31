@@ -26,7 +26,7 @@ import kg_obo.obolibrary_utils
 import kg_obo.upload
 from kg_obo.prefixes import KGOBO_PREFIXES
 from kg_obo.robot_utils import (initialize_robot, merge_and_convert_owl,
-                                relax_owl, normalize_owl_names)
+                                relax_owl, examine_owl_names)
 
 
 def delete_path(root_dir: str, omit: list = []) -> bool:
@@ -844,18 +844,17 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 input_owl = tfile_relaxed.name
 
             # Standardize IDs
-            # Note that some http-containing prefixes need to be changed to https,
-            # or vice-versa, to match the provided converter maps
+            # First, get all ids from the input owl
             print(f"ROBOT preprocessing: node ID normalization on {ontology_name}")
-            if not normalize_owl_names(robot_path,
+            if not examine_owl_names(robot_path,
                                        input_owl,
-                                       all_contexts,
+                                       versioned_obo_path,
                                        curie_converter,
                                        iri_converter,
                                        robot_env):
                 kg_obo_logger.error(
-                    f"ROBOT name normalization of {ontology_name} failed - skipping.")
-                print(f"ROBOT name normalization of {ontology_name} failed - skipping.")
+                    f"ROBOT id retrieval for {ontology_name} failed - skipping.")
+                print(f"ROBOT id retrieval for {ontology_name} failed - skipping.")
 
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
