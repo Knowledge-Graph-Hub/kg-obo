@@ -25,7 +25,8 @@ from tqdm import tqdm  # type: ignore
 import kg_obo.obolibrary_utils
 import kg_obo.upload
 from kg_obo.prefixes import KGOBO_PREFIXES
-from kg_obo.robot_utils import (initialize_robot, merge_and_convert_owl,
+from kg_obo.robot_utils import (initialize_robot, convert_owl,
+                                merge_and_convert_owl,
                                 relax_owl, examine_owl_names)
 
 
@@ -95,14 +96,15 @@ def kgx_transform(input_file: list, input_format: str,
     :param output_file: output file root
     :param output_format: output format
     :param logger: logger
-    :return: tuple - (bool for did transform work?, bool for any errors encountered)
+    :return: tuple - (bool for did transform work?,
+    bool for any errors encountered, str for error msg)
     """
     success = True
     errors = False
 
     bnode_errors = "BNode Errors"
     other_errors = "Other Errors"
-    output_msg = f"No errors in transformation of {input_file} to {output_format}"
+    output_msg = f"No errors in parsing {input_file}."
 
     log_file_name = f"{output_format}_transform.log"
     log_file_path = os.path.join(os.path.dirname(output_file), log_file_name)
@@ -125,17 +127,11 @@ def kgx_transform(input_file: list, input_format: str,
         pass
 
     try:
-        if output_format == "tsv":
-            kgx.cli.transform(inputs=input_file,
-                              input_format=input_format,
-                              output=output_file,
-                              output_format=output_format,
-                              output_compression="tar.gz")
-        else:
-            kgx.cli.transform(inputs=input_file,
-                              input_format=input_format,
-                              output=f"{output_file}.{output_format}",
-                              output_format=output_format)
+        kgx.cli.transform(inputs=input_file,
+                            input_format=input_format,
+                            output=output_file,
+                            output_format=output_format,
+                            output_compression="tar.gz")
 
         # Need to parse the log output to aggregate it
         error_collect = {bnode_errors: 0, other_errors: 0}
@@ -156,6 +152,7 @@ def kgx_transform(input_file: list, input_format: str,
             ) as e:
         success = False
         output_msg = f"KGX problem while transforming {input_file} to {output_format} due to {e}"
+        print(output_msg)
 
     log_handler.flush()
     log_file_handler.flush()
@@ -745,9 +742,11 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             # Set up output folders for completed transform
             if not os.path.exists(base_obo_path):
+                print(f"Making directory {base_obo_path}.")
                 os.mkdir(base_obo_path)
             versioned_obo_path = os.path.join(base_obo_path, owl_version)
             if not os.path.exists(versioned_obo_path):
+                print(f"Making directory {versioned_obo_path}.")
                 os.mkdir(versioned_obo_path)
 
             # If this version is new, now we download the whole OBO
@@ -807,13 +806,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     f"ROBOT relaxing of {ontology_name} yielded an empty result!")
                 continue  # Need to skip this one or we will upload empty results
 
-            # If we have imports, merge to resolve
+            # If we have imports, merge+convert to resolve
             # Don't do this every time as it is not necessary
             if need_imports:
 
                 print(
                     f"ROBOT preprocessing: merge and convert {ontology_name}")
-                temp_suffix = f"_{ontology_name}_merged.owl"
+                temp_suffix = f"_{ontology_name}_merged.json"
                 tfile_merged = tempfile.NamedTemporaryFile(
                     delete=False, suffix=temp_suffix)
                 if not merge_and_convert_owl(robot_path, tfile_relaxed.name, tfile_merged.name, robot_env):
@@ -838,13 +837,13 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                         f"ROBOT merging of {ontology_name} yielded an empty result!")
                     continue  # Need to skip this one or we will upload empty results
 
-            if need_imports:
                 input_owl = tfile_merged.name
+
             else:
+
                 input_owl = tfile_relaxed.name
 
-            # Standardize IDs
-            # First, get all ids from the input owl
+            # Get all ids from the input owl - we use this later to convert IDs
             print(f"ROBOT preprocessing: node ID normalization on {ontology_name}")
             if not examine_owl_names(robot_path,
                                        input_owl,
@@ -856,43 +855,57 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                     f"ROBOT id retrieval for {ontology_name} failed - skipping.")
                 print(f"ROBOT id retrieval for {ontology_name} failed - skipping.")
 
+            # Convert to JSON
+            print(f"ROBOT preprocessing: convert {ontology_name}")
+            ontology_filename = f"{ontology_name}.json"
+            owl_converted = os.path.join(versioned_obo_path, ontology_filename)
+            if not convert_owl(robot_path, tfile_relaxed.name, owl_converted, robot_env):
+                kg_obo_logger.error(
+                    f"ROBOT convert of {ontology_name} failed - skipping.")
+                print(f"ROBOT convert of {ontology_name} failed - skipping.")
+                tfile_relaxed.close()
+                continue
+
+            if not os.path.exists(owl_converted):
+                kg_obo_logger.error(
+                    f"ROBOT convert of {ontology_name} yielded no result!")
+                print(
+                    f"ROBOT convert of {ontology_name} yielded no result!")
+                continue  # Need to skip this one or we will upload empty results
+
+            input_owl = owl_converted
+
             # Use kgx to transform, but save errors to log
             # Do separate transforms for different output formats
             success = True  # for all transforms
             errors = False  # for all transforms
+            output_format = 'tsv'
             all_success_and_errors = {}
-            desired_output_formats = ['tsv', 'json']
-            for output_format in desired_output_formats:
-                kg_obo_logger.info(f"Transforming to {output_format}...")
-                if output_format == 'tsv':
-                    ontology_filename = f"{ontology_name}_kgx_tsv"
-                else:
-                    ontology_filename = f"{ontology_name}_kgx"
-                this_success, this_errors, this_output_msg = kgx_transform(input_file=[input_owl],
-                                                                           input_format='owl',
-                                                                           output_file=os.path.join(
-                                                                               versioned_obo_path, ontology_filename),
-                                                                           output_format=output_format,
-                                                                           logger=kgx_logger)
-                all_success_and_errors[output_format] = (
-                    this_success, this_errors)
-                kg_obo_logger.info(this_output_msg)
+            print(f"Transforming {ontology_name} to {output_format}...")
+            kg_obo_logger.info(f"Transforming to {output_format}...")
+            if output_format == 'tsv':
+                ontology_filename = f"{ontology_name}_kgx_tsv"
+            else:
+                ontology_filename = f"{ontology_name}_kgx"
+            this_success, this_errors, this_output_msg = kgx_transform(input_file=[input_owl],
+                                                                        input_format='obojson',
+                                                                        output_file=os.path.join(
+                                                                            versioned_obo_path, ontology_filename),
+                                                                        output_format=output_format,
+                                                                        logger=kgx_logger)
+            all_success_and_errors[output_format] = (
+                this_success, this_errors)
+            kg_obo_logger.info(this_output_msg)
 
             # TODO: remove bnode ids
             # this may require editing the tsv nodefile
 
             # Check results of all transforms
-            # If we didn't get JSON, that's acceptable
-            for output_format in desired_output_formats:
-                if output_format == 'tsv' and not all_success_and_errors[output_format][0]:
-                    success = False
-                if output_format == 'json' and not all_success_and_errors[output_format][0]:
-                    kg_obo_logger.warning("JSON transform failed!")
-                    errors = True
-            for output_format in desired_output_formats:
-                if all_success_and_errors[output_format][1]:
-                    errors = True
-                    break
+            if output_format == 'tsv' and not all_success_and_errors[output_format][0]:
+                success = False
+            if all_success_and_errors[output_format][1]:
+                errors = True
+                break
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(versioned_obo_path):
@@ -968,7 +981,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                             f"Failed to mock create index for {ontology_name} and {owl_version}")
 
             # Clean up any incomplete transform leftovers
-            if not success:
+            if not success and not save_local:
                 if delete_path(base_obo_path):
                     kg_obo_logger.info(
                         f"Removed incomplete transform files for {ontology_name}.")

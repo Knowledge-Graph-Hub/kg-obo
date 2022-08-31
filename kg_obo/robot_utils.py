@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import shutil
 from typing import Dict
 
 import sh  # type: ignore
@@ -79,20 +78,52 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict)
     return success
 
 
-def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict) -> bool:
+def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -> bool:
     """
-    This method runs a merge and convert ROBOT command on a single OBO.
-    Has a three-hour timeout limit - process is killed if it takes this long.
+    This method runs a convert ROBOT command on a single OBO.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be relaxed
-    :param output_owl: Ontology file to be created (needs valid ROBOT suffix)
+    :param output: Ontology file to be created (needs valid ROBOT suffix)
     :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
     :return: True if completed without errors, False if errors
     """
 
     success = False
 
-    print(f"Merging and converting {input_owl} to {output_owl}...")
+    print(f"Converting {input_owl} to {output}...")
+
+    robot_command = sh.Command(robot_path)
+
+    try:
+        robot_command('convert',
+            '--input', input_owl,
+            '--format', 'json',
+            '--output', output,
+            _env=robot_env,
+        )
+        print("Complete.")
+        success = True
+    except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
+        print(f"ROBOT encountered an error: {e}")
+        success = False
+
+    return success
+
+
+def merge_and_convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -> bool:
+    """
+    This method runs a merge and convert ROBOT command on a single OBO.
+    Has a three-hour timeout limit - process is killed if it takes this long.
+    :param robot_path: Path to ROBOT files
+    :param input_owl: Ontology file to be relaxed
+    :param output: Ontology file to be created (needs valid ROBOT suffix)
+    :param robot_env: dict of environment variables, including ROBOT_JAVA_ARGS
+    :return: True if completed without errors, False if errors
+    """
+
+    success = False
+
+    print(f"Merging and converting {input_owl} to {output}...")
 
     robot_command = sh.Command(robot_path)
 
@@ -100,7 +131,7 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output_owl: str, robo
         robot_command('merge',
             '--input', input_owl,
             'convert', 
-            '--output', output_owl,
+            '--output', output,
             '--vvv',
             _env=robot_env,
             _timeout=10800 
@@ -207,7 +238,11 @@ def examine_owl_names(robot_path: str,
         # For each id, assume it is a CURIE and try to convert to IRI.
         # If that doesn't work, it might be an IRI - try to
         # convert it to a CURIE. If that works, we need to update it.
+        # Also checks if IDs with OBO prefixes should be something else.
         for identifier in id_list:
+            if (identifier.split(":"))[0].upper() == "OBO":
+                mal_id_list.append(identifier)
+                continue
             try: 
                 assert curie_converter.expand(identifier)
             except AssertionError:
