@@ -559,7 +559,7 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     # Note: not all prefixes in all_contexts are in all_reverse_contexts
     curie_contexts = load_multi_context(["obo", "bioregistry.upper"])
     all_contexts = curie_contexts.as_dict()
-    all_contexts = {key.upper(): val for key, val in all_contexts.items()}
+    all_contexts = {key: val for key, val in all_contexts.items()}
     curie_converter = Converter.from_prefix_map(all_contexts)
     all_reverse_contexts = {val: key for key, val in all_contexts.items()}
     all_reverse_contexts.update(KGOBO_PREFIXES)
