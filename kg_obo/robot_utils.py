@@ -240,26 +240,29 @@ def examine_owl_names(robot_path: str,
         # If that doesn't work, it might be an IRI - try to
         # convert it to a CURIE. If that works, we need to update it.
         # Also checks if IDs with OBO prefixes should be something else.
-        for identifier in id_list:
-            # See if there's an OBO prefix
-            if (identifier.split(":"))[0].upper() == "OBO":
-                mal_id_list.append(identifier)
-                new_id = ((identifier[4:]).replace("_",":")).upper()
-                split_new_id = new_id.split("/")
-                if split_new_id[0].endswith("OWL"):
-                    new_id = split_new_id[1]
-                update_ids[identifier] = new_id
-                continue
-            try: 
-                assert curie_converter.expand(identifier)
-            except AssertionError:
-                mal_id_list.append(identifier)
-                new_id = iri_converter.compress(identifier)
-                if new_id:
-                    if new_id[0].islower(): # Need to capitalize
-                        split_id = new_id.split(":")
-                        new_id = f"{split_id[0].upper()}:{split_id[1]}"
+        try:
+            for identifier in id_list:
+                # See if there's an OBO prefix
+                if (identifier.split(":"))[0].upper() == "OBO":
+                    mal_id_list.append(identifier)
+                    new_id = ((identifier[4:]).replace("_",":")).upper()
+                    split_new_id = new_id.split("/")
+                    if split_new_id[0].endswith("OWL"):
+                        new_id = split_new_id[1]
                     update_ids[identifier] = new_id
+                    continue
+                try: 
+                    assert curie_converter.expand(identifier)
+                except AssertionError:
+                    mal_id_list.append(identifier)
+                    new_id = iri_converter.compress(identifier)
+                    if new_id:
+                        if new_id[0].islower(): # Need to capitalize
+                            split_id = new_id.split(":")
+                            new_id = f"{split_id[0].upper()}:{split_id[1]}"
+                        update_ids[identifier] = new_id
+        except IndexError:
+            mal_id_list.append(identifier)
 
         mal_id_list_len = len(mal_id_list)
         if mal_id_list_len > 0:
