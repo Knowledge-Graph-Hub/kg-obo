@@ -4,12 +4,10 @@ import pytest
 import requests
 from unittest import TestCase, mock
 from unittest.mock import Mock
-from botocore.exceptions import ClientError
 
 from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
     get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
     delete_path, imports_requested, get_file_diff, get_file_length, replace_illegal_chars
-from urllib.parse import quote
 
 class TestRunTransform(TestCase):
 
@@ -125,7 +123,9 @@ class TestRunTransform(TestCase):
     @mock.patch('kg_obo.obolibrary_utils.get_url')
     @mock.patch('kg_obo.transform.get_owl_iri', return_value=('http://purl.obolibrary.org/obo/bfo/2019-08-26/bfo.owl', '2019-08-26', 'versionIRI'))
     @mock.patch('kgx.cli.transform')
-    def test_run_transform(self, mock_kgx_transform, mock_get_owl_iri, mock_base_url,
+    @mock.patch('kg_obo.transform.clean_and_normalize_graph')
+    def test_run_transform(self, mock_clean_and_normalize_graph, mock_kgx_transform,
+                           mock_get_owl_iri, mock_base_url,
                            mock_retrieve_obofoundry_yaml, mock_get):
         mock_retrieve_obofoundry_yaml.return_value = [{'id': 'bfo'}]
 
@@ -137,6 +137,7 @@ class TestRunTransform(TestCase):
             self.assertTrue(mock_get_owl_iri.called)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
             self.assertTrue(mock_kgx_transform.called)
+            self.assertTrue(mock_clean_and_normalize_graph.called)
 
         # Test with s3_test option off
         with tempfile.TemporaryDirectory() as td:
@@ -146,6 +147,7 @@ class TestRunTransform(TestCase):
             self.assertTrue(mock_get_owl_iri.called)
             self.assertTrue(mock_retrieve_obofoundry_yaml.called)
             self.assertTrue(mock_kgx_transform.called)
+            self.assertTrue(mock_clean_and_normalize_graph.called)
 
         # Test if we exit when ROBOT not available
         with tempfile.TemporaryDirectory() as td,\
