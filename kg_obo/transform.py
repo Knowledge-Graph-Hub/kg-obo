@@ -507,8 +507,6 @@ def clean_and_normalize_graph(filename) -> bool:
             graph_file_paths.append(os.path.join(os.path.dirname(filename), graph_file))
     os.remove(filename)
 
-    print(graph_file_paths)
-
     # Remap node IDs
     # First, identify node and edge lists
 
@@ -537,10 +535,20 @@ def clean_and_normalize_graph(filename) -> bool:
 
     # Continue with mapping if everything's OK so far
     try:
+        mapcount = 0
         with open(nodepath,'r') as innodefile, \
             open(edgepath, 'r') as inedgefile:
             with open(outnodepath,'w') as outnodefile, \
                 open(outedgepath, 'w') as outedgefile:
+                for line in innodefile:
+                    if mapping:
+                        line_split = (line.rstrip()).split("\t")
+                        # Check for nodes to be remapped
+                        if line_split[0] in remap_these_nodes:
+                            new_node_id = remap_these_nodes[line_split[0]]
+                            line_split[0] = new_node_id
+                            mapcount = mapcount + 1
+                        outnodefile.write("\t".join(line_split) + "\n")
                 for line in inedgefile:
                     if mapping:
                         line_split = (line.rstrip()).split("\t")
@@ -549,19 +557,18 @@ def clean_and_normalize_graph(filename) -> bool:
                             if line_split[col] in remap_these_nodes:
                                 new_node_id = remap_these_nodes[line_split[col]]
                                 line_split[col] = new_node_id
+                                mapcount = mapcount + 1
                         outedgefile.write("\t".join(line_split) + "\n")
-                for line in innodefile:
-                    if mapping:
-                        line_split = (line.rstrip()).split("\t")
-                        # Check for nodes to be remapped
-                        if line_split[0] in remap_these_nodes:
-                            new_node_id = remap_these_nodes[line_split[0]]
-                            line_split[0] = new_node_id
-                        outnodefile.write("\t".join(line_split) + "\n")
 
         os.replace(outnodepath,nodepath)
         os.replace(outedgepath,edgepath)
-        success = True
+
+        if mapping and mapcount > 0:
+            print(f"Remapped {mapcount} node IDs.")
+            success = True
+        elif mapping and mapcount == 0:
+            print("Failed to remap node IDs.")
+            success = False
     except (IOError, KeyError) as e:
         print(f"Failed to remap node IDs for {nodepath} and/or {edgepath}: {e}")
         success = False
