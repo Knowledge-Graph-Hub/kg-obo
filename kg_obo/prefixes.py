@@ -5,6 +5,8 @@
 # to CURIEs
 KGOBO_PREFIXES = {
     "http://purl.bioontology.org/ontology/MESH/":"MESH",
+    "http://purl.obolibrary.org/GO_":"GO",
+    "http://purl.obolibrary.org/NCBITaxon_":"NCBITaxon",
     "https://books.google.com/books?id=":"GOOGLE.BOOKS",
     "https://doi.org/":"DOI",
     "https://viaf.org/":"VIAF",

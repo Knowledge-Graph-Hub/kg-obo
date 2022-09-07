@@ -620,6 +620,7 @@ def clean_and_normalize_graph(filename) -> bool:
     # Sometimes prefixes get capitalized, so we check for that too
     try:
         mapcount = 0
+        bnodecount = 0
         with open(nodepath, "r") as innodefile, open(edgepath, "r") as inedgefile:
             with open(outnodepath, "w") as outnodefile, open(
                 outedgepath, "w"
