@@ -573,6 +573,9 @@ def clean_and_normalize_graph(filename) -> bool:
     :return: bool, True if successful
     """
 
+    success = True
+    mapping = True
+
     graph_file_paths = []
 
     # Decompress graph
@@ -585,8 +588,6 @@ def clean_and_normalize_graph(filename) -> bool:
 
     # Remap node IDs
     # First, identify node and edge lists
-
-    mapping = True
 
     for filepath in graph_file_paths:
         if filepath.endswith("nodes.tsv"):
