@@ -11,4 +11,5 @@ KGOBO_PREFIXES = {
     "https://www.jstor.org/stable/":"JSTOR",
     "https://www.wikidata.org/wiki/":"WIKIDATA",
     "https://www.worldcat.org/oclc/":"OCLC",
+    "obo:bco.owl/BCO_":"BCO",
 }

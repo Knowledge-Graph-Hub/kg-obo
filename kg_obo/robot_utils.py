@@ -189,6 +189,7 @@ def examine_owl_names(robot_path: str,
 
     Reports all identifiers of expected and unexpected format,
     and finds more appropriate prefixes if possible.
+    Does not rewrite IRIs.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be normalized
     :param output_dir: string of directory, location of unexpected id 
@@ -240,8 +241,14 @@ def examine_owl_names(robot_path: str,
         # convert it to a CURIE. If that works, we need to update it.
         # Also checks if IDs with OBO prefixes should be something else.
         for identifier in id_list:
+            # See if there's an OBO prefix
             if (identifier.split(":"))[0].upper() == "OBO":
                 mal_id_list.append(identifier)
+                new_id = ((identifier[4:]).replace("_",":")).upper()
+                split_new_id = new_id.split("/")
+                if split_new_id[0].endswith("OWL"):
+                    new_id = split_new_id[1]
+                update_ids[identifier] = new_id
                 continue
             try: 
                 assert curie_converter.expand(identifier)
