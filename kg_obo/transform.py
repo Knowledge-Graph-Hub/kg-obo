@@ -559,6 +559,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
     all_contexts = {key: val for key, val in all_contexts.items()}
     curie_converter = Converter.from_prefix_map(all_contexts)
     all_reverse_contexts = {val: key for key, val in all_contexts.items()}
+    all_reverse_contexts_lc = {val.lower(): key for key, val in all_contexts.items()}
+    all_reverse_contexts.update(all_reverse_contexts_lc)
     all_reverse_contexts.update(KGOBO_PREFIXES)
     iri_converter = Converter.from_reverse_prefix_map(all_reverse_contexts)
 
@@ -808,11 +810,12 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
             # If we have imports, merge+convert to resolve
             # Don't do this every time as it is not necessary
+            # We don't convert to JSON just yet
             if need_imports:
 
                 print(
                     f"ROBOT preprocessing: merge and convert {ontology_name}")
-                temp_suffix = f"_{ontology_name}_merged.json"
+                temp_suffix = f"_{ontology_name}_merged.owl"
                 tfile_merged = tempfile.NamedTemporaryFile(
                     delete=False, suffix=temp_suffix)
                 if not merge_and_convert_owl(robot_path, tfile_relaxed.name, tfile_merged.name, robot_env):
