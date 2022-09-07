@@ -531,15 +531,22 @@ def clean_and_normalize_graph(filename) -> bool:
             map_file.readline()
             for line in map_file:
                 splitline = line.rstrip().split("\t")
+                cap_prefix = ((splitline[0].split(":"))[0].upper()) + ":" + (splitline[0].split(":"))[1]
                 remap_these_nodes[splitline[0]] = splitline[1]
+                remap_these_nodes[cap_prefix] = splitline[1]
+
+    print(remap_these_nodes)
 
     # Continue with mapping if everything's OK so far
+    # Sometimes prefixes get capitalized, so we check for that too
     try:
         mapcount = 0
         with open(nodepath,'r') as innodefile, \
             open(edgepath, 'r') as inedgefile:
             with open(outnodepath,'w') as outnodefile, \
                 open(outedgepath, 'w') as outedgefile:
+                innodefile.readline()
+                inedgefile.readline()
                 for line in innodefile:
                     if mapping:
                         line_split = (line.rstrip()).split("\t")
@@ -567,11 +574,15 @@ def clean_and_normalize_graph(filename) -> bool:
             print(f"Remapped {mapcount} node IDs.")
             success = True
         elif mapping and mapcount == 0:
-            print("Failed to remap node IDs.")
+            print("Failed to remap node IDs - could not find corresponding nodes.")
             success = False
+
     except (IOError, KeyError) as e:
         print(f"Failed to remap node IDs for {nodepath} and/or {edgepath}: {e}")
+        for temppath in [outnodepath, outedgepath]:
+            os.remove(temppath)
         success = False
+
 
     # Recompress graph
     with tarfile.open(filename, "w:gz") as outtar:
