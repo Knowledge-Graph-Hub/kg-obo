@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import sys
+import tarfile
 import tempfile
 from datetime import datetime
 from io import StringIO
@@ -489,6 +490,90 @@ def get_file_length(filename) -> int:
     return out_value
 
 
+def clean_and_normalize_graph(filename) -> bool:
+    """
+    Replace or remove node IDs or nodes as needed.
+    :param filename: str, name or path of *compressed* KGX graph
+    :return: bool, True if successful
+    """
+
+    graph_file_paths = []
+
+    # Decompress graph
+    with tarfile.open(filename) as intar:
+        graph_files = intar.getnames()
+        for graph_file in graph_files:
+            intar.extract(graph_file, path=os.path.dirname(filename))
+            graph_file_paths.append(os.path.join(os.path.dirname(filename), graph_file))
+    os.remove(filename)
+
+    print(graph_file_paths)
+
+    # Remap node IDs
+    # First, identify node and edge lists
+
+    mapping = True
+
+    for filepath in graph_file_paths:
+        if filepath.endswith("nodes.tsv"):
+            nodepath = filepath
+            outnodepath = nodepath + ".tmp"
+        if filepath.endswith("edges.tsv"):
+            edgepath = filepath
+            outedgepath = edgepath + ".tmp"
+
+    # Now load the update_id_map file
+    id_map_path = os.path.join(os.path.dirname(filename), "update_id_maps.tsv")
+    if not os.path.exists(id_map_path):
+        print("Can't find ID remapping file. This may not be a problem.")
+        mapping = False
+    else:
+        remap_these_nodes = {}
+        with open(id_map_path) as map_file:
+            map_file.readline()
+            for line in map_file:
+                splitline = line.rstrip().split("\t")
+                remap_these_nodes[splitline[0]] = splitline[1]
+
+    # Continue with mapping if everything's OK so far
+    try:
+        with open(nodepath,'r') as innodefile, \
+            open(edgepath, 'r') as inedgefile:
+            with open(outnodepath,'w') as outnodefile, \
+                open(outedgepath, 'w') as outedgefile:
+                for line in inedgefile:
+                    if mapping:
+                        line_split = (line.rstrip()).split("\t")
+                        # Check for edges containing nodes to be remapped
+                        for col in [1,3]:
+                            if line_split[col] in remap_these_nodes:
+                                new_node_id = remap_these_nodes[line_split[col]]
+                                line_split[col] = new_node_id
+                        outedgefile.write("\t".join(line_split) + "\n")
+                for line in innodefile:
+                    if mapping:
+                        line_split = (line.rstrip()).split("\t")
+                        # Check for nodes to be remapped
+                        if line_split[0] in remap_these_nodes:
+                            new_node_id = remap_these_nodes[line_split[0]]
+                            line_split[0] = new_node_id
+                        outnodefile.write("\t".join(line_split) + "\n")
+
+        os.replace(outnodepath,nodepath)
+        os.replace(outedgepath,edgepath)
+        success = True
+    except (IOError, KeyError) as e:
+        print(f"Failed to remap node IDs for {nodepath} and/or {edgepath}: {e}")
+        success = False
+
+    # Recompress graph
+    with tarfile.open(filename, "w:gz") as outtar:
+        for graph_file in graph_file_paths:
+            outtar.add(graph_file, arcname=os.path.basename(graph_file))
+            os.remove(graph_file)
+
+    return success
+
 def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                   save_local=False, s3_test=False,
                   no_dl_progress=False,
@@ -846,7 +931,8 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
 
                 input_owl = tfile_relaxed.name
 
-            # Get all ids from the input owl - we use this later to convert IDs
+            # Get all ids from the input owl and identify normalized forms
+            # We use this later to convert IDs
             print(f"ROBOT preprocessing: node ID normalization on {ontology_name}")
             if not examine_owl_names(robot_path,
                                        input_owl,
@@ -900,15 +986,21 @@ def run_transform(skip: list = [], get_only: list = [], bucket="bucket",
                 this_success, this_errors)
             kg_obo_logger.info(this_output_msg)
 
-            # TODO: remove bnode ids
-            # this may require editing the tsv nodefile
-
             # Check results of all transforms
             if output_format == 'tsv' and not all_success_and_errors[output_format][0]:
                 success = False
             if all_success_and_errors[output_format][1]:
                 errors = True
                 break
+
+            # Time for post-processing.
+            print(f"Post-processing {ontology_name}...")
+            kg_obo_logger.info(f"Post-processing {ontology_name}...")
+            input_file = os.path.join(versioned_obo_path, ontology_filename + ".tar.gz")
+            if not clean_and_normalize_graph(input_file):
+                success = False
+                print(f"Failed post-processing {ontology_name}...")
+                kg_obo_logger.info(f"Failed post-processing {ontology_name}...")
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(versioned_obo_path):
