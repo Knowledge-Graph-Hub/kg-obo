@@ -14,7 +14,8 @@ class TestRunTransform(TestCase):
     def setUp(self) -> None:
         self.kgx_transform_kwargs = {'input_file': ['foo'], 'input_format': 'tsv',
                                      'output_file': 'bar', 'output_format': 'tsv',
-                                     'logger': logging.Logger}
+                                     'logger': logging.Logger,
+                                     'knowledge_sources': [("knowledge_source", "source")]}
 
         self.download_ontology_kwargs = {'url': 'https://some/url',
                                          'file': tempfile.NamedTemporaryFile().name,
