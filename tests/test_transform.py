@@ -1,13 +1,27 @@
 import logging
 import tempfile
-import pytest
-import requests
 from unittest import TestCase, mock
 from unittest.mock import Mock
 
-from kg_obo.transform import run_transform, kgx_transform, download_ontology, \
-    get_owl_iri, retrieve_obofoundry_yaml, transformed_obo_exists, track_obo_version, \
-    delete_path, imports_requested, get_file_diff, get_file_length, replace_illegal_chars
+import pytest
+import requests
+
+from kg_obo.transform import (
+    clean_and_normalize_graph,
+    delete_path,
+    download_ontology,
+    get_file_diff,
+    get_file_length,
+    get_owl_iri,
+    imports_requested,
+    kgx_transform,
+    replace_illegal_chars,
+    retrieve_obofoundry_yaml,
+    run_transform,
+    track_obo_version,
+    transformed_obo_exists,
+)
+
 
 class TestRunTransform(TestCase):
 
@@ -380,3 +394,7 @@ class TestRunTransform(TestCase):
         input = "A%(B)??C#D"
         output = replace_illegal_chars(input,"")
         self.assertEqual(output, "ABCD")
+
+    def test_clean_and_normalize_graph(self):
+        graphpath = 'tests/resources/download_ontology/graph.tar.gz'
+        self.assertTrue(clean_and_normalize_graph(graphpath))
