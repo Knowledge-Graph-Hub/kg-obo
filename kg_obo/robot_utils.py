@@ -255,7 +255,7 @@ def examine_owl_names(robot_path: str,
                     assert curie_converter.expand(identifier)
                 except AssertionError:
                     mal_id_list.append(identifier)
-                    new_id = iri_converter.compress(identifier)
+                    new_id = iri_converter.compress(identifier) # type: ignore
                     if new_id:
                         if new_id[0].islower(): # Need to capitalize
                             split_id = new_id.split(":")

@@ -628,8 +628,8 @@ def clean_and_normalize_graph(filename) -> bool:
             with open(outnodepath, "w") as outnodefile, open(
                 outedgepath, "w"
             ) as outedgefile:
-                innodefile.readline()
-                inedgefile.readline()
+                outnodefile.write(innodefile.readline())
+                outedgefile.write(inedgefile.readline())
                 for line in innodefile:
                     if mapping:
                         line_split = (line.rstrip()).split("\t")
@@ -1123,8 +1123,7 @@ def run_transform(
                 output_file=os.path.join(versioned_obo_path, ontology_filename),
                 output_format=output_format,
                 logger=kgx_logger,
-                knowledge_sources=[("aggregator_knowledge_source", "KG-OBO"),
-                        ("primary_knowledge_source", f"{ontology_name} {owl_version}")]
+                knowledge_sources=[("knowledge_source", f"{ontology_name.upper()} {owl_version}")]
             )
             all_success_and_errors[output_format] = (this_success, this_errors)
             kg_obo_logger.info(this_output_msg)
