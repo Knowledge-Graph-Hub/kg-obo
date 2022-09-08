@@ -152,7 +152,7 @@ def kgx_transform(
             output_format=output_format,
             output_compression="tar.gz",
             knowledge_sources=knowledge_sources,
-            stream=True
+            stream=True,
         )
 
         # Need to parse the log output to aggregate it
@@ -1123,7 +1123,9 @@ def run_transform(
                 output_file=os.path.join(versioned_obo_path, ontology_filename),
                 output_format=output_format,
                 logger=kgx_logger,
-                knowledge_sources=[("knowledge_source", f"{ontology_name.upper()} {owl_version}")]
+                knowledge_sources=[
+                    ("knowledge_source", f"{ontology_name.upper()} {owl_version}")
+                ],
             )
             all_success_and_errors[output_format] = (this_success, this_errors)
             kg_obo_logger.info(this_output_msg)
@@ -1146,9 +1148,16 @@ def run_transform(
 
             # Check file size and fail/warn if nodes|edge file is empty
             for filename in os.listdir(versioned_obo_path):
-                kg_obo_logger.info(
-                    f"{filename} {os.stat(os.path.join(versioned_obo_path, filename)).st_size} bytes"
-                )
+                if filename.endswith(".tar.gz"):
+                    filesize = os.stat(
+                        os.path.join(versioned_obo_path, filename)
+                    ).st_size
+                    if filesize < 400:
+                        kg_obo_logger.warning(
+                            f"{filename} appears to contain empty graph files - something went wrong."
+                        )
+                        print(f"{filename} appears to contain empty graph files - something went wrong.")
+                        success = False
 
             if success and not errors:
                 kg_obo_logger.info(
