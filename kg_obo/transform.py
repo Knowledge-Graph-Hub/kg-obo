@@ -152,7 +152,6 @@ def kgx_transform(
             output_format=output_format,
             output_compression="tar.gz",
             knowledge_sources=knowledge_sources,
-            stream=True,
         )
 
         # Need to parse the log output to aggregate it
@@ -639,6 +638,8 @@ def clean_and_normalize_graph(filename) -> bool:
                             line_split[0] = new_node_id
                             mapcount = mapcount + 1
                         outnodefile.write("\t".join(line_split) + "\n")
+                    else:
+                        outnodefile.write(line)
                 for line in inedgefile:
                     if mapping:
                         line_split = (line.rstrip()).split("\t")
@@ -649,6 +650,8 @@ def clean_and_normalize_graph(filename) -> bool:
                                 line_split[col] = new_node_id
                                 mapcount = mapcount + 1
                         outedgefile.write("\t".join(line_split) + "\n")
+                    else:
+                        outedgefile.write(line)
 
         os.replace(outnodepath, nodepath)
         os.replace(outedgepath, edgepath)
