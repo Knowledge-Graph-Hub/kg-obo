@@ -35,6 +35,8 @@ from kg_obo.robot_utils import (
 )
 
 
+KGOBO_TRACK_FILE = "kg-obo/tracking.yaml"
+
 def delete_path(root_dir: str, omit: list = []) -> bool:
     """Deletes a path recursively, i.e., everything in
     the provided directory and all its subdirectories.
@@ -155,13 +157,10 @@ def kgx_transform(
         )
 
         # Need to parse the log output to aggregate it
-        error_collect = {bnode_errors: 0, other_errors: 0}
+        error_collect = {other_errors: 0}
 
-        for line in log_stream.getvalue().splitlines():
-            if line[0:31] == "Do not know how to handle BNode":
-                error_collect[bnode_errors] = error_collect[bnode_errors] + 1
-            else:
-                error_collect[other_errors] = error_collect[other_errors] + 1
+        for _ in log_stream.getvalue().splitlines():
+            error_collect[other_errors] = error_collect[other_errors] + 1
 
         if sum(error_collect.values()) > 0:  # type: ignore
             output_msg = f"Encountered errors in transforming or parsing to {output_format}: {error_collect}"
@@ -353,7 +352,7 @@ def track_obo_version(
     version: str = "",
     bucket: str = "",
     track_file_local_path: str = "data/tracking.yaml",
-    track_file_remote_path: str = "kg-obo/tracking.yaml",
+    track_file_remote_path: str = KGOBO_TRACK_FILE,
 ) -> None:
     """
     Writes OBO version as per IRI to tracking.yaml.
@@ -415,7 +414,7 @@ def transformed_obo_exists(
     s3_test=False,
     bucket: str = "",
     tracking_file_local_path: str = "data/tracking.yaml",
-    tracking_file_remote_path: str = "kg-obo/tracking.yaml",
+    tracking_file_remote_path: str = KGOBO_TRACK_FILE,
 ) -> bool:
     """
     Read tracking.yaml to determine if transformed version of this OBO exists.
@@ -696,7 +695,7 @@ def run_transform(
     data_dir="data",
     remote_path="kg-obo",
     track_file_local_path: str = "data/tracking.yaml",
-    tracking_file_remote_path: str = "kg-obo/tracking.yaml",
+    tracking_file_remote_path: str = KGOBO_TRACK_FILE,
 ) -> bool:
     """
     Perform setup, then kgx-mediated transforms for all specified OBOs.
