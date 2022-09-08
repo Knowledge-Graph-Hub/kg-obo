@@ -572,6 +572,8 @@ def get_file_length(filename) -> int:
 def clean_and_normalize_graph(filename) -> bool:
     """
     Replace or remove node IDs or nodes as needed.
+    Also replaces biolink:OntologyClass node types
+    with biolink:NamedThing.
     :param filename: str, name or path of *compressed* KGX graph
     :return: bool, True if successful
     """
@@ -630,28 +632,29 @@ def clean_and_normalize_graph(filename) -> bool:
                 outnodefile.write(innodefile.readline())
                 outedgefile.write(inedgefile.readline())
                 for line in innodefile:
+                    line_split = (line.rstrip()).split("\t")
                     if mapping:
-                        line_split = (line.rstrip()).split("\t")
                         # Check for nodes to be remapped
                         if line_split[0] in remap_these_nodes:
                             new_node_id = remap_these_nodes[line_split[0]]
                             line_split[0] = new_node_id
                             mapcount = mapcount + 1
-                        outnodefile.write("\t".join(line_split) + "\n")
-                    else:
-                        outnodefile.write(line)
+                            line = "\t".join(line_split) + "\n"
+                    if line_split[1] == "biolink:OntologyClass":
+                        line_split[1] = "biolink:NamedThing"
+                        line = "\t".join(line_split) + "\n"
+                    outnodefile.write(line)
                 for line in inedgefile:
+                    line_split = (line.rstrip()).split("\t")
                     if mapping:
-                        line_split = (line.rstrip()).split("\t")
                         # Check for edges containing nodes to be remapped
                         for col in [1, 3]:
                             if line_split[col] in remap_these_nodes:
                                 new_node_id = remap_these_nodes[line_split[col]]
                                 line_split[col] = new_node_id
                                 mapcount = mapcount + 1
-                        outedgefile.write("\t".join(line_split) + "\n")
-                    else:
-                        outedgefile.write(line)
+                                line = "\t".join(line_split) + "\n"
+                    outedgefile.write(line)
 
         os.replace(outnodepath, nodepath)
         os.replace(outedgepath, edgepath)
