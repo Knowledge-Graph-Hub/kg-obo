@@ -5,6 +5,7 @@
 # to CURIEs
 KGOBO_PREFIXES = {
     "http://biomodels.net/SBO/SBO_":"SBO",
+    "http://evs.nci.nih.gov/ftp1/NDF-RT/NDF-RT.owl#":"NDFRT",
     "http://purl.bioontology.org/ontology/MESH/":"MESH",
     "http://purl.obolibrary.org/GO_":"GO",
     "http://purl.obolibrary.org/NCBITaxon_":"NCBITaxon",
