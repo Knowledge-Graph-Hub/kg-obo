@@ -48,7 +48,7 @@ setup(
     author_email='justinreese@lbl.gov, jhc@lbl.gov',
     description='Code to import OBO ontologies into KGHub',
     long_description=long_description,
-    python_requires='>=3.7',
+    python_requires='>=3.9',
 
     include_package_data=True,
     classifiers=[
@@ -60,20 +60,22 @@ setup(
     tests_require=test_deps,
     # add package dependencies
     install_requires=[
-        'kgx',
-        'requests',
-        'setuptools',
         'boto3',
         'botocore', 
-        'pyyaml',
-        'tqdm',
-        'moto[s3]',
-        'sphinx_rtd_theme',
-        'recommonmark',
-        'sh',
-        'gitpython',
         'click',
-        'grape'
+        'curies',
+        'gitpython',
+        'grape',
+        'kgx==1.7.0',
+        'moto[s3]',
+        'prefixmaps',
+        'pyyaml',
+        'recommonmark',
+        'requests',
+        'setuptools',
+        'sh',
+        'sphinx_rtd_theme',
+        'tqdm',
     ],
     extras_require=extras,
 )
