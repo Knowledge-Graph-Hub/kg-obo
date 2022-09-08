@@ -104,6 +104,7 @@ def kgx_transform(
     output_file: str,
     output_format: str,
     logger: object,
+    knowledge_sources: list,
 ) -> tuple:
     """Call KGX transform and report success status (bool)
 
@@ -112,6 +113,7 @@ def kgx_transform(
     :param output_file: output file root
     :param output_format: output format
     :param logger: logger
+    :param knowledge_sources: list of tuples for knowledge sources
     :return: tuple - (bool for did transform work?,
     bool for any errors encountered, str for error msg)
     """
@@ -149,6 +151,8 @@ def kgx_transform(
             output=output_file,
             output_format=output_format,
             output_compression="tar.gz",
+            knowledge_sources=knowledge_sources,
+            stream=True
         )
 
         # Need to parse the log output to aggregate it
@@ -1119,6 +1123,8 @@ def run_transform(
                 output_file=os.path.join(versioned_obo_path, ontology_filename),
                 output_format=output_format,
                 logger=kgx_logger,
+                knowledge_sources=[("aggregator_knowledge_source", "KG-OBO"),
+                        ("primary_knowledge_source", f"{ontology_name} {owl_version}")]
             )
             all_success_and_errors[output_format] = (this_success, this_errors)
             kg_obo_logger.info(this_output_msg)
