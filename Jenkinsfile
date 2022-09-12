@@ -41,7 +41,7 @@ pipeline {
                     sh 'cat branch.txt'
                     sh "echo $BUILDSTARTDATE > dow.txt"
                     sh "echo $BUILDSTARTDATE"
-                    sh "python3.8 --version"
+                    sh "python --version"
                     sh "id"
                     sh "whoami" // this should be jenkinsuser
                     // if the above fails, then the docker host didn't start the docker
@@ -60,7 +60,7 @@ pipeline {
                             url: 'https://github.com/Knowledge-Graph-Hub/kg-obo',
                             branch: env.BRANCH_NAME
                     )
-                    sh '/usr/bin/python3.8 -m venv venv'
+                    sh '/usr/bin/python -m venv venv'
                     sh '. venv/bin/activate'
                     sh './venv/bin/pip install pathlib' // fix for build config issues with pathlib
                     sh './venv/bin/pip install .'
