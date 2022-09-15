@@ -15,9 +15,14 @@ from grape import Graph  # type: ignore
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, measure_owl
 
-IGNORED_FILES = ["index.html","tracking.yaml","lock",
-                "json_transform.log", "tsv_transform.log",
-                "kg-obo_version"]
+IGNORED_FILES = ["index.html",
+                 "json_transform.log",
+                 "kg-obo_version",
+                 "lock",
+                 "tracking.yaml",
+                 "tsv_transform.log",
+                 "unexpected_ids.tsv",
+                 "update_id_maps.tsv"]
 FORMATS = ["TSV","JSON"]
 DATA_DIR = "./data/"
 
@@ -137,6 +142,7 @@ def get_file_list(bucket, remote_path, versions) -> dict:
                         metadata[key['Key']]["Format"] = "TSV"
                     elif key['Key'].endswith(".json"):
                         metadata[key['Key']]["Format"] = "JSON"
+
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
 
@@ -251,8 +257,6 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 and metadata as key-value pairs
     """
 
-    #TODO: use the ensmallen automatic loading, for Maximum Speed
-
     client = boto3.client('s3')
 
     graph_details = {} # type: ignore
@@ -263,7 +267,6 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     # Clean up the metadata dict so we can index it
     for entry in metadata:
-        filetype = (entry.split("."))[-1]
         name = (entry.split("/"))[1]
         version = (entry.split("/"))[2]
         if name in clean_metadata and version in clean_metadata[name]:
