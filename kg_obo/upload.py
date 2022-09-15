@@ -114,21 +114,22 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
             relative_path = os.path.relpath(local_path, local_directory)
             s3_path = os.path.join(s3_bucket_dir, relative_path)
 
+            # We will upload the new files, overwriting existing ones
+            # on the bucket
             print(f"Searching {s3_path} in {s3_bucket}")
             try:
                 client.head_object(Bucket=s3_bucket, Key=s3_path)
-                logging.warning(f"Existing file {s3_path} found on S3! Skipping.")
+                logging.warning(f"Existing file {s3_path} found on S3. Will overwrite.")
             except botocore.exceptions.ClientError:  # Exception abuse
-                extra_args = {'ContentType': 'plain/text'}
-                if filename == "index.html":
-                    continue #Index is uploaded separately
-                if make_public:
-                    extra_args['ACL'] = 'public-read'
-                logging.info(f"Uploading {s3_path}")
-                client.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
-                
-            except botocore.exceptions.ParamValidationError as e: #Raised when bucket ID is wrong
-                print(e)
+                pass
+
+            extra_args = {'ContentType': 'plain/text'}
+            if filename == "index.html":
+                continue #Index is uploaded separately
+            if make_public:
+                extra_args['ACL'] = 'public-read'
+            logging.info(f"Uploading {s3_path}")
+            client.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
 
     return filelist
 
