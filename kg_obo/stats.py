@@ -2,20 +2,18 @@
 
 import csv
 import os
-import sys
-import yaml # type: ignore
-import boto3 # type: ignore
-from importlib import import_module
-import tarfile
 import shutil
-from typing import List, Dict
+import sys
+import tarfile
+from typing import Dict, List
 
-import botocore.exceptions # type: ignore
+import boto3  # type: ignore
+import botocore.exceptions  # type: ignore
+import yaml  # type: ignore
+from grape import Graph  # type: ignore
 
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, measure_owl
-
-from grape import Graph # type: ignore
 
 IGNORED_FILES = ["index.html","tracking.yaml","lock",
                 "json_transform.log", "tsv_transform.log",
@@ -206,7 +204,7 @@ def decompress_graph(name, outpath) -> tuple:
             i = i+1
         if i > 2:
             cleanup(name)
-            sys.exit(f"Compressed graph file contains unexpected members!")
+            sys.exit("Compressed graph file contains unexpected members!")
     graph_file.close()
 
     edges_path = os.path.join(outdir,f"{name}_kgx_tsv_edges.tsv")
@@ -616,7 +614,7 @@ def get_all_stats(skip: list = [],
         print(f"ROBOT evironment variables: {robot_env['ROBOT_JAVA_ARGS']}")
 
         if not robot_params[0]: #i.e., if we couldn't find ROBOT 
-            sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
+            sys.exit("\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
 
     # Make local stats directory
     try:
