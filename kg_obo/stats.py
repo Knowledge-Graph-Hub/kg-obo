@@ -2,24 +2,27 @@
 
 import csv
 import os
-import sys
-import yaml # type: ignore
-import boto3 # type: ignore
-from importlib import import_module
-import tarfile
 import shutil
-from typing import List, Dict
+import sys
+import tarfile
+from typing import Dict, List
 
-import botocore.exceptions # type: ignore
+import boto3  # type: ignore
+import botocore.exceptions  # type: ignore
+import yaml  # type: ignore
+from grape import Graph  # type: ignore
 
 import kg_obo.upload
 from kg_obo.robot_utils import initialize_robot, measure_owl
 
-from grape import Graph # type: ignore
-
-IGNORED_FILES = ["index.html","tracking.yaml","lock",
-                "json_transform.log", "tsv_transform.log",
-                "kg-obo_version"]
+IGNORED_FILES = ["index.html",
+                 "json_transform.log",
+                 "kg-obo_version",
+                 "lock",
+                 "tracking.yaml",
+                 "tsv_transform.log",
+                 "unexpected_ids.tsv",
+                 "update_id_maps.tsv"]
 FORMATS = ["TSV","JSON"]
 DATA_DIR = "./data/"
 
@@ -139,6 +142,7 @@ def get_file_list(bucket, remote_path, versions) -> dict:
                         metadata[key['Key']]["Format"] = "TSV"
                     elif key['Key'].endswith(".json"):
                         metadata[key['Key']]["Format"] = "JSON"
+
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
 
@@ -206,7 +210,7 @@ def decompress_graph(name, outpath) -> tuple:
             i = i+1
         if i > 2:
             cleanup(name)
-            sys.exit(f"Compressed graph file contains unexpected members!")
+            sys.exit("Compressed graph file contains unexpected members!")
     graph_file.close()
 
     edges_path = os.path.join(outdir,f"{name}_kgx_tsv_edges.tsv")
@@ -253,8 +257,6 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
                 and metadata as key-value pairs
     """
 
-    #TODO: use the ensmallen automatic loading, for Maximum Speed
-
     client = boto3.client('s3')
 
     graph_details = {} # type: ignore
@@ -265,7 +267,6 @@ def get_graph_details(bucket, remote_path, versions) -> dict:
 
     # Clean up the metadata dict so we can index it
     for entry in metadata:
-        filetype = (entry.split("."))[-1]
         name = (entry.split("/"))[1]
         version = (entry.split("/"))[2]
         if name in clean_metadata and version in clean_metadata[name]:
@@ -616,7 +617,7 @@ def get_all_stats(skip: list = [],
         print(f"ROBOT evironment variables: {robot_env['ROBOT_JAVA_ARGS']}")
 
         if not robot_params[0]: #i.e., if we couldn't find ROBOT 
-            sys.exit(f"\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
+            sys.exit("\t*** Could not locate ROBOT - ensure it is available and executable. \n\tExiting...")
 
     # Make local stats directory
     try:
