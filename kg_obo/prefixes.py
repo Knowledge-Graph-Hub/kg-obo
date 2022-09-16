@@ -9,6 +9,7 @@ KGOBO_PREFIXES = {
     "http://purl.bioontology.org/ontology/MESH/":"MESH",
     "http://purl.obolibrary.org/GO_":"GO",
     "http://purl.obolibrary.org/NCBITaxon_":"NCBITaxon",
+    "http://purl.obolibrary.org/obo/GNO_":"GNO",
     "http://www.ncbi.nlm.nih.gov/gene/":"NCBIGENE",
     "https://books.google.com/books?id=":"GOOGLE.BOOKS",
     "https://doi.org/":"DOI",
