@@ -691,6 +691,7 @@ def run_transform(
     replace_base_obos=False,
     robot_path: str = os.path.join(os.getcwd(), "robot"),
     lock_file_remote_path: str = "kg-obo/lock",
+    force_overwrite=False,
     log_dir="logs",
     data_dir="data",
     remote_path="kg-obo",
@@ -708,6 +709,7 @@ def run_transform(
     :param force_index_refresh: bool for whether to rebuild all index.html on remote
     :param robot_path: str of path to robot, if different from default (bin/robot) - don't need '.jar' extension
     :param lock_file_remote_path: str of path for lock file on S3
+    :param force_overwrite: bool, if True, will overwrite existing transform files on bucket
     :param log_dir: str of local dir where any logs should be saved
     :param data_dir: str of local dir where data should be saved
     :param remote_path: str of remote path on S3 bucket
@@ -1204,6 +1206,7 @@ def run_transform(
                         bucket,
                         versioned_remote_path,
                         make_public=True,
+                        force_overwrite=force_overwrite
                     )
                     if not kg_obo.upload.verify_uploads(filelist, ontology_name):
                         kg_obo_logger.info(
