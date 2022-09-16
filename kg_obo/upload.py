@@ -91,14 +91,20 @@ def set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
     return lock_created
 
 
-def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
-                     make_public=False) -> list:
+def upload_dir_to_s3(local_directory: str,
+                     s3_bucket: str,
+                     s3_bucket_dir: str,
+                     make_public=False,
+                     force_overwrite=False) -> list:
     """
     Upload a local directory to a specified AWS S3 bucket.
     Returns list of files processed, whether they're uploaded or not.
     :param local_directory: str name of directory to upload
     :param s3_bucket: str ID of the bucket to upload to
     :param s3_bucket_dir: str of name of directory to create on S3
+    :param make_public: bool, if True, sets 'ACL' on objects to 'public-read'
+    :param force_overwrite: bool, if True, will overwrite objects
+    if they already exist on the bucket.
     :return: list of uploaded files
     """
 
@@ -114,11 +120,24 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
             relative_path = os.path.relpath(local_path, local_directory)
             s3_path = os.path.join(s3_bucket_dir, relative_path)
 
+            # Now we will upload the new files
+            ok_to_upload = False
             print(f"Searching {s3_path} in {s3_bucket}")
-            try:
-                client.head_object(Bucket=s3_bucket, Key=s3_path)
-                logging.warning(f"Existing file {s3_path} found on S3! Skipping.")
-            except botocore.exceptions.ClientError:  # Exception abuse
+            if force_overwrite:
+                try:
+                    client.head_object(Bucket=s3_bucket, Key=s3_path)
+                    logging.warning(f"Existing file {s3_path} found on S3. Will overwrite.")
+                except botocore.exceptions.ClientError:  # Exception abuse
+                    pass
+                ok_to_upload = True
+            else:
+                try:
+                    client.head_object(Bucket=s3_bucket, Key=s3_path)
+                    logging.warning(f"Existing file {s3_path} found on S3! Skipping.")
+                except botocore.exceptions.ClientError:  # Exception abuse
+                    ok_to_upload = True
+
+            if ok_to_upload:
                 extra_args = {'ContentType': 'plain/text'}
                 if filename == "index.html":
                     continue #Index is uploaded separately
@@ -126,9 +145,6 @@ def upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                     extra_args['ACL'] = 'public-read'
                 logging.info(f"Uploading {s3_path}")
                 client.upload_file(local_path, s3_bucket, s3_path, ExtraArgs=extra_args)
-                
-            except botocore.exceptions.ParamValidationError as e: #Raised when bucket ID is wrong
-                print(e)
 
     return filelist
 
