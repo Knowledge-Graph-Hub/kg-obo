@@ -105,7 +105,18 @@ def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -
         success = True
     except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
         print(f"ROBOT encountered an error: {e}")
-        success = False
+        print(f"Will try to repair...")
+        try:
+            robot_command('remove',
+                '--input', input_owl,
+                '--select', 'object-properties',
+                '--output', output,
+                _env=robot_env,
+            )
+            success = True
+        except sh.ErrorReturnCode_1 as e:
+            print(f"ROBOT encountered another error: {e}")
+            success = False
 
     return success
 
