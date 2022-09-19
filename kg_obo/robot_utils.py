@@ -7,6 +7,7 @@ from typing import Dict
 import sh  # type: ignore
 from curies import Converter  # type: ignore
 from sh import chmod  # type: ignore
+from sh import sed  # type: ignore
 
 from post_setup.post_setup import robot_setup
 
@@ -81,6 +82,7 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict)
 def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -> bool:
     """
     This method runs a convert ROBOT command on a single OBO.
+    It also fixes invalid "file:" prefixes.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be relaxed
     :param output: Ontology file to be created (needs valid ROBOT suffix)
@@ -127,6 +129,13 @@ def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -
             except sh.ErrorReturnCode_1 as e:
                 print(f"ROBOT encountered yet another error: {e}")
                 success = False
+
+    # Neutralize invalid prefixes.
+    print("Replacing any invalid prefixes...")
+    sed(['-i', 
+        's/file:/file_/', 
+        output]
+    )
 
     return success
 
