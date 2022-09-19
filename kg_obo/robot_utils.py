@@ -116,7 +116,17 @@ def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -
             success = True
         except sh.ErrorReturnCode_1 as e:
             print(f"ROBOT encountered another error: {e}")
-            success = False
+            try:
+                robot_command('remove',
+                    '--input', input_owl,
+                    '--term', 'rdfs:comment',
+                    '--output', output,
+                    _env=robot_env,
+                )
+                success = True
+            except sh.ErrorReturnCode_1 as e:
+                print(f"ROBOT encountered yet another error: {e}")
+                success = False
 
     return success
 
