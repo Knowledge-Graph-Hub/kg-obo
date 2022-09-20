@@ -660,10 +660,10 @@ def clean_and_normalize_graph(filename) -> bool:
 
         if mapping and mapcount > 0:
             print(f"Remapped {mapcount} node IDs.")
-            success = True
         elif mapping and mapcount == 0:
             print("Failed to remap node IDs - could not find corresponding nodes.")
-            success = False
+        
+        success = True
 
     except (IOError, KeyError) as e:
         print(f"Failed to remap node IDs for {nodepath} and/or {edgepath}: {e}")
