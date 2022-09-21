@@ -7,6 +7,7 @@ from typing import Dict
 import sh  # type: ignore
 from curies import Converter  # type: ignore
 from sh import chmod  # type: ignore
+from sh import sed  # type: ignore
 
 from post_setup.post_setup import robot_setup
 
@@ -81,6 +82,7 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict)
 def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -> bool:
     """
     This method runs a convert ROBOT command on a single OBO.
+    It also fixes invalid "file:" prefixes.
     :param robot_path: Path to ROBOT files
     :param input_owl: Ontology file to be relaxed
     :param output: Ontology file to be created (needs valid ROBOT suffix)
@@ -105,7 +107,35 @@ def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -
         success = True
     except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
         print(f"ROBOT encountered an error: {e}")
-        success = False
+        print(f"Will try to repair...")
+        try:
+            robot_command('remove',
+                '--input', input_owl,
+                '--select', 'object-properties',
+                '--output', output,
+                _env=robot_env,
+            )
+            success = True
+        except sh.ErrorReturnCode_1 as e:
+            print(f"ROBOT encountered another error: {e}")
+            try:
+                robot_command('remove',
+                    '--input', input_owl,
+                    '--term', 'rdfs:comment',
+                    '--output', output,
+                    _env=robot_env,
+                )
+                success = True
+            except sh.ErrorReturnCode_1 as e:
+                print(f"ROBOT encountered yet another error: {e}")
+                success = False
+
+    # Neutralize invalid prefixes.
+    print("Replacing any invalid prefixes...")
+    sed(['-i', 
+        's/file:/file_/', 
+        output]
+    )
 
     return success
 
@@ -246,9 +276,14 @@ def examine_owl_names(robot_path: str,
                 if (identifier.split(":"))[0].upper() == "OBO":
                     mal_id_list.append(identifier)
                     new_id = ((identifier[4:]).replace("_",":")).upper()
-                    split_new_id = new_id.split("/")
-                    if split_new_id[0].endswith("OWL"):
+                    # and check to see if this is referencing an owl file
+                    # if so, try to remove
+                    if ".OWL" in new_id:
+                        split_new_id = new_id.split(".OWL")
                         new_id = split_new_id[1]
+                    # May still have a char left over. Remove.
+                    if new_id[0] in ["/","#"]:
+                        new_id = new_id[1:]
                     update_ids[identifier] = new_id
                     continue
                 try: 

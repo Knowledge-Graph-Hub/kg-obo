@@ -339,7 +339,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
             for key in remote_contents:
                 if os.path.basename(key['Key']) not in [IFILENAME,"tracking.yaml","lock"]:
                     remote_files.append(key['Key'])
-        print(f"Found existing contents at {remote_path}: {remote_files}")
+        print(f"Found existing contents at {remote_path}: {len(remote_files)} files.")
     except KeyError:
         print(f"Found no existing contents at {remote_path}")
 
