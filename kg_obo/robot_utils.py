@@ -276,9 +276,14 @@ def examine_owl_names(robot_path: str,
                 if (identifier.split(":"))[0].upper() == "OBO":
                     mal_id_list.append(identifier)
                     new_id = ((identifier[4:]).replace("_",":")).upper()
-                    split_new_id = new_id.split("/")
-                    if split_new_id[0].endswith("OWL"):
+                    # and check to see if this is referencing an owl file
+                    # if so, try to remove
+                    if ".OWL" in new_id:
+                        split_new_id = new_id.split(".OWL")
                         new_id = split_new_id[1]
+                    # May still have a char left over. Remove.
+                    if new_id[0] in ["/","#"]:
+                        new_id = new_id[1:]
                     update_ids[identifier] = new_id
                     continue
                 try: 
