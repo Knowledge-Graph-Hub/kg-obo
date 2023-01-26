@@ -18,7 +18,7 @@ pipeline {
 
         // Some imports use an outdated scikit-learn alias.
         // This makes that usage OK for pip.
-        SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
+        SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL='True'
 
     }
     options {
