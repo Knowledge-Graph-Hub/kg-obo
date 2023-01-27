@@ -16,6 +16,10 @@ pipeline {
         // used solely for invalidations
         AWS_CLOUDFRONT_DISTRIBUTION_ID = 'EUVSWXZQBXCFP'
 
+        // Some imports use an outdated scikit-learn alias.
+        // This makes that usage OK for pip.
+        SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL='True'
+
     }
     options {
         timestamps()
