@@ -8,7 +8,7 @@ def robot_setup():
     """
 
     robotjar_paths = {"local":"robot.jar",
-                    "remote":"https://github.com/ontodev/robot/releases/download/v1.9.4/robot.jar"}
+                    "remote":"https://github.com/ontodev/robot/releases/download/v1.8.3/robot.jar"}
     robot_paths = {"local":"robot",
                     "remote":"https://raw.githubusercontent.com/ontodev/robot/master/bin/robot"}
     # Check if they already exist
