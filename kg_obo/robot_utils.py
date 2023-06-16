@@ -66,7 +66,7 @@ def relax_owl(robot_path: str, input_owl: str, output_owl: str, robot_env: dict)
         robot_command('relax',
             '--input', input_owl, 
             '--output', output_owl,
-            '--vvv',
+            '-vvv',
             _env=robot_env,
             _timeout=10800 
         )
@@ -162,7 +162,7 @@ def merge_and_convert_owl(robot_path: str, input_owl: str, output: str, robot_en
             '--input', input_owl,
             'convert', 
             '--output', output,
-            '--vvv',
+            '-vvv',
             _env=robot_env,
             _timeout=10800 
         )
