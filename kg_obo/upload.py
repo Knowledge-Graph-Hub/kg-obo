@@ -1,6 +1,6 @@
 import botocore.exceptions  # type: ignore
 import boto3  # type: ignore
-from moto import mock_s3 # type: ignore
+from moto import mock_aws
 import os
 import logging
 from time import time
@@ -148,7 +148,7 @@ def upload_dir_to_s3(local_directory: str,
 
     return filelist
 
-@mock_s3
+@mock_aws
 def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
     """
     Mock checking on existence of the tracking.yaml file on S3.
@@ -183,7 +183,7 @@ def mock_check_tracking(s3_bucket: str, s3_bucket_dir: str) -> bool:
 
     return tracking_file_exists
 
-@mock_s3
+@mock_aws
 def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
     """
     Mock checking on existence of a lock file on S3 to avoid concurrent runs.
@@ -214,7 +214,7 @@ def mock_check_lock(s3_bucket: str, s3_bucket_dir: str) -> bool:
 
     return lock_exists
 
-@mock_s3
+@mock_aws
 def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
     """
     Mocks creating a lock file on S3 to avoid concurrent runs.
@@ -254,7 +254,7 @@ def mock_set_lock(s3_bucket: str, s3_bucket_dir: str, unlock: bool) -> bool:
 
     return lock_created
 
-@mock_s3
+@mock_aws
 def mock_upload_dir_to_s3(local_directory: str, s3_bucket: str, s3_bucket_dir: str,
                      make_public=False) -> list:
     """
@@ -383,7 +383,7 @@ def update_index_files(bucket: str, remote_path: str, data_dir: str, update_root
 
     return success
 
-@mock_s3
+@mock_aws
 def mock_update_index_files(bucket: str, remote_path: str, data_dir: str, update_root=False) -> bool:
     """
     Mocks checking a specified remote path on the S3 bucket, 

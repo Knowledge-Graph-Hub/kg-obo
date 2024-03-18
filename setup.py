@@ -67,7 +67,7 @@ setup(
         'gitpython',
         'grape',
         'kgx==1.7.0',
-        'moto[s3]',
+        'moto>=5.0.0',
         'prefixmaps',
         'pyyaml',
         'recommonmark',
