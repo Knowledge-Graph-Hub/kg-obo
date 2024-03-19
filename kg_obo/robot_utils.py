@@ -107,7 +107,7 @@ def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -
         success = True
     except sh.ErrorReturnCode_1 as e: # If ROBOT runs but returns an error
         print(f"ROBOT encountered an error: {e}")
-        print(f"Will try to repair...")
+        print("Will try to repair by removing object properties...")
         try:
             robot_command('remove',
                 '--input', input_owl,
@@ -118,6 +118,7 @@ def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -
             success = True
         except sh.ErrorReturnCode_1 as e:
             print(f"ROBOT encountered another error: {e}")
+            print("Will try to repair by removing comments..")
             try:
                 robot_command('remove',
                     '--input', input_owl,
@@ -128,7 +129,18 @@ def convert_owl(robot_path: str, input_owl: str, output: str, robot_env: dict) -
                 success = True
             except sh.ErrorReturnCode_1 as e:
                 print(f"ROBOT encountered yet another error: {e}")
-                success = False
+                print("Will try to repair by removing IAO:0000115...")
+                try:
+                    robot_command('remove',
+                        '--input', input_owl,
+                        '--exclude-term', 'IAO:0000115',
+                        '--output', output,
+                        _env=robot_env,
+                    )
+                    success = True
+                except sh.ErrorReturnCode_1 as e:
+                    print(f"ROBOT encountered yet a further error: {e}")
+                    return False
 
     # Neutralize invalid prefixes.
     print("Replacing any invalid prefixes...")
